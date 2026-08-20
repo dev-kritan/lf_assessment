@@ -30,6 +30,7 @@ export const EventDetailPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [attendeeFilter, setAttendeeFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>('all');
 
   const { isAuthenticated } = useAuth();
   const { success, error } = useToast();
@@ -232,44 +233,119 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Attendees List Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-500" />
-                Community Attendees ({event.rsvpStats.yes})
-              </h2>
-              <span className="text-xs text-slate-500">
-                {event.rsvpStats.maybe} interested • {event.rsvpStats.no} declined
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-500" />
+                  Community Responses ({event.attendees?.length || 0})
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {event.rsvpStats.yes} going • {event.rsvpStats.maybe} interested • {event.rsvpStats.no} declined
+                </p>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 self-start sm:self-auto text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setAttendeeFilter('all')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                    attendeeFilter === 'all'
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  All ({event.attendees?.length || 0})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAttendeeFilter('yes')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                    attendeeFilter === 'yes'
+                      ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                      : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'
+                  }`}
+                >
+                  Going ({event.rsvpStats.yes})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAttendeeFilter('maybe')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                    attendeeFilter === 'maybe'
+                      ? 'bg-amber-500 text-white shadow-sm font-bold'
+                      : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                  }`}
+                >
+                  Maybe ({event.rsvpStats.maybe})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAttendeeFilter('no')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                    attendeeFilter === 'no'
+                      ? 'bg-rose-600 text-white shadow-sm font-bold'
+                      : 'text-slate-500 hover:text-rose-600 dark:hover:text-rose-400'
+                  }`}
+                >
+                  No ({event.rsvpStats.no})
+                </button>
+              </div>
             </div>
 
-            {event.attendees && event.attendees.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {event.attendees.map((attendee) => (
-                  <div
-                    key={attendee.id}
-                    className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
-                  >
-                    <img
-                      src={attendee.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${attendee.name}`}
-                      alt={attendee.name}
-                      className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{attendee.name}</p>
-                      <span className={`text-[10px] font-bold uppercase ${
-                        attendee.status === 'yes' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
-                      }`}>
-                        {attendee.status === 'yes' ? 'Attending' : 'Interested'}
-                      </span>
+            {(() => {
+              const filteredAttendees = (event.attendees || []).filter((a) => {
+                if (attendeeFilter === 'all') return true;
+                return a.status === attendeeFilter;
+              });
+
+              if (!event.attendees || event.attendees.length === 0) {
+                return (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
+                    No RSVPs recorded yet. Be the first to RSVP!
+                  </p>
+                );
+              }
+
+              if (filteredAttendees.length === 0) {
+                return (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
+                    No attendees in this category yet.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {filteredAttendees.map((attendee) => (
+                    <div
+                      key={attendee.id}
+                      className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
+                    >
+                      <img
+                        src={attendee.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${attendee.name}`}
+                        alt={attendee.name}
+                        className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 flex-shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{attendee.name}</p>
+                        <span
+                          className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border mt-0.5 ${
+                            attendee.status === 'yes'
+                              ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60'
+                              : attendee.status === 'maybe'
+                              ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60'
+                              : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60'
+                          }`}
+                        >
+                          {attendee.status === 'yes' ? 'Attending' : attendee.status === 'maybe' ? 'Interested' : 'Declined'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
-                No RSVPs recorded yet. Be the first to RSVP!
-              </p>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
