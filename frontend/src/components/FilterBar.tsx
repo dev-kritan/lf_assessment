@@ -1,0 +1,182 @@
+import React from 'react';
+import { Search, Tag as TagIcon, X, SlidersHorizontal, Grid, List } from 'lucide-react';
+import { Tag } from '../types';
+
+interface FilterBarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  selectedTimeframe: 'all' | 'upcoming' | 'past';
+  onTimeframeChange: (tf: 'all' | 'upcoming' | 'past') => void;
+  selectedType: 'all' | 'public' | 'private';
+  onTypeChange: (type: 'all' | 'public' | 'private') => void;
+  selectedTag: string;
+  onTagChange: (tag: string) => void;
+  sortBy: 'date' | 'popularity' | 'created_at';
+  onSortChange: (sort: 'date' | 'popularity' | 'created_at') => void;
+  tags: Tag[];
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
+  onReset: () => void;
+  hasActiveFilters: boolean;
+}
+
+export const FilterBar: React.FC<FilterBarProps> = ({
+  search,
+  onSearchChange,
+  selectedTimeframe,
+  onTimeframeChange,
+  selectedType,
+  onTypeChange,
+  selectedTag,
+  onTagChange,
+  sortBy,
+  onSortChange,
+  tags,
+  viewMode,
+  onViewModeChange,
+  onReset,
+  hasActiveFilters,
+}) => {
+  return (
+    <div className="space-y-4 mb-8">
+      {/* Top Bar: Search, Sort & View Mode */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search events by title, description, or location..."
+            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/50 shadow-sm transition-all"
+          />
+          {search && (
+            <button
+              onClick={() => onSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Dropdowns: Event Type & Sort By */}
+        <div className="flex items-center gap-2">
+          {/* Event Type Filter */}
+          <select
+            value={selectedType}
+            onChange={(e) => onTypeChange(e.target.value as any)}
+            className="px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm cursor-pointer"
+          >
+            <option value="all">All Types</option>
+            <option value="public">Public Events</option>
+            <option value="private">Private Events</option>
+          </select>
+
+          {/* Sort By Filter */}
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value as any)}
+            className="px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm cursor-pointer"
+          >
+            <option value="date">Sort by Date</option>
+            <option value="popularity">Most Popular (RSVP)</option>
+            <option value="created_at">Recently Created</option>
+          </select>
+
+          {/* View Toggle */}
+          <div className="hidden sm:flex items-center p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <button
+              onClick={() => onViewModeChange('grid')}
+              aria-label="Grid View"
+              className={`p-2 rounded-xl transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <Grid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onViewModeChange('list')}
+              aria-label="List View"
+              className={`p-2 rounded-xl transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Bar: Timeframe Tabs (All, Upcoming, Past) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md">
+          {(['all', 'upcoming', 'past'] as const).map((tf) => (
+            <button
+              key={tf}
+              onClick={() => onTimeframeChange(tf)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
+                selectedTimeframe === tf
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {tf === 'all' ? 'All Events' : tf === 'upcoming' ? '✨ Upcoming Events' : '🕰️ Past Events'}
+            </button>
+          ))}
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={onReset}
+            className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer px-2"
+          >
+            <X className="w-3.5 h-3.5" />
+            Reset all filters
+          </button>
+        )}
+      </div>
+
+      {/* Bottom Bar: Tags Filter Chips */}
+      {tags.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
+          <span className="text-xs font-semibold text-slate-400 flex items-center gap-1 flex-shrink-0">
+            <TagIcon className="w-3.5 h-3.5" /> Tags:
+          </span>
+          <button
+            onClick={() => onTagChange('')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors flex-shrink-0 ${
+              !selectedTag
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            All Tags
+          </button>
+
+          {tags.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => onTagChange(selectedTag === t.name ? '' : t.name)}
+              style={
+                selectedTag === t.name
+                  ? { backgroundColor: t.colorHex, color: '#ffffff' }
+                  : { backgroundColor: `${t.colorHex}15`, color: t.colorHex }
+              }
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex-shrink-0 hover:scale-105 ${
+                selectedTag === t.name ? 'shadow-sm ring-2 ring-indigo-500/30' : ''
+              }`}
+            >
+              #{t.name} {t.eventCount !== undefined && `(${t.eventCount})`}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
