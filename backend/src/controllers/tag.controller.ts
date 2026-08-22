@@ -5,7 +5,13 @@ import { sendSuccess, sendCreated } from '../utils/response.utils';
 export class TagController {
   static async getAllTags(req: Request, res: Response, next: NextFunction) {
     try {
-      const tags = await TagService.getAllTags();
+      const { event_type, timeframe, search } = req.query as {
+        event_type?: 'all' | 'public' | 'private';
+        timeframe?: 'all' | 'upcoming' | 'past';
+        search?: string;
+      };
+      const currentUserId = req.user?.userId;
+      const tags = await TagService.getAllTags({ event_type, timeframe, search }, currentUserId);
       return sendSuccess(res, tags, 'Tags retrieved successfully');
     } catch (error) {
       next(error);

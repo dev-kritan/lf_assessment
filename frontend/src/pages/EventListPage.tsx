@@ -69,11 +69,15 @@ export const EventListPage: React.FC = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Fetch Tags and Metrics
-  const fetchTagsAndMetrics = async () => {
+  // Fetch Tags and Metrics with active filter context
+  const fetchTagsAndMetrics = useCallback(async () => {
     try {
       const [tagsRes, metricsRes] = await Promise.all([
-        eventsApi.getTags(),
+        eventsApi.getTags({
+          event_type: eventType !== 'all' ? eventType : undefined,
+          timeframe: timeframe !== 'all' ? timeframe : undefined,
+          search: debouncedSearch || undefined,
+        }),
         eventsApi.getMetrics(),
       ]);
       if (tagsRes.success) setTags(tagsRes.data);
@@ -81,11 +85,11 @@ export const EventListPage: React.FC = () => {
     } catch {
       // Non-blocking
     }
-  };
+  }, [eventType, timeframe, debouncedSearch]);
 
   useEffect(() => {
     fetchTagsAndMetrics();
-  }, []);
+  }, [fetchTagsAndMetrics]);
 
   // Fetch Events
   const fetchEvents = useCallback(async () => {

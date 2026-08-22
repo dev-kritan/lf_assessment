@@ -63,8 +63,8 @@ export const eventsApi = {
     return response.data;
   },
 
-  async getTags() {
-    const response = await apiClient.get<ApiResponse<Tag[]>>('/tags');
+  async getTags(params?: { event_type?: string; timeframe?: string; search?: string }) {
+    const response = await apiClient.get<ApiResponse<Tag[]>>('/tags', { params });
     return response.data;
   },
 

@@ -142,4 +142,65 @@ describe('Events Endpoints & Filtering', () => {
     expect(res2.body.data.colorHex).toMatch(/^#[0-9a-fA-F]{6}$/);
     expect(res1.body.data.colorHex.toLowerCase()).not.toBe(res2.body.data.colorHex.toLowerCase());
   });
+
+  it('should dynamically filter tag event counts based on event_type (public vs private)', async () => {
+    // Create custom tag 'GoalTag'
+    const tagRes = await request(app)
+      .post('/api/v1/tags')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({ name: 'GoalTag' });
+    const goalTagId = tagRes.body.data.id;
+
+    // Create 1 public event with GoalTag
+    await request(app)
+      .post('/api/v1/events')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({
+        title: 'Public Goal Event',
+        description: 'Goal event that is public',
+        location: 'Hall A',
+        start_time: new Date(Date.now() + 86400000).toISOString(),
+        event_type: 'public',
+        tag_ids: [goalTagId],
+      });
+
+    // Create 1 private event with GoalTag
+    await request(app)
+      .post('/api/v1/events')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({
+        title: 'Private Goal Event',
+        description: 'Goal event that is private',
+        location: 'Room B',
+        start_time: new Date(Date.now() + 86400000).toISOString(),
+        event_type: 'private',
+        tag_ids: [goalTagId],
+      });
+
+    // Query all tags with event_type=public
+    const publicTagsRes = await request(app)
+      .get('/api/v1/tags?event_type=public');
+    expect(publicTagsRes.status).toBe(200);
+    const publicGoalTag = publicTagsRes.body.data.find((t: any) => t.id === goalTagId);
+    expect(publicGoalTag).toBeDefined();
+    expect(publicGoalTag.eventCount).toBe(1);
+
+    // Query all tags with event_type=private (as user1)
+    const privateTagsRes = await request(app)
+      .get('/api/v1/tags?event_type=private')
+      .set('Authorization', `Bearer ${user1Token}`);
+    expect(privateTagsRes.status).toBe(200);
+    const privateGoalTag = privateTagsRes.body.data.find((t: any) => t.id === goalTagId);
+    expect(privateGoalTag).toBeDefined();
+    expect(privateGoalTag.eventCount).toBe(1);
+
+    // Query all tags without filter (as user1 who can see both)
+    const allTagsRes = await request(app)
+      .get('/api/v1/tags')
+      .set('Authorization', `Bearer ${user1Token}`);
+    expect(allTagsRes.status).toBe(200);
+    const allGoalTag = allTagsRes.body.data.find((t: any) => t.id === goalTagId);
+    expect(allGoalTag).toBeDefined();
+    expect(allGoalTag.eventCount).toBe(2);
+  });
 });
