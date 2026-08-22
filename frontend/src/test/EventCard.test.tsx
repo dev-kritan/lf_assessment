@@ -47,4 +47,28 @@ describe('EventCard Component', () => {
     expect(screen.getByText(/15 going/i)).toBeInTheDocument();
     expect(screen.getByText('Public')).toBeInTheDocument();
   });
+
+  it('renders up to 3 tags and shows +X more badge for excess tags', () => {
+    const eventWithManyTags: EventItem = {
+      ...mockEvent,
+      tags: [
+        { id: 1, name: 'Tech', colorHex: '#6366f1' },
+        { id: 2, name: 'Workshop', colorHex: '#10b981' },
+        { id: 3, name: 'AI', colorHex: '#ec4899' },
+        { id: 4, name: 'Design', colorHex: '#f59e0b' },
+        { id: 5, name: 'Career', colorHex: '#06b6d4' },
+      ],
+    };
+
+    render(
+      <BrowserRouter>
+        <EventCard event={eventWithManyTags} />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('#Tech')).toBeInTheDocument();
+    expect(screen.getByText('#Workshop')).toBeInTheDocument();
+    expect(screen.getByText('#AI')).toBeInTheDocument();
+    expect(screen.getByText('+2 more')).toBeInTheDocument();
+  });
 });

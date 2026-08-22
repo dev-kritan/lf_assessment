@@ -402,24 +402,28 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Categories & Tags
             </label>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {availableTags.map((tag) => (
-                <button
-                  type="button"
-                  key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
-                  style={
-                    selectedTagIds.includes(tag.id)
-                      ? { backgroundColor: tag.colorHex, color: '#ffffff' }
-                      : { backgroundColor: `${tag.colorHex}15`, color: tag.colorHex }
-                  }
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                    selectedTagIds.includes(tag.id) ? 'ring-2 ring-indigo-400/40 shadow-sm' : 'opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  #{tag.name}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-1.5 mb-3 max-h-36 overflow-y-auto p-1.5 border border-slate-100 dark:border-slate-800/60 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40">
+              {availableTags.length === 0 ? (
+                <p className="text-xs text-slate-400 dark:text-slate-500 py-1 px-2">No tags available yet. Create one below!</p>
+              ) : (
+                availableTags.map((tag) => (
+                  <button
+                    type="button"
+                    key={tag.id}
+                    onClick={() => toggleTag(tag.id)}
+                    style={
+                      selectedTagIds.includes(tag.id)
+                        ? { backgroundColor: tag.colorHex, color: '#ffffff' }
+                        : { backgroundColor: `${tag.colorHex}15`, color: tag.colorHex }
+                    }
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                      selectedTagIds.includes(tag.id) ? 'ring-2 ring-indigo-400/40 shadow-sm' : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    #{tag.name}
+                  </button>
+                ))
+              )}
             </div>
 
             {/* Add Custom Tag Inline */}

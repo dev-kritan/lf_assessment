@@ -22,6 +22,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { format, parseISO } from 'date-fns';
+import { TagsPopover } from '../components/TagsPopover';
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -139,7 +140,7 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Admin Controls */}
           {event.isCreator && (
-            <div className="absolute top-4 right-4 flex items-center gap-2">
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white text-xs font-bold backdrop-blur-md hover:bg-white transition-all shadow-md"
@@ -158,9 +159,9 @@ export const EventDetailPage: React.FC = () => {
           )}
 
           {/* Title & Tags inside Hero */}
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="flex flex-wrap gap-1.5 mb-2.5">
-              {event.tags.map((t) => (
+          <div className="absolute bottom-6 left-6 right-6 z-10">
+            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+              {event.tags.slice(0, 5).map((t) => (
                 <span
                   key={t.id}
                   style={{ backgroundColor: t.colorHex }}
@@ -169,8 +170,15 @@ export const EventDetailPage: React.FC = () => {
                   #{t.name}
                 </span>
               ))}
+              <TagsPopover
+                tags={event.tags}
+                limit={5}
+                badgeClassName="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900/80 hover:bg-slate-900 text-slate-200 backdrop-blur-md shadow-sm cursor-pointer transition-colors inline-flex items-center gap-1"
+                popoverClassName="absolute left-0 bottom-full mb-2 z-50 flex flex-col gap-1.5 p-3.5 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl min-w-[240px] max-w-[320px] max-h-56 overflow-y-auto animate-fade-in pointer-events-auto"
+                chipClassName="px-2.5 py-0.5 rounded-full text-xs font-bold border"
+              />
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight line-clamp-2">
               {event.title}
             </h1>
           </div>
@@ -230,6 +238,31 @@ export const EventDetailPage: React.FC = () => {
               {event.description}
             </div>
           </div>
+
+          {/* Tags & Categories Card */}
+          {event.tags && event.tags.length > 0 && (
+            <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+                  Categories & Tags
+                </h2>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  {event.tags.length} {event.tags.length === 1 ? 'tag' : 'tags'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                {event.tags.map((t) => (
+                  <span
+                    key={t.id}
+                    style={{ backgroundColor: `${t.colorHex}18`, color: t.colorHex, borderColor: `${t.colorHex}35` }}
+                    className="px-3 py-1 rounded-xl text-xs font-bold border transition-all hover:scale-105"
+                  >
+                    #{t.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Attendees List Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">

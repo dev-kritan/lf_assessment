@@ -13,6 +13,8 @@ import {
 import { EventItem } from '../types';
 import { format, parseISO } from 'date-fns';
 
+import { TagsPopover } from './TagsPopover';
+
 interface EventCardProps {
   event: EventItem;
   onEdit?: (event: EventItem) => void;
@@ -84,8 +86,8 @@ export const EventCard: React.FC<EventCardProps> = ({
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
           {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {event.tags.map((t) => (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            {event.tags.slice(0, 3).map((t) => (
               <span
                 key={t.id}
                 style={{ backgroundColor: `${t.colorHex}18`, color: t.colorHex }}
@@ -94,6 +96,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 #{t.name}
               </span>
             ))}
+            <TagsPopover tags={event.tags} limit={3} />
           </div>
 
           {/* Title */}
