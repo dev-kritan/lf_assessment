@@ -237,6 +237,7 @@ export const MyEventsPage: React.FC = () => {
         eventToEdit={eventToEdit}
         onSuccess={loadData}
         allTags={allTags}
+        onTagCreated={(newTag) => setAllTags((prev) => [...prev, newTag])}
       />
 
       {/* Delete Confirm Modal */}

@@ -395,7 +395,6 @@ export const EventDetailPage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)}
         eventToEdit={event}
         onSuccess={(updated) => setEvent(updated)}
-        allTags={event.tags}
       />
 
       {/* Delete Modal */}

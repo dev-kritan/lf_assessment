@@ -124,4 +124,22 @@ describe('Events Endpoints & Filtering', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+
+  it('should create custom tags and assign non-repeating randomized hex colors', async () => {
+    const res1 = await request(app)
+      .post('/api/v1/tags')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({ name: 'TagAlpha' });
+
+    const res2 = await request(app)
+      .post('/api/v1/tags')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({ name: 'TagBeta' });
+
+    expect(res1.status).toBe(201);
+    expect(res2.status).toBe(201);
+    expect(res1.body.data.colorHex).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(res2.body.data.colorHex).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(res1.body.data.colorHex.toLowerCase()).not.toBe(res2.body.data.colorHex.toLowerCase());
+  });
 });

@@ -57,6 +57,7 @@ export const AppContent: React.FC = () => {
           window.location.reload();
         }}
         allTags={tags}
+        onTagCreated={(newTag) => setTags((prev) => [...prev, newTag])}
       />
 
       {/* Modern Footer */}

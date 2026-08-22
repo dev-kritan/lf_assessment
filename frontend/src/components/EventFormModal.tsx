@@ -10,7 +10,7 @@ interface EventFormModalProps {
   onClose: () => void;
   eventToEdit?: EventItem | null;
   onSuccess: (event: EventItem) => void;
-  allTags: Tag[];
+  allTags?: Tag[];
   onTagCreated?: (tag: Tag) => void;
 }
 
@@ -32,10 +32,24 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [endTime, setEndTime] = useState('');
   const [capacity, setCapacity] = useState<string>('');
   const [bannerUrl, setBannerUrl] = useState('');
+  const [availableTags, setAvailableTags] = useState<Tag[]>(allTags || []);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      if (allTags && allTags.length > 0) {
+        setAvailableTags(allTags);
+      }
+      eventsApi.getTags().then((res) => {
+        if (res.success && res.data) {
+          setAvailableTags(res.data);
+        }
+      }).catch(() => {});
+    }
+  }, [isOpen, allTags]);
 
   useEffect(() => {
     if (eventToEdit) {
@@ -85,18 +99,39 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   };
 
   const handleAddNewTag = async () => {
-    if (!newTagInput.trim()) return;
+    const inputName = newTagInput.trim();
+    if (!inputName) return;
+
+    // Case-insensitive check against already available tags
+    const existingTag = availableTags.find(
+      (t) => t.name.toLowerCase() === inputName.toLowerCase()
+    );
+
+    if (existingTag) {
+      setSelectedTagIds((prev) =>
+        prev.includes(existingTag.id) ? prev : [...prev, existingTag.id]
+      );
+      setNewTagInput('');
+      success(`Tag #${existingTag.name} selected`);
+      return;
+    }
+
     try {
-      const res = await eventsApi.createTag(newTagInput.trim());
+      const res = await eventsApi.createTag(inputName);
       if (res.success && res.data) {
-        if (!selectedTagIds.includes(res.data.id)) {
-          setSelectedTagIds((prev) => [...prev, res.data.id]);
-        }
+        const newTag = res.data;
+        setAvailableTags((prev) => {
+          if (prev.some((t) => t.id === newTag.id)) return prev;
+          return [...prev, newTag];
+        });
+        setSelectedTagIds((prev) =>
+          prev.includes(newTag.id) ? prev : [...prev, newTag.id]
+        );
         if (onTagCreated) {
-          onTagCreated(res.data);
+          onTagCreated(newTag);
         }
         setNewTagInput('');
-        success(`Tag #${res.data.name} added`);
+        success(`Tag #${newTag.name} added`);
       }
     } catch {
       error('Failed to create tag');
@@ -368,7 +403,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               Categories & Tags
             </label>
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {allTags.map((tag) => (
+              {availableTags.map((tag) => (
                 <button
                   type="button"
                   key={tag.id}

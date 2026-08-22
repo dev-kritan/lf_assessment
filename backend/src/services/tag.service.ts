@@ -1,6 +1,30 @@
 import db from '../config/knex';
 
 export class TagService {
+  /**
+   * Generates a random 24-bit RGB hex color (#000000 to #ffffff).
+   */
+  static generateRandomHexColor(): string {
+    const randomInt = Math.floor(Math.random() * 16777216);
+    return `#${randomInt.toString(16).padStart(6, '0')}`;
+  }
+
+  /**
+   * Generates a randomized hex color that is not currently used by any existing tag.
+   */
+  static async getUniqueRandomColor(): Promise<string> {
+    const existingTags = await db('tags').select('color_hex');
+    const usedColors = new Set(existingTags.map((t) => (t.color_hex || '').toLowerCase()));
+
+    let color = this.generateRandomHexColor();
+    let attempts = 0;
+    while (usedColors.has(color.toLowerCase()) && attempts < 100) {
+      color = this.generateRandomHexColor();
+      attempts++;
+    }
+    return color;
+  }
+
   static async getAllTags() {
     const tags = await db('tags')
       .leftJoin('event_tags', 'tags.id', 'event_tags.tag_id')
@@ -17,7 +41,7 @@ export class TagService {
     }));
   }
 
-  static async createTag(name: string, colorHex: string = '#6366f1') {
+  static async createTag(name: string, colorHex?: string) {
     const trimmedName = name.trim();
     const existing = await db('tags').whereRaw('LOWER(name) = ?', [trimmedName.toLowerCase()]).first();
     if (existing) {
@@ -28,9 +52,13 @@ export class TagService {
       };
     }
 
+    const assignedColor = colorHex && colorHex !== '#6366f1'
+      ? colorHex
+      : await TagService.getUniqueRandomColor();
+
     const [insertedIdRaw] = await db('tags').insert({
       name: trimmedName,
-      color_hex: colorHex,
+      color_hex: assignedColor,
     });
 
     const id = typeof insertedIdRaw === 'object' ? (insertedIdRaw as any).id || 1 : insertedIdRaw;
