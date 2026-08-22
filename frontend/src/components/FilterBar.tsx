@@ -1,6 +1,20 @@
 import React from 'react';
-import { Search, Tag as TagIcon, X, SlidersHorizontal, Grid, List } from 'lucide-react';
+import { 
+  Search, 
+  Tag as TagIcon, 
+  X, 
+  SlidersHorizontal, 
+  Grid, 
+  List,
+  Layers,
+  Globe,
+  Lock,
+  Calendar,
+  TrendingUp,
+  Clock
+} from 'lucide-react';
 import { Tag } from '../types';
+import { CustomSelect, SelectOption } from './CustomSelect';
 
 interface FilterBarProps {
   search: string;
@@ -37,11 +51,23 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onReset,
   hasActiveFilters,
 }) => {
+  const eventTypeOptions: SelectOption<'all' | 'public' | 'private'>[] = [
+    { value: 'all', label: 'All Types', icon: <Layers className="w-3.5 h-3.5 text-slate-400" /> },
+    { value: 'public', label: 'Public Events', icon: <Globe className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'private', label: 'Private Events', icon: <Lock className="w-3.5 h-3.5 text-indigo-500" /> },
+  ];
+
+  const sortOptions: SelectOption<'date' | 'popularity' | 'created_at'>[] = [
+    { value: 'date', label: 'Sort by Date', icon: <Calendar className="w-3.5 h-3.5 text-indigo-500" /> },
+    { value: 'popularity', label: 'Most Popular (RSVP)', icon: <TrendingUp className="w-3.5 h-3.5 text-amber-500" /> },
+    { value: 'created_at', label: 'Recently Created', icon: <Clock className="w-3.5 h-3.5 text-slate-400" /> },
+  ];
+
   return (
     <div className="space-y-4 mb-8">
-      {/* Top Bar: Search, Sort & View Mode */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        {/* Search Input */}
+      {/* Top Row: Search & View Toggle */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Search Bar */}
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -64,26 +90,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         {/* Dropdowns: Event Type & Sort By */}
         <div className="flex items-center gap-2">
           {/* Event Type Filter */}
-          <select
+          <CustomSelect
             value={selectedType}
-            onChange={(e) => onTypeChange(e.target.value as any)}
-            className="px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm cursor-pointer"
-          >
-            <option value="all">All Types</option>
-            <option value="public">Public Events</option>
-            <option value="private">Private Events</option>
-          </select>
+            onChange={onTypeChange}
+            options={eventTypeOptions}
+            buttonClassName="py-3"
+            ariaLabel="Event Type Filter"
+          />
 
           {/* Sort By Filter */}
-          <select
+          <CustomSelect
             value={sortBy}
-            onChange={(e) => onSortChange(e.target.value as any)}
-            className="px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm cursor-pointer"
-          >
-            <option value="date">Sort by Date</option>
-            <option value="popularity">Most Popular (RSVP)</option>
-            <option value="created_at">Recently Created</option>
-          </select>
+            onChange={onSortChange}
+            options={sortOptions}
+            buttonClassName="py-3"
+            ariaLabel="Sort By Filter"
+          />
 
           {/* View Toggle */}
           <div className="hidden sm:flex items-center p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">

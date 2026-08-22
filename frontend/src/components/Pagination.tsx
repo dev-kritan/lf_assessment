@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PaginationMeta } from '../types';
+import { CustomSelect, SelectOption } from './CustomSelect';
 
 interface PaginationProps {
   meta: PaginationMeta;
@@ -10,6 +11,13 @@ interface PaginationProps {
 
 export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLimitChange }) => {
   const { page, totalPages, total, limit } = meta;
+
+  const limitOptions: SelectOption<number>[] = [
+    { value: 6, label: '6 / page' },
+    { value: 9, label: '9 / page' },
+    { value: 15, label: '15 / page' },
+    { value: 30, label: '30 / page' },
+  ];
 
   if (totalPages <= 1 && total <= limit) {
     return (
@@ -81,16 +89,13 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
       {onLimitChange && (
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>Per page:</span>
-          <select
+          <CustomSelect
             value={limit}
-            onChange={(e) => onLimitChange(Number(e.target.value))}
-            className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-          >
-            <option value={6}>6</option>
-            <option value={9}>9</option>
-            <option value={15}>15</option>
-            <option value={30}>30</option>
-          </select>
+            onChange={(val) => onLimitChange(Number(val))}
+            options={limitOptions}
+            size="sm"
+            ariaLabel="Select events per page"
+          />
         </div>
       )}
     </div>
