@@ -16,6 +16,7 @@ import { EventCard } from '../components/EventCard';
 import { FilterBar } from '../components/FilterBar';
 import { Pagination } from '../components/Pagination';
 import { StatCard } from '../components/StatCard';
+import { MetricDetailDrawer, MetricType } from '../components/MetricDetailDrawer';
 import { EventFormModal } from '../components/EventFormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
@@ -32,6 +33,8 @@ export const EventListPage: React.FC = () => {
     totalRsvps: number;
     totalTags: number;
   } | null>(null);
+
+  const [activeMetricDetail, setActiveMetricDetail] = useState<MetricType | null>(null);
 
   const [pagination, setPagination] = useState<PaginationMeta>({
     page: 1,
@@ -214,6 +217,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Calendar className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
                   description="Active on schedule"
+                  onClick={() => setActiveMetricDetail('upcoming')}
                 />
                 <StatCard
                   label="Total RSVPs"
@@ -221,6 +225,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Users className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-emerald-600 to-emerald-500"
                   description="Confirmed attendees"
+                  onClick={() => setActiveMetricDetail('rsvps')}
                 />
                 <StatCard
                   label="Categories"
@@ -228,6 +233,7 @@ export const EventListPage: React.FC = () => {
                   icon={<TagIcon className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-amber-600 to-amber-500"
                   description="Filterable tags"
+                  onClick={() => setActiveMetricDetail('categories')}
                 />
                 <StatCard
                   label="Past Events"
@@ -235,6 +241,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Flame className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-purple-600 to-purple-500"
                   description="Archived history"
+                  onClick={() => setActiveMetricDetail('past')}
                 />
               </div>
             )}
@@ -374,6 +381,26 @@ export const EventListPage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setEventToDelete(null)}
       />
+
+      {/* Metric Detail Responsive Drawer / Dialog */}
+      {metrics && (
+        <MetricDetailDrawer
+          isOpen={!!activeMetricDetail}
+          onClose={() => setActiveMetricDetail(null)}
+          metricType={activeMetricDetail}
+          metrics={metrics}
+          events={events}
+          tags={tags}
+          onFilterTimeframe={(tf) => {
+            setTimeframe(tf);
+            setPagination((prev) => ({ ...prev, page: 1 }));
+          }}
+          onFilterTag={(tag) => {
+            setSelectedTag(tag);
+            setPagination((prev) => ({ ...prev, page: 1 }));
+          }}
+        />
+      )}
     </div>
   );
 };
