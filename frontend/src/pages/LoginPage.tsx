@@ -21,6 +21,7 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setFormError('');
 
     if (!email.trim() || !password.trim()) {

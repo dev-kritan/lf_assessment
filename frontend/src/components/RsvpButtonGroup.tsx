@@ -68,6 +68,11 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
   }, [stats]);
 
   const handleRsvp = async (status: "yes" | "maybe" | "no") => {
+    // Idempotency: Ignore click if status is already active or request is currently in-flight
+    if (currentStatus === status || isLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       info(`Please sign in to RSVP "${status === 'yes' ? 'Going' : status === 'maybe' ? 'Maybe' : 'Can\'t Go'}"`);
       const targetParams = new URLSearchParams(location.search);

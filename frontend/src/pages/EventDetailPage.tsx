@@ -65,7 +65,7 @@ export const EventDetailPage: React.FC = () => {
   }, [id, isAuthenticated]);
 
   const handleDelete = async () => {
-    if (!event) return;
+    if (!event || isDeleting) return;
     try {
       setIsDeleting(true);
       const res = await eventsApi.deleteEvent(event.id);

@@ -33,6 +33,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
   }, [isOpen]);
 
   const fetch2FASetup = async () => {
+    if (isLoading || (qrCode && secret)) return;
     try {
       setIsLoading(true);
       setErrorMessage('');
@@ -56,6 +57,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
 
   const handleVerifyAndEnable = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVerifying) return;
     if (!token.trim() || token.trim().length !== 6) {
       setErrorMessage('Please enter the 6-digit authentication code.');
       return;

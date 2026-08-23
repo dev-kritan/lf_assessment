@@ -37,6 +37,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 
   const handleAddNewTag = async () => {
     const inputName = newTagInput.trim();
-    if (!inputName) return;
+    if (!inputName || isCreatingTag) return;
 
     // Case-insensitive check against already available tags
     const existingTag = availableTags.find(
@@ -120,6 +121,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     }
 
     try {
+      setIsCreatingTag(true);
       const res = await eventsApi.createTag(inputName);
       if (res.success && res.data) {
         const newTag = res.data;
@@ -138,6 +140,8 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       }
     } catch {
       error('Failed to create tag');
+    } finally {
+      setIsCreatingTag(false);
     }
   };
 
@@ -169,6 +173,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validateForm()) return;
 
     try {

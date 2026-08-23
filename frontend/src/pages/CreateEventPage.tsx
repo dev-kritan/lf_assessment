@@ -37,6 +37,7 @@ export const CreateEventPage: React.FC = () => {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -61,16 +62,17 @@ export const CreateEventPage: React.FC = () => {
     }).catch(() => {});
   }, []);
 
-  const toggleTag = (id: number) => {
+  const handleToggleTag = (tagId: number) => {
     setSelectedTagIds((prev) =>
-      prev.includes(id) ? prev.filter((tId) => tId !== id) : [...prev, id]
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
     );
   };
 
   const handleAddNewTag = async () => {
     const inputName = newTagInput.trim();
-    if (!inputName) return;
+    if (!inputName || isCreatingTag) return;
 
+    // Case-insensitive check
     const existingTag = availableTags.find(
       (t) => t.name.toLowerCase() === inputName.toLowerCase()
     );
@@ -85,6 +87,7 @@ export const CreateEventPage: React.FC = () => {
     }
 
     try {
+      setIsCreatingTag(true);
       const res = await eventsApi.createTag(inputName);
       if (res.success && res.data) {
         const newTag = res.data;
@@ -95,6 +98,8 @@ export const CreateEventPage: React.FC = () => {
       }
     } catch {
       error('Failed to create tag');
+    } finally {
+      setIsCreatingTag(false);
     }
   };
 
@@ -126,6 +131,7 @@ export const CreateEventPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validateForm()) return;
 
     try {

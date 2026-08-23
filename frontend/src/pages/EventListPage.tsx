@@ -165,7 +165,7 @@ export const EventListPage: React.FC = () => {
   );
 
   const handleDeleteConfirm = async () => {
-    if (!eventToDelete) return;
+    if (!eventToDelete || isDeleting) return;
     try {
       setIsDeleting(true);
       const res = await eventsApi.deleteEvent(eventToDelete.id);

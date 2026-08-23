@@ -40,6 +40,7 @@ export const ProfilePage: React.FC = () => {
   }
 
   const handleDisable2FA = async () => {
+    if (!user?.twoFactorEnabled || isDisabling) return;
     if (!disableToken || disableToken.length !== 6) {
       error('Please enter the 6-digit code to disable 2FA');
       return;
@@ -62,6 +63,7 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleRequestVerificationEmail = async () => {
+    if (user?.isEmailVerified || isRequestingEmail) return;
     try {
       setIsRequestingEmail(true);
       const res = await authApi.requestVerificationLink();

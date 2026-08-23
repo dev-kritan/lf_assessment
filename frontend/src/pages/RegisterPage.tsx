@@ -23,6 +23,7 @@ export const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setFormError('');
 
     if (!name.trim() || name.trim().length < 2) {

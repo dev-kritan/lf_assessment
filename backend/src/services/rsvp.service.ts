@@ -32,12 +32,14 @@ export class RsvpService {
     const existing = await db('rsvps').where({ event_id: eventId, user_id: userId }).first();
 
     if (existing) {
-      await db('rsvps')
-        .where({ event_id: eventId, user_id: userId })
-        .update({
-          status,
-          updated_at: new Date(),
-        });
+      if (existing.status !== status) {
+        await db('rsvps')
+          .where({ event_id: eventId, user_id: userId })
+          .update({
+            status,
+            updated_at: new Date(),
+          });
+      }
     } else {
       await db('rsvps').insert({
         event_id: eventId,
