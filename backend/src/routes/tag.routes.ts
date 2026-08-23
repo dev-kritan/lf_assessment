@@ -6,5 +6,9 @@ const router = Router();
 
 router.get('/', optionalAuthenticate, TagController.getAllTags);
 router.post('/', authenticate, TagController.createTag);
+router.get('/:id/usage', optionalAuthenticate, TagController.getTagUsage);
+router.put('/:id', authenticate, TagController.updateTag);
+router.delete('/:id', authenticate, TagController.deleteTag);
 
 export default router;
+

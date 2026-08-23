@@ -12,7 +12,9 @@ import {
   HelpCircle, 
   XCircle,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -35,6 +37,8 @@ interface MetricDetailDrawerProps {
   tags: Tag[];
   onFilterTimeframe?: (tf: 'all' | 'upcoming' | 'past') => void;
   onFilterTag?: (tag: string) => void;
+  onEditTag?: (tag: Tag) => void;
+  onDeleteTag?: (tag: Tag) => void;
 }
 
 export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
@@ -46,6 +50,8 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   tags,
   onFilterTimeframe,
   onFilterTag,
+  onEditTag,
+  onDeleteTag,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -316,29 +322,66 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
                 <div className="flex flex-wrap gap-2 max-h-72 overflow-y-auto p-1">
                   {tags.map((t) => (
-                    <button
+                    <div
                       key={t.id}
-                      type="button"
-                      onClick={() => {
-                        if (onFilterTag) {
-                          onFilterTag(t.name);
-                        }
-                        onClose();
-                      }}
                       style={{
                         backgroundColor: `${t.colorHex}18`,
                         color: t.colorHex,
                         borderColor: `${t.colorHex}35`,
                       }}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 hover:shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      className="group px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5"
                     >
-                      <span>#{t.name}</span>
-                      {t.eventCount !== undefined && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/60 dark:bg-slate-900/60">
-                          {t.eventCount}
-                        </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onFilterTag) {
+                            onFilterTag(t.name);
+                          }
+                          onClose();
+                        }}
+                        className="flex items-center gap-1.5 cursor-pointer hover:underline focus:outline-none"
+                      >
+                        <span>#{t.name}</span>
+                        {t.eventCount !== undefined && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/60 dark:bg-slate-900/60">
+                            {t.eventCount}
+                          </span>
+                        )}
+                      </button>
+
+                      {(onEditTag || onDeleteTag) && (
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity ml-1">
+                          {onEditTag && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditTag(t);
+                              }}
+                              title={`Edit tag #${t.name}`}
+                              aria-label={`Edit tag ${t.name}`}
+                              className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                          )}
+                          {onDeleteTag && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteTag(t);
+                              }}
+                              title={`Delete tag #${t.name}`}
+                              aria-label={`Delete tag ${t.name}`}
+                              className="p-1 rounded-lg hover:bg-rose-500 hover:text-white transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       )}
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -27,4 +27,46 @@ export class TagController {
       next(error);
     }
   }
+
+  static async getTagUsage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tagId = Number(req.params.id);
+      if (isNaN(tagId) || tagId <= 0) {
+        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      }
+      const currentUserId = req.user?.userId;
+      const usage = await TagService.getTagUsage(tagId, currentUserId);
+      return sendSuccess(res, usage, 'Tag usage retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateTag(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tagId = Number(req.params.id);
+      if (isNaN(tagId) || tagId <= 0) {
+        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      }
+      const { name, colorHex } = req.body;
+      const updatedTag = await TagService.updateTag(tagId, { name, colorHex });
+      return sendSuccess(res, updatedTag, 'Tag updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteTag(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tagId = Number(req.params.id);
+      if (isNaN(tagId) || tagId <= 0) {
+        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      }
+      const result = await TagService.deleteTag(tagId);
+      return sendSuccess(res, result, 'Tag deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

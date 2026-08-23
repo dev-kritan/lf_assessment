@@ -15,6 +15,21 @@ export interface Tag {
   eventCount?: number;
 }
 
+export interface AssociatedEvent {
+  id: number;
+  title: string;
+  eventType: 'public' | 'private';
+  startTime: string;
+  location?: string;
+  isTruePrivate?: boolean;
+}
+
+export interface TagUsageData {
+  tag: Tag;
+  eventCount: number;
+  associatedEvents: AssociatedEvent[];
+}
+
 export interface RsvpStats {
   yes: number;
   maybe: number;

@@ -22,6 +22,8 @@ import {
 } from "../components/MetricDetailDrawer";
 import { EventFormModal } from "../components/EventFormModal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { TagEditModal } from "../components/TagEditModal";
+import { TagDeleteModal } from "../components/TagDeleteModal";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
@@ -69,6 +71,10 @@ export const EventListPage: React.FC = () => {
   const [eventToEdit, setEventToEdit] = useState<EventItem | null>(null);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Tag Management State
+  const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
+  const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
 
   const { isAuthenticated, user } = useAuth();
   const { success, error } = useToast();
@@ -181,6 +187,40 @@ export const EventListPage: React.FC = () => {
       setIsDeleting(false);
     }
   };
+
+  const handleEditTag = (tag: Tag) => {
+    if (!isAuthenticated) {
+      error("Please sign in to edit tags");
+      return;
+    }
+    setTagToEdit(tag);
+  };
+
+  const handleDeleteTag = (tag: Tag) => {
+    if (!isAuthenticated) {
+      error("Please sign in to delete tags");
+      return;
+    }
+    setTagToDelete(tag);
+  };
+
+  const handleTagEditedSuccess = (updatedTag: Tag) => {
+    if (selectedTag === tagToEdit?.name) {
+      setSelectedTag(updatedTag.name);
+    }
+    fetchTagsAndMetrics();
+    fetchEvents();
+  };
+
+  const handleTagDeletedSuccess = (deletedTag: Tag) => {
+    if (selectedTag === deletedTag.name) {
+      setSelectedTag("");
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    }
+    fetchTagsAndMetrics();
+    fetchEvents();
+  };
+
 
   return (
     <div className="min-w-full pb-16">
@@ -309,6 +349,8 @@ export const EventListPage: React.FC = () => {
           onViewModeChange={setViewMode}
           onReset={handleResetFilters}
           hasActiveFilters={hasActiveFilters}
+          onEditTag={handleEditTag}
+          onDeleteTag={handleDeleteTag}
         />
 
         {/* Loading Spinner */}
@@ -443,8 +485,26 @@ export const EventListPage: React.FC = () => {
             setSelectedTag(tag);
             setPagination((prev) => ({ ...prev, page: 1 }));
           }}
+          onEditTag={handleEditTag}
+          onDeleteTag={handleDeleteTag}
         />
       )}
+
+      {/* Tag Edit Modal with Event Association Notice */}
+      <TagEditModal
+        isOpen={!!tagToEdit}
+        tag={tagToEdit}
+        onClose={() => setTagToEdit(null)}
+        onSuccess={handleTagEditedSuccess}
+      />
+
+      {/* Tag Delete Confirmation Modal with Event Association Warning */}
+      <TagDeleteModal
+        isOpen={!!tagToDelete}
+        tag={tagToDelete}
+        onClose={() => setTagToDelete(null)}
+        onSuccess={handleTagDeletedSuccess}
+      />
     </div>
   );
 };

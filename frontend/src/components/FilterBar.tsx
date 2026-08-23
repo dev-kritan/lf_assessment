@@ -11,7 +11,9 @@ import {
   Lock,
   Calendar,
   TrendingUp,
-  Clock
+  Clock,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import { Tag } from '../types';
 import { CustomSelect, SelectOption } from './CustomSelect';
@@ -32,6 +34,8 @@ interface FilterBarProps {
   onViewModeChange: (mode: 'grid' | 'list') => void;
   onReset: () => void;
   hasActiveFilters: boolean;
+  onEditTag?: (tag: Tag) => void;
+  onDeleteTag?: (tag: Tag) => void;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -50,6 +54,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onViewModeChange,
   onReset,
   hasActiveFilters,
+  onEditTag,
+  onDeleteTag,
 }) => {
   const eventTypeOptions: SelectOption<'all' | 'public' | 'private'>[] = [
     { value: 'all', label: 'All Types', icon: <Layers className="w-3.5 h-3.5 text-slate-400" /> },
@@ -182,20 +188,65 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </button>
 
           {tags.map((t) => (
-            <button
+            <div
               key={t.id}
-              onClick={() => onTagChange(selectedTag === t.name ? '' : t.name)}
+              className={`group relative inline-flex items-center rounded-full text-xs font-semibold transition-all flex-shrink-0 ${
+                selectedTag === t.name ? 'shadow-sm ring-2 ring-indigo-500/30' : ''
+              }`}
               style={
                 selectedTag === t.name
                   ? { backgroundColor: t.colorHex, color: '#ffffff' }
-                  : { backgroundColor: `${t.colorHex}15`, color: t.colorHex }
+                  : { backgroundColor: `${t.colorHex}18`, color: t.colorHex }
               }
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex-shrink-0 hover:scale-105 ${
-                selectedTag === t.name ? 'shadow-sm ring-2 ring-indigo-500/30' : ''
-              }`}
             >
-              #{t.name} {t.eventCount !== undefined && `(${t.eventCount})`}
-            </button>
+              <button
+                type="button"
+                onClick={() => onTagChange(selectedTag === t.name ? '' : t.name)}
+                className="pl-3 pr-2 py-1 flex items-center gap-1 cursor-pointer focus:outline-none"
+              >
+                <span>#{t.name}</span>
+                {t.eventCount !== undefined && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedTag === t.name ? 'bg-white/25 text-white' : 'bg-slate-900/10 dark:bg-white/15'
+                  }`}>
+                    {t.eventCount}
+                  </span>
+                )}
+              </button>
+
+              {(onEditTag || onDeleteTag) && (
+                <div className="flex items-center gap-0.5 pr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                  {onEditTag && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditTag(t);
+                      }}
+                      title={`Edit tag #${t.name}`}
+                      aria-label={`Edit tag ${t.name}`}
+                      className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
+                    >
+                      <Edit2 className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                  {onDeleteTag && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteTag(t);
+                      }}
+                      title={`Delete tag #${t.name}`}
+                      aria-label={`Delete tag ${t.name}`}
+                      className="p-1 rounded-full hover:bg-rose-500 hover:text-white transition-colors"
+                    >
+                      <Trash2 className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

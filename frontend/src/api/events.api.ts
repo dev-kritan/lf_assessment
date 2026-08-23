@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { EventItem, Tag, ApiResponse, EventQueryParams } from '../types';
+import { EventItem, Tag, TagUsageData, ApiResponse, EventQueryParams } from '../types';
 
 export const eventsApi = {
   async getEvents(params: EventQueryParams = {}) {
@@ -72,4 +72,20 @@ export const eventsApi = {
     const response = await apiClient.post<ApiResponse<Tag>>('/tags', { name, colorHex });
     return response.data;
   },
+
+  async getTagUsage(id: number) {
+    const response = await apiClient.get<ApiResponse<TagUsageData>>(`/tags/${id}/usage`);
+    return response.data;
+  },
+
+  async updateTag(id: number, data: { name?: string; colorHex?: string }) {
+    const response = await apiClient.put<ApiResponse<Tag>>(`/tags/${id}`, data);
+    return response.data;
+  },
+
+  async deleteTag(id: number) {
+    const response = await apiClient.delete<ApiResponse<{ deletedTag: Tag; affectedEventsCount: number }>>(`/tags/${id}`);
+    return response.data;
+  },
 };
+
