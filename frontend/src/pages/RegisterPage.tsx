@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus, User, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -15,6 +15,11 @@ export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const from = redirectParam || (location.state as any)?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +46,7 @@ export const RegisterPage: React.FC = () => {
       setIsLoading(true);
       await register(name.trim(), email.trim(), password);
       success('Account created successfully! Welcome to EventHub.');
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err: any) {
       const msg = err.response?.data?.error?.message || 'Registration failed. Please try again.';
       setFormError(msg);
@@ -163,7 +168,10 @@ export const RegisterPage: React.FC = () => {
         {/* Footer Link */}
         <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+          <Link
+            to={`/login${location.search}`}
+            className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
             Sign In
           </Link>
         </p>

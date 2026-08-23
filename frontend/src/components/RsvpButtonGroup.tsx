@@ -56,7 +56,7 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
   const handleRsvp = async (status: "yes" | "maybe" | "no") => {
     if (!isAuthenticated) {
       info("Please sign in to RSVP for this event");
-      navigate("/login");
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 

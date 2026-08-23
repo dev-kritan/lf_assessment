@@ -27,7 +27,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [eventType, setEventType] = useState<'public' | 'private'>('public');
+  const [showToUnauthenticated, setShowToUnauthenticated] = useState<boolean>(false);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [capacity, setCapacity] = useState<string>('');
@@ -56,7 +56,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setTitle(eventToEdit.title);
       setDescription(eventToEdit.description);
       setLocation(eventToEdit.location);
-      setEventType(eventToEdit.eventType);
+      setShowToUnauthenticated(eventToEdit.eventType === 'public');
       try {
         setStartTime(format(parseISO(eventToEdit.startTime), "yyyy-MM-dd'T'HH:mm"));
         if (eventToEdit.endTime) {
@@ -80,7 +80,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setTitle('');
       setDescription('');
       setLocation('');
-      setEventType('public');
+      setShowToUnauthenticated(false); // Default to false (Private)
       setStartTime(format(tomorrow, "yyyy-MM-dd'T'HH:mm"));
       setEndTime(format(endTomorrow, "yyyy-MM-dd'T'HH:mm"));
       setCapacity('');
@@ -174,7 +174,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
         title: title.trim(),
         description: description.trim(),
         location: location.trim(),
-        event_type: eventType,
+        event_type: showToUnauthenticated ? ('public' as const) : ('private' as const),
         start_time: new Date(startTime).toISOString(),
         end_time: endTime ? new Date(endTime).toISOString() : null,
         capacity: capacity ? Number(capacity) : null,
@@ -338,45 +338,64 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             </div>
           </div>
 
-          {/* Event Privacy Type */}
+          {/* Show to Unauthenticated Visitors Toggle */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-              Event Privacy Type *
+              Audience & Privacy Settings
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label
-                onClick={() => setEventType('public')}
-                className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
-                  eventType === 'public'
-                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
-                  <Globe className="w-4 h-4" />
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-center justify-between gap-4 transition-all">
+              <div className="flex items-start gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors shadow-sm ${
+                    showToUnauthenticated
+                      ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                      : 'bg-indigo-600 text-white shadow-indigo-500/20'
+                  }`}
+                >
+                  {showToUnauthenticated ? (
+                    <Globe className="w-4 h-4" />
+                  ) : (
+                    <Lock className="w-4 h-4" />
+                  )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Public Event</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Visible to all visitors</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Show to Unauthenticated Visitors</span>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        showToUnauthenticated
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                          : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
+                      }`}
+                    >
+                      {showToUnauthenticated ? 'Public' : 'Private (Members Only)'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {showToUnauthenticated
+                      ? 'Visible to everyone including unauthenticated visitors.'
+                      : 'Private event: unauthenticated users cannot enroll (must sign in to RSVP).'}
+                  </p>
                 </div>
-              </label>
+              </div>
 
-              <label
-                onClick={() => setEventType('private')}
-                className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
-                  eventType === 'private'
-                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                role="switch"
+                aria-label="Toggle show to unauthenticated visitors"
+                aria-checked={showToUnauthenticated}
+                onClick={() => setShowToUnauthenticated(!showToUnauthenticated)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                  showToUnauthenticated ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
               >
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Private Event</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Signed-in community only</p>
-                </div>
-              </label>
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    showToUnauthenticated ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
           </div>
 

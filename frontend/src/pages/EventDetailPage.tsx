@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -12,7 +12,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Loader2,
-  Clock
+  Clock,
+  LogIn
 } from 'lucide-react';
 import { EventItem } from '../types';
 import { eventsApi } from '../api/events.api';
@@ -26,6 +27,7 @@ import { TagsPopover } from '../components/TagsPopover';
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [event, setEvent] = useState<EventItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -202,7 +204,7 @@ export const EventDetailPage: React.FC = () => {
             </div>
           </div>
           <Link
-            to="/login"
+            to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
             className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0"
           >
             Sign In to RSVP
@@ -365,7 +367,7 @@ export const EventDetailPage: React.FC = () => {
                       Only registered community members can view who has RSVP&apos;d to this private gathering.
                     </p>
                     <Link
-                      to="/login"
+                      to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
                     >
                       Sign in to view attendees
@@ -431,18 +433,60 @@ export const EventDetailPage: React.FC = () => {
 
         {/* Right Sidebar: RSVP Widget & Organizer Card */}
         <div className="space-y-6">
-          {/* RSVP Button Group Widget */}
-          <RsvpButtonGroup
-            eventId={event.id}
-            initialStatus={event.userRsvp}
-            stats={event.rsvpStats}
-            capacity={event.capacity}
-            isPast={isPast}
-            onRsvpSuccess={(newStatus, updatedStats) => {
-              setEvent((prev) => (prev ? { ...prev, userRsvp: newStatus, rsvpStats: updatedStats } : null));
-              fetchEvent();
-            }}
-          />
+          {/* RSVP Widget: interactive for authenticated members; Sign-in CTA for unauthorized guests */}
+          {isAuthenticated ? (
+            <RsvpButtonGroup
+              eventId={event.id}
+              initialStatus={event.userRsvp}
+              stats={event.rsvpStats}
+              capacity={event.capacity}
+              isPast={isPast}
+              onRsvpSuccess={(newStatus, updatedStats) => {
+                setEvent((prev) => (prev ? { ...prev, userRsvp: newStatus, rsvpStats: updatedStats } : null));
+                fetchEvent();
+              }}
+            />
+          ) : (
+            <div className="rounded-3xl glass-card p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  <span>RSVP & Attendance</span>
+                </h4>
+                {event.capacity ? (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    {event.rsvpStats.yes} / {event.capacity} spots
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    {event.rsvpStats.yes} attending
+                  </span>
+                )}
+              </div>
+
+              {/* Capacity bar */}
+              {event.capacity && (
+                <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-1.5 overflow-hidden mb-4">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.round((event.rsvpStats.yes / event.capacity) * 100))}%` }}
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                Sign in to your account to RSVP, save your spot, and receive event updates.
+              </p>
+
+              <Link
+                to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Sign In to RSVP
+              </Link>
+            </div>
+          )}
 
           {/* Organizer Card */}
           <div className="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-md">

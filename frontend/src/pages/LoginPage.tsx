@@ -15,9 +15,9 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = (location.state as any)?.from?.pathname || '/';
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const from = redirectParam || (location.state as any)?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,8 +197,11 @@ export const LoginPage: React.FC = () => {
 
         {/* Footer Link */}
         <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-6">
-          Don't have an account yet?{' '}
-          <Link to="/register" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+          Don&apos;t have an account yet?{' '}
+          <Link
+            to={`/register${location.search}`}
+            className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
             Sign Up
           </Link>
         </p>
