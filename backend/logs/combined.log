@@ -1504,3 +1504,73 @@
 {"level":"info","message":"GET /api/v1/tags 304 - - 3.599 ms","service":"event-planner-api","timestamp":"2026-08-23 10:27:13"}
 {"level":"info","message":"PUT /api/v1/events/13 200 960 - 18.158 ms","service":"event-planner-api","timestamp":"2026-08-23 10:27:18"}
 {"level":"info","message":"GET /api/v1/tags 304 - - 3.098 ms","service":"event-planner-api","timestamp":"2026-08-23 10:27:21"}
+{"level":"info","message":"PUT /api/v1/events/13 200 960 - 19.155 ms","service":"event-planner-api","timestamp":"2026-08-23 10:27:39"}
+{"level":"info","message":"Gracefully shutting down server...","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"level":"info","message":"Starting Event Planning API server in development mode...","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"level":"info","message":"✅ Database connected successfully (mysql2)","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"level":"info","message":"🚀 Server running on http://localhost:5000","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"level":"info","message":"📚 Swagger API Docs available at http://localhost:5000/api-docs","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"level":"info","message":"⚡ API endpoints live at http://localhost:5000/api/v1","service":"event-planner-api","timestamp":"2026-08-23 10:30:41"}
+{"code":"EMAIL_EXISTS","level":"error","message":"POST /api/v1/auth/register - Error: An account with this email address already exists.","service":"event-planner-api","stack":"Error: An account with this email address already exists.\n    at AuthService.register (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/services/auth.service.ts:16:26)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at register (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/controllers/auth.controller.ts:9:22)","statusCode":409,"timestamp":"2026-08-23 10:31:05"}
+{"code":"INVALID_CREDENTIALS","level":"error","message":"POST /api/v1/auth/login - Error: Invalid email or password.","service":"event-planner-api","stack":"Error: Invalid email or password.\n    at AuthService.login (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/services/auth.service.ts:77:26)\n    at login (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/controllers/auth.controller.ts:21:22)","statusCode":401,"timestamp":"2026-08-23 10:31:06"}
+{"code":"TOKEN_REUSE_DETECTED","level":"error","message":"POST /api/v1/auth/refresh-token - Error: Suspicious activity detected: Refresh token was already used. All sessions revoked.","service":"event-planner-api","stack":"Error: Suspicious activity detected: Refresh token was already used. All sessions revoked.\n    at AuthService.refreshAccessToken (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/services/auth.service.ts:152:28)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at refreshToken (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/controllers/auth.controller.ts:38:22)","statusCode":401,"timestamp":"2026-08-23 10:31:06"}
+{"code":"FORBIDDEN","level":"error","message":"PUT /api/v1/events/7 - Error: Forbidden: Only the event creator can edit this event.","service":"event-planner-api","stack":"Error: Forbidden: Only the event creator can edit this event.\n    at EventService.updateEvent (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/services/event.service.ts:457:26)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at updateEvent (/home/kritan/Documents/Personal Projects/lf_assessment/backend/src/controllers/event.controller.ts:42:21)","statusCode":403,"timestamp":"2026-08-23 10:31:07"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 19.443 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:22"}
+{"level":"info","message":"PUT /api/v1/events/13 200 959 - 38.211 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:24"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 6.039 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:29"}
+{"level":"info","message":"POST /api/v1/auth/logout 200 98 - 8.294 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 5.475 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 8.315 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 200 11398 - 31.485 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 39.005 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 12.366 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 10.944 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:34"}
+{"level":"info","message":"GET /api/v1/events/12 200 806 - 6.593 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:40"}
+{"level":"info","message":"GET /api/v1/events/12 304 - - 6.154 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:40"}
+{"level":"info","message":"POST /api/v1/auth/login 200 748 - 149.217 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:45"}
+{"level":"info","message":"GET /api/v1/events/12 200 960 - 11.780 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:45"}
+{"level":"info","message":"GET /api/v1/events/12 304 - - 9.015 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:45"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 3.983 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:46"}
+{"level":"info","message":"PUT /api/v1/events/12 200 949 - 24.152 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:50"}
+{"level":"info","message":"POST /api/v1/auth/logout 200 98 - 5.600 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 4.525 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 200 11554 - 12.407 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 5.364 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 18.841 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 12.697 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 10.380 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:53"}
+{"level":"info","message":"GET /api/v1/events/9 200 4706 - 5.617 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:58"}
+{"level":"info","message":"GET /api/v1/events/9 304 - - 6.062 ms","service":"event-planner-api","timestamp":"2026-08-23 10:32:58"}
+{"level":"info","message":"POST /api/v1/auth/login 200 748 - 135.230 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:02"}
+{"level":"info","message":"GET /api/v1/events/9 200 4858 - 8.029 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:02"}
+{"level":"info","message":"GET /api/v1/events/9 304 - - 7.938 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:02"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 5.325 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 200 11091 - 14.476 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 16.587 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 4.836 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 11.851 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 10.768 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:08"}
+{"level":"info","message":"GET /api/v1/events/12 200 959 - 11.230 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:20"}
+{"level":"info","message":"GET /api/v1/events/12 304 - - 9.063 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:20"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 3.486 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 3.823 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 18.971 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 18.162 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 8.424 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 10.542 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:25"}
+{"level":"info","message":"POST /api/v1/auth/logout 200 98 - 5.583 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:36"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 4.011 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:37"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 11.359 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:37"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 200 11554 - 9.372 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:37"}
+{"level":"info","message":"GET /api/v1/events/11 200 995 - 6.524 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:41"}
+{"level":"info","message":"GET /api/v1/events/11 304 - - 7.915 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:41"}
+{"level":"info","message":"POST /api/v1/auth/login 200 748 - 147.966 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:47"}
+{"level":"info","message":"GET /api/v1/events/11 200 995 - 8.511 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:47"}
+{"level":"info","message":"GET /api/v1/events/11 304 - - 6.627 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:47"}
+{"level":"info","message":"GET /api/v1/tags 200 5141 - 3.718 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:50"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 5.005 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 12.367 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 5.019 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 200 11091 - 17.841 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 9.570 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 11.015 ms","service":"event-planner-api","timestamp":"2026-08-23 10:33:54"}

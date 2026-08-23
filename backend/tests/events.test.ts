@@ -96,11 +96,15 @@ describe('Events Endpoints & Filtering', () => {
       .set('Authorization', `Bearer ${user1Token}`)
       .send({
         title: 'Updated: Cloud Native Kubernetes Conference',
+        event_type: 'private',
+        is_true_private: true,
       });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.title).toBe('Updated: Cloud Native Kubernetes Conference');
+    expect(res.body.data.eventType).toBe('private');
+    expect(res.body.data.isTruePrivate).toBe(true);
   });
 
   it('should reject update if the requester is NOT the creator', async () => {

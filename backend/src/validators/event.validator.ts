@@ -7,6 +7,7 @@ export const baseEventSchema = z.object({
   event_type: z.enum(['public', 'private'], {
     errorMap: () => ({ message: 'Event type must be either public or private' }),
   }),
+  is_true_private: z.boolean().optional(),
   start_time: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid start time format',
   }),
