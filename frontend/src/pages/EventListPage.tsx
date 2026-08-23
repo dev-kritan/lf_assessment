@@ -219,11 +219,11 @@ export const EventListPage: React.FC = () => {
                   </button>
                 ) : (
                   <Link
-                    to="/register"
+                    to="/login?redirect=/create-event"
                     className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all"
                   >
                     <PlusCircle className="w-4 h-4" />
-                    Get Started Free
+                    Host an Event
                   </Link>
                 )}
 
@@ -350,7 +350,14 @@ export const EventListPage: React.FC = () => {
               >
                 Create an Event
               </button>
-            ) : null}
+            ) : (
+              <Link
+                to="/login?redirect=/create-event"
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                Sign In to Host an Event
+              </Link>
+            )}
           </div>
         ) : (
           /* Events Grid / List */

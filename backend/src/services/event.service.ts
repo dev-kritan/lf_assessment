@@ -54,6 +54,12 @@ export class EventService {
         'users.avatar_url as creator_avatar'
       );
 
+    // Private events policy:
+    // If not authenticated, private events cannot be viewed in the event list (only public events are shown).
+    if (!currentUserId) {
+      baseQuery.where('events.event_type', 'public');
+    }
+
     // Filter by Event Type (if explicitly specified)
     if (params.event_type && params.event_type !== 'all') {
       baseQuery.where('events.event_type', params.event_type);
@@ -281,7 +287,13 @@ export class EventService {
       throw error;
     }
 
-    const isPrivateAndGuest = event.event_type === 'private' && !currentUserId;
+    // Authorization for private events
+    if (event.event_type === 'private' && !currentUserId) {
+      const error: any = new Error('This event is private. Please sign in to view details.');
+      error.statusCode = 403;
+      error.code = 'PRIVATE_EVENT_FORBIDDEN';
+      throw error;
+    }
 
     // Fetch tags
     const tags = await db('event_tags')
@@ -305,22 +317,19 @@ export class EventService {
       rsvpStats.total += count;
     });
 
-    // Fetch attendees list (users who RSVP'd yes/maybe) - only if not restricted guest
-    let attendees: any[] = [];
-    if (!isPrivateAndGuest) {
-      attendees = await db('rsvps')
-        .join('users', 'rsvps.user_id', 'users.id')
-        .where('rsvps.event_id', id)
-        .select(
-          'users.id',
-          'users.name',
-          'users.avatar_url',
-          'rsvps.status',
-          'rsvps.updated_at'
-        )
-        .orderBy('rsvps.updated_at', 'desc')
-        .limit(50);
-    }
+    // Fetch attendees list (users who RSVP'd yes/maybe)
+    const attendees = await db('rsvps')
+      .join('users', 'rsvps.user_id', 'users.id')
+      .where('rsvps.event_id', id)
+      .select(
+        'users.id',
+        'users.name',
+        'users.avatar_url',
+        'rsvps.status',
+        'rsvps.updated_at'
+      )
+      .orderBy('rsvps.updated_at', 'desc')
+      .limit(50);
 
     // Current user's RSVP status
     let userRsvp = null;
@@ -349,7 +358,6 @@ export class EventService {
       createdAt: event.created_at,
       updatedAt: event.updated_at,
       isPast,
-      isRestricted: isPrivateAndGuest,
       creator: {
         id: event.creator_id,
         name: event.creator_name,

@@ -22,15 +22,15 @@ export const MyEventsPage: React.FC = () => {
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
+    if (!authLoading && !isAuthenticated) {
+      navigate('/login?redirect=/my-events');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const loadData = async () => {
     if (!user) return;

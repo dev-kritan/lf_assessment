@@ -10,6 +10,7 @@ import { MyEventsPage } from './pages/MyEventsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { CreateEventPage } from './pages/CreateEventPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { BonusChallengePage } from './pages/BonusChallengePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -39,6 +40,7 @@ export const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<EventListPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+          <Route path="/create-event" element={<CreateEventPage />} />
           <Route path="/my-events" element={<MyEventsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

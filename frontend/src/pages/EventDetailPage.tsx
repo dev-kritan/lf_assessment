@@ -30,12 +30,13 @@ export const EventDetailPage: React.FC = () => {
   const location = useLocation();
   const [event, setEvent] = useState<EventItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isForbidden, setIsForbidden] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [attendeeFilter, setAttendeeFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>('all');
 
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
 
@@ -43,12 +44,17 @@ export const EventDetailPage: React.FC = () => {
     if (!id) return;
     try {
       setIsLoading(true);
+      setIsForbidden(false);
       const res = await eventsApi.getEventById(Number(id));
       if (res.success) {
         setEvent(res.data);
       }
     } catch (err: any) {
-      error(err.response?.data?.error?.message || 'Failed to load event details');
+      if (err.response?.status === 403 || err.response?.data?.error?.code === 'PRIVATE_EVENT_FORBIDDEN') {
+        setIsForbidden(true);
+      } else {
+        error(err.response?.data?.error?.message || 'Failed to load event details');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +62,7 @@ export const EventDetailPage: React.FC = () => {
 
   useEffect(() => {
     fetchEvent();
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const handleDelete = async () => {
     if (!event) return;
@@ -79,6 +85,35 @@ export const EventDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-24 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
         <p className="text-sm font-semibold text-slate-500">Loading event details...</p>
+      </div>
+    );
+  }
+
+  if (isForbidden) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 text-center animate-fade-in">
+        <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4 shadow-inner ring-1 ring-indigo-500/20">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Private Event</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 mb-8 leading-relaxed">
+          This gathering is private and restricted to signed-in community members. Sign in to view full event details and RSVP.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <LogIn className="w-4 h-4" />
+            Sign In to View
+          </Link>
+          <Link
+            to="/"
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
+          >
+            Browse Public Events
+          </Link>
+        </div>
       </div>
     );
   }

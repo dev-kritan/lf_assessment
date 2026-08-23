@@ -131,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
               </button>
             ) : (
               <Link
-                to="/login"
+                to="/login?redirect=/create-event"
                 className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 active:scale-95 transition-all"
               >
                 <PlusCircle className="w-4 h-4" />
@@ -312,14 +312,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             ) : (
               <div className="flex flex-col gap-2">
                 <Link
-                  to="/login"
+                  to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-xl font-semibold bg-indigo-600 text-white"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/register"
+                  to={`/register?redirect=${encodeURIComponent(location.pathname + location.search)}`}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-xl font-semibold border border-slate-300 dark:border-slate-700"
                 >

@@ -32,7 +32,7 @@ export const ProfilePage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <p className="text-sm text-slate-500">Please sign in to view your profile and security settings.</p>
-        <Link to="/login" className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
+        <Link to="/login?redirect=/profile" className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
           Sign In
         </Link>
       </div>
