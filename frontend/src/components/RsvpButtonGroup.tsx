@@ -7,8 +7,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { rsvpApi } from "../api/rsvp.api";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -47,16 +47,33 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
   const { isAuthenticated } = useAuth();
   const { success, error, info } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isFull = capacity ? currentStats.yes >= capacity : false;
   const fillPercent = capacity
     ? Math.min(100, Math.round((currentStats.yes / capacity) * 100))
     : 0;
 
+  const hasAutoRsvpdRef = useRef(false);
+
+  // Synchronize state when props update
+  useEffect(() => {
+    if (initialStatus !== undefined) {
+      setCurrentStatus(initialStatus);
+    }
+  }, [initialStatus]);
+
+  useEffect(() => {
+    setCurrentStats(stats);
+  }, [stats]);
+
   const handleRsvp = async (status: "yes" | "maybe" | "no") => {
     if (!isAuthenticated) {
-      info("Please sign in to RSVP for this event");
-      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      info(`Please sign in to RSVP "${status === 'yes' ? 'Going' : status === 'maybe' ? 'Maybe' : 'Can\'t Go'}"`);
+      const targetParams = new URLSearchParams(location.search);
+      targetParams.set('auto_rsvp', status);
+      const targetUrl = `${location.pathname}?${targetParams.toString()}`;
+      navigate(`/login?redirect=${encodeURIComponent(targetUrl)}`);
       return;
     }
 
@@ -99,6 +116,30 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Intent-preserving Auto-RSVP post login
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const autoRsvpParam = searchParams.get('auto_rsvp') as "yes" | "maybe" | "no" | null;
+
+    if (
+      isAuthenticated &&
+      autoRsvpParam &&
+      ["yes", "maybe", "no"].includes(autoRsvpParam) &&
+      !hasAutoRsvpdRef.current
+    ) {
+      hasAutoRsvpdRef.current = true;
+
+      // Clean the query parameter from URL history cleanly
+      const newParams = new URLSearchParams(location.search);
+      newParams.delete('auto_rsvp');
+      const newQuery = newParams.toString() ? `?${newParams.toString()}` : '';
+      navigate(`${location.pathname}${newQuery}`, { replace: true });
+
+      // Automatically execute RSVP with preserved intent
+      handleRsvp(autoRsvpParam);
+    }
+  }, [isAuthenticated, location.search, location.pathname, navigate]);
 
   const isCard = variant === "card";
 
