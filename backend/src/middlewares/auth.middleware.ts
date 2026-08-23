@@ -46,6 +46,8 @@ export function optionalAuthenticate(req: Request, res: Response, next: NextFunc
     token = authHeader.substring(7);
   } else if (req.cookies && req.cookies.accessToken) {
     token = req.cookies.accessToken;
+  } else if (req.signedCookies && req.signedCookies.accessToken) {
+    token = req.signedCookies.accessToken;
   }
 
   if (token) {

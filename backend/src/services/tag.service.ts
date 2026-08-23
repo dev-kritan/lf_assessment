@@ -36,12 +36,7 @@ export class TagService {
       .join('events', 'event_tags.event_id', 'events.id')
       .select('event_tags.tag_id', 'events.id as event_id');
 
-    // If not authenticated, only public events are counted
-    if (!currentUserId) {
-      eventsSubquery.where('events.event_type', 'public');
-    }
-
-    // Filter by Event Type
+    // Filter by Event Type (if explicitly specified)
     if (params.event_type && params.event_type !== 'all') {
       eventsSubquery.where('events.event_type', params.event_type);
     }

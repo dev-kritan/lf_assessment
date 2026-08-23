@@ -1,27 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Sparkles, 
-  Calendar, 
-  Users, 
-  Tag as TagIcon, 
-  PlusCircle, 
-  Layers, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Sparkles,
+  Calendar,
+  Users,
+  Tag as TagIcon,
+  PlusCircle,
+  Layers,
   Flame,
   Loader2,
-  CalendarX2
-} from 'lucide-react';
-import { EventItem, Tag, PaginationMeta } from '../types';
-import { eventsApi } from '../api/events.api';
-import { EventCard } from '../components/EventCard';
-import { FilterBar } from '../components/FilterBar';
-import { Pagination } from '../components/Pagination';
-import { StatCard } from '../components/StatCard';
-import { MetricDetailDrawer, MetricType } from '../components/MetricDetailDrawer';
-import { EventFormModal } from '../components/EventFormModal';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useToast } from '../contexts/ToastContext';
-import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+  CalendarX2,
+} from "lucide-react";
+import { EventItem, Tag, PaginationMeta } from "../types";
+import { eventsApi } from "../api/events.api";
+import { EventCard } from "../components/EventCard";
+import { FilterBar } from "../components/FilterBar";
+import { Pagination } from "../components/Pagination";
+import { StatCard } from "../components/StatCard";
+import {
+  MetricDetailDrawer,
+  MetricType,
+} from "../components/MetricDetailDrawer";
+import { EventFormModal } from "../components/EventFormModal";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useToast } from "../contexts/ToastContext";
+import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export const EventListPage: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -34,7 +37,8 @@ export const EventListPage: React.FC = () => {
     totalTags: number;
   } | null>(null);
 
-  const [activeMetricDetail, setActiveMetricDetail] = useState<MetricType | null>(null);
+  const [activeMetricDetail, setActiveMetricDetail] =
+    useState<MetricType | null>(null);
 
   const [pagination, setPagination] = useState<PaginationMeta>({
     page: 1,
@@ -46,13 +50,19 @@ export const EventListPage: React.FC = () => {
   });
 
   // Filter States
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [timeframe, setTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
-  const [eventType, setEventType] = useState<'all' | 'public' | 'private'>('all');
-  const [selectedTag, setSelectedTag] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'popularity' | 'created_at'>('date');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [timeframe, setTimeframe] = useState<"all" | "upcoming" | "past">(
+    "all",
+  );
+  const [eventType, setEventType] = useState<"all" | "public" | "private">(
+    "all",
+  );
+  const [selectedTag, setSelectedTag] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "popularity" | "created_at">(
+    "date",
+  );
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +70,7 @@ export const EventListPage: React.FC = () => {
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { success, error } = useToast();
 
   // Debounce search input
@@ -77,8 +87,8 @@ export const EventListPage: React.FC = () => {
     try {
       const [tagsRes, metricsRes] = await Promise.all([
         eventsApi.getTags({
-          event_type: eventType !== 'all' ? eventType : undefined,
-          timeframe: timeframe !== 'all' ? timeframe : undefined,
+          event_type: eventType !== "all" ? eventType : undefined,
+          timeframe: timeframe !== "all" ? timeframe : undefined,
           search: debouncedSearch || undefined,
         }),
         eventsApi.getMetrics(),
@@ -88,7 +98,7 @@ export const EventListPage: React.FC = () => {
     } catch {
       // Non-blocking
     }
-  }, [eventType, timeframe, debouncedSearch]);
+  }, [eventType, timeframe, debouncedSearch, isAuthenticated, user]);
 
   useEffect(() => {
     fetchTagsAndMetrics();
@@ -115,27 +125,44 @@ export const EventListPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      error('Failed to load events. Please try again.');
+      error("Failed to load events. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.page, pagination.limit, debouncedSearch, timeframe, eventType, selectedTag, sortBy, error]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    debouncedSearch,
+    timeframe,
+    eventType,
+    selectedTag,
+    sortBy,
+    isAuthenticated,
+    user,
+    error,
+  ]);
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
   const handleResetFilters = () => {
-    setSearch('');
-    setDebouncedSearch('');
-    setTimeframe('all');
-    setEventType('all');
-    setSelectedTag('');
-    setSortBy('date');
+    setSearch("");
+    setDebouncedSearch("");
+    setTimeframe("all");
+    setEventType("all");
+    setSelectedTag("");
+    setSortBy("date");
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const hasActiveFilters = !!(search || timeframe !== 'all' || eventType !== 'all' || selectedTag || sortBy !== 'date');
+  const hasActiveFilters = !!(
+    search ||
+    timeframe !== "all" ||
+    eventType !== "all" ||
+    selectedTag ||
+    sortBy !== "date"
+  );
 
   const handleDeleteConfirm = async () => {
     if (!eventToDelete) return;
@@ -143,13 +170,13 @@ export const EventListPage: React.FC = () => {
       setIsDeleting(true);
       const res = await eventsApi.deleteEvent(eventToDelete.id);
       if (res.success) {
-        success('Event deleted successfully');
+        success("Event deleted successfully");
         setEventToDelete(null);
         fetchEvents();
         fetchTagsAndMetrics();
       }
     } catch (err: any) {
-      error(err.response?.data?.error?.message || 'Failed to delete event');
+      error(err.response?.data?.error?.message || "Failed to delete event");
     } finally {
       setIsDeleting(false);
     }
@@ -167,13 +194,15 @@ export const EventListPage: React.FC = () => {
                 <span>Next-Gen Event Planning & Community Discovery</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                Plan, Discover & Attend{' '}
+                Plan, Discover & Attend{" "}
                 <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Unforgettable Events
                 </span>
               </h1>
               <p className="mt-4 text-base text-slate-600 dark:text-slate-300 max-w-xl">
-                Explore upcoming workshops, tech summits, celebrations, and meetups. Manage your gatherings with real-time RSVPs and granular category filtering.
+                Explore upcoming workshops, tech summits, celebrations, and
+                meetups. Manage your gatherings with real-time RSVPs and
+                granular category filtering.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-3">
@@ -217,7 +246,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Calendar className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
                   description="Active on schedule"
-                  onClick={() => setActiveMetricDetail('upcoming')}
+                  onClick={() => setActiveMetricDetail("upcoming")}
                 />
                 <StatCard
                   label="Total RSVPs"
@@ -225,7 +254,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Users className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-emerald-600 to-emerald-500"
                   description="Confirmed attendees"
-                  onClick={() => setActiveMetricDetail('rsvps')}
+                  onClick={() => setActiveMetricDetail("rsvps")}
                 />
                 <StatCard
                   label="Categories"
@@ -233,7 +262,7 @@ export const EventListPage: React.FC = () => {
                   icon={<TagIcon className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-amber-600 to-amber-500"
                   description="Filterable tags"
-                  onClick={() => setActiveMetricDetail('categories')}
+                  onClick={() => setActiveMetricDetail("categories")}
                 />
                 <StatCard
                   label="Past Events"
@@ -241,7 +270,7 @@ export const EventListPage: React.FC = () => {
                   icon={<Flame className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-purple-600 to-purple-500"
                   description="Archived history"
-                  onClick={() => setActiveMetricDetail('past')}
+                  onClick={() => setActiveMetricDetail("past")}
                 />
               </div>
             )}
@@ -286,7 +315,9 @@ export const EventListPage: React.FC = () => {
         {isLoading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Loading events...</p>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              Loading events...
+            </p>
           </div>
         ) : events.length === 0 ? (
           /* Empty State */
@@ -294,11 +325,13 @@ export const EventListPage: React.FC = () => {
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
               <CalendarX2 className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">No Events Found</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              No Events Found
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-6">
               {hasActiveFilters
-                ? 'No events match your current filter criteria. Try searching with different keywords or resetting filters.'
-                : 'There are currently no events listed. Be the first to create one!'}
+                ? "No events match your current filter criteria. Try searching with different keywords or resetting filters."
+                : "There are currently no events listed. Be the first to create one!"}
             </p>
             {hasActiveFilters ? (
               <button
@@ -323,9 +356,9 @@ export const EventListPage: React.FC = () => {
           /* Events Grid / List */
           <div
             className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                : 'space-y-4'
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
             }
           >
             {events.map((event) => (
@@ -348,8 +381,12 @@ export const EventListPage: React.FC = () => {
         {!isLoading && events.length > 0 && (
           <Pagination
             meta={pagination}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
+            onLimitChange={(limit) =>
+              setPagination((prev) => ({ ...prev, limit, page: 1 }))
+            }
           />
         )}
       </main>

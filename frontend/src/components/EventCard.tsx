@@ -49,14 +49,18 @@ export const EventCard: React.FC<EventCardProps> = ({
         {/* Badges: Event Type & Past Indicator */}
         <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-sm ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md transition-all ${
               event.eventType === 'public'
-                ? 'bg-emerald-500/80 text-white'
-                : 'bg-indigo-600/80 text-white'
+                ? 'bg-emerald-500/85 text-white border border-emerald-400/30'
+                : 'bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white border border-violet-400/40 shadow-indigo-500/20'
             }`}
           >
-            {event.eventType === 'public' ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-            {event.eventType === 'public' ? 'Public' : 'Private'}
+            {event.eventType === 'public' ? (
+              <Globe className="w-3.5 h-3.5 text-emerald-100" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-amber-300" />
+            )}
+            <span>{event.eventType === 'public' ? 'Public' : 'Private'}</span>
           </span>
 
           {isPast && (

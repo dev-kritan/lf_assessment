@@ -53,6 +53,7 @@ export interface EventItem {
   rsvpStats: RsvpStats;
   userRsvp?: 'yes' | 'maybe' | 'no' | null;
   isCreator: boolean;
+  isRestricted?: boolean;
   attendees?: Attendee[];
 }
 

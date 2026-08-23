@@ -185,6 +185,31 @@ export const EventDetailPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Private Event Notice for Unauthenticated Guests */}
+      {event.eventType === 'private' && !isAuthenticated && (
+        <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+                Private Community Event
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                Sign in to your account to view the full attendee roster and RSVP for this gathering.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/login"
+            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0"
+          >
+            Sign In to RSVP
+          </Link>
+        </div>
+      )}
+
       {/* Grid Layout: Details & Sidebar */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column (2 Cols): Information & Description */}
@@ -327,6 +352,28 @@ export const EventDetailPage: React.FC = () => {
             </div>
 
             {(() => {
+              if (event.eventType === 'private' && !isAuthenticated) {
+                return (
+                  <div className="py-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-2.5">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      Attendee List is Private
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4 max-w-sm mx-auto">
+                      Only registered community members can view who has RSVP&apos;d to this private gathering.
+                    </p>
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
+                    >
+                      Sign in to view attendees
+                    </Link>
+                  </div>
+                );
+              }
+
               const filteredAttendees = (event.attendees || []).filter((a) => {
                 if (attendeeFilter === 'all') return true;
                 return a.status === attendeeFilter;
