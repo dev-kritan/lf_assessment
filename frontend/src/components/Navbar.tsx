@@ -5,6 +5,7 @@ import {
   PlusCircle, 
   Sun, 
   Moon, 
+  Monitor,
   User as UserIcon, 
   LogOut, 
   ShieldCheck, 
@@ -24,13 +25,38 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, resolvedTheme, toggleTheme } = useTheme();
   const { success } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const getThemeIcon = () => {
+    if (theme === 'system') {
+      return (
+        <span className="relative inline-flex items-center justify-center">
+          <Monitor className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+        </span>
+      );
+    }
+    if (theme === 'dark') {
+      return <Sun className="w-5 h-5 text-amber-400" />;
+    }
+    return <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />;
+  };
+
+  const getThemeTitle = () => {
+    if (theme === 'system') {
+      return `Theme: Auto / System (${resolvedTheme}) — Click to toggle`;
+    }
+    if (theme === 'dark') {
+      return 'Theme: Dark — Click to toggle';
+    }
+    return 'Theme: Light — Click to toggle';
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -116,13 +142,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
           {/* Right Action Controls */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Dark Mode Toggle */}
+            {/* Theme Mode Toggle (Auto/Dark/Light) */}
             <button
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label={getThemeTitle()}
+              title={getThemeTitle()}
               className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+              {getThemeIcon()}
             </button>
 
             {/* Create Event CTA */}
@@ -239,10 +266,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="p-2 rounded-lg text-slate-600 dark:text-slate-300"
+              aria-label={getThemeTitle()}
+              title={getThemeTitle()}
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+              {getThemeIcon()}
             </button>
 
             <button
