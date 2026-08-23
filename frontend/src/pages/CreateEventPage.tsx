@@ -103,7 +103,7 @@ export const CreateEventPage: React.FC = () => {
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): Record<string, string> => {
     const errors: Record<string, string> = {};
     if (!title.trim() || title.length < 3) {
       errors.title = 'Title must be at least 3 characters long.';
@@ -126,13 +126,40 @@ export const CreateEventPage: React.FC = () => {
       errors.capacity = 'Capacity must be a positive number.';
     }
     setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    return errors;
+  };
+
+  const scrollToFirstError = (errors: Record<string, string>) => {
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length === 0) return;
+    const firstKey = errorKeys[0];
+
+    setTimeout(() => {
+      const targetElement =
+        document.querySelector<HTMLElement>(`[data-field="${firstKey}"]`) ||
+        document.querySelector<HTMLElement>(`input[name="${firstKey}"], textarea[name="${firstKey}"]`) ||
+        document.querySelector<HTMLElement>('.border-rose-500') ||
+        document.querySelector<HTMLElement>('.text-rose-500');
+
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const focusable =
+          targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA' || targetElement.tagName === 'SELECT'
+            ? targetElement
+            : targetElement.querySelector<HTMLElement>('input, textarea, select');
+        focusable?.focus?.();
+      }
+    }, 50);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (!validateForm()) return;
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      scrollToFirstError(errors);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -182,30 +209,32 @@ export const CreateEventPage: React.FC = () => {
         Back to Events
       </Link>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        {/* Header Visual */}
-        <div className="px-6 sm:px-8 py-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-indigo-50/80 via-purple-50/40 to-transparent dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-slate-900 flex items-center justify-between">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>New Event Creator</span>
+      <div className="rounded-3xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
+        {/* Header */}
+        <div className="p-6 sm:p-8 bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10 border-b border-slate-200/80 dark:border-slate-800/80">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/25">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Host an Event</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Fill in the details below to publish your gathering and manage RSVPs.
-            </p>
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Create New Event</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Plan, organize, and invite community members to your gathering
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           {/* Event Title */}
-          <div>
+          <div data-field="title">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Event Title *
             </label>
             <input
               type="text"
+              name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. NextGen Web & AI Conference 2026"
@@ -217,12 +246,13 @@ export const CreateEventPage: React.FC = () => {
           </div>
 
           {/* Description */}
-          <div>
+          <div data-field="description">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Description *
             </label>
             <textarea
               rows={4}
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide a compelling description, event agenda, prerequisites, and instructions for attendees..."
@@ -235,7 +265,7 @@ export const CreateEventPage: React.FC = () => {
 
           {/* Location & Capacity Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div data-field="location">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Location / Venue *
               </label>
@@ -243,6 +273,7 @@ export const CreateEventPage: React.FC = () => {
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
+                  name="location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Innovation Hub or Zoom URL"
@@ -254,7 +285,7 @@ export const CreateEventPage: React.FC = () => {
               {formErrors.location && <p className="text-xs text-rose-500 mt-1">{formErrors.location}</p>}
             </div>
 
-            <div>
+            <div data-field="capacity">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Max Capacity (Optional)
               </label>
@@ -262,6 +293,7 @@ export const CreateEventPage: React.FC = () => {
                 <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="number"
+                  name="capacity"
                   min="1"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
@@ -277,7 +309,7 @@ export const CreateEventPage: React.FC = () => {
 
           {/* Date and Time Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div data-field="startTime">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Start Date & Time *
               </label>
@@ -285,6 +317,7 @@ export const CreateEventPage: React.FC = () => {
                 <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="datetime-local"
+                  name="startTime"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
@@ -295,7 +328,7 @@ export const CreateEventPage: React.FC = () => {
               {formErrors.startTime && <p className="text-xs text-rose-500 mt-1">{formErrors.startTime}</p>}
             </div>
 
-            <div>
+            <div data-field="endTime">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 End Date & Time (Optional)
               </label>
@@ -303,6 +336,7 @@ export const CreateEventPage: React.FC = () => {
                 <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="datetime-local"
+                  name="endTime"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
@@ -314,34 +348,34 @@ export const CreateEventPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Privacy & Visibility Settings (Dual Toggles) */}
-          <div className="space-y-3">
+          {/* Privacy & Visibility Settings (Dual Toggles - Mobile Streamlined) */}
+          <div className="space-y-2.5 sm:space-y-3">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Privacy & Visibility Settings
             </label>
 
             {/* Toggle 1: Base Privacy Type (Public vs Private) */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setEventType('public');
                   setIsTruePrivate(false);
                 }}
-                className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+                className={`flex items-start gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left transition-all ${
                   eventType === 'public'
                     ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20'
                     : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
                   eventType === 'public' ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
                 }`}>
-                  <Globe className="w-4 h-4" />
+                  <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold">Public Event</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-bold truncate">Public Event</p>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
                     Visible to all visitors in the event list.
                   </p>
                 </div>
@@ -350,103 +384,105 @@ export const CreateEventPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setEventType('private')}
-                className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+                className={`flex items-start gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left transition-all ${
                   eventType === 'private'
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
                     : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
                   eventType === 'private' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
                 }`}>
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold">Private Event</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-bold truncate">Private Event</p>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
                     Community members only.
                   </p>
                 </div>
               </button>
             </div>
 
-            {/* Toggle 2: True Private (Conditional Extra Toggle - Only available for Private events) */}
+            {/* Toggle 2: True Private (Conditional Extra Toggle - Mobile Optimized Card) */}
             <div
-              className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+              className={`p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all ${
                 eventType === 'private'
                   ? 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
                   : 'border-slate-200/50 dark:border-slate-800/50 bg-slate-100/50 dark:bg-slate-950/20 opacity-60'
               }`}
             >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                    eventType === 'private' && isTruePrivate
-                      ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/30'
-                      : eventType === 'private'
-                      ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      eventType === 'private' && isTruePrivate
+                        ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/30'
+                        : eventType === 'private'
+                        ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                        Make Event &ldquo;True Private&rdquo;
+                      </p>
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full ${
+                          eventType === 'public'
+                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                            : isTruePrivate
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                            : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                        }`}
+                      >
+                        {eventType === 'public'
+                          ? 'Public'
+                          : isTruePrivate
+                          ? 'True Private'
+                          : 'Standard Private'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                      {eventType === 'public'
+                        ? 'Switch to Private above to enable True Private.'
+                        : isTruePrivate
+                        ? 'Completely hidden from unauthenticated guests in the event list.'
+                        : 'Visible in public list with lock badge. Sign-in required to RSVP.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Toggle Switch */}
+                <button
+                  type="button"
+                  role="switch"
+                  disabled={eventType !== 'private'}
+                  aria-label="Toggle True Private"
+                  aria-checked={isTruePrivate}
+                  onClick={() => {
+                    if (eventType === 'private') {
+                      setIsTruePrivate(!isTruePrivate);
+                    }
+                  }}
+                  className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 mt-0.5 ${
+                    eventType !== 'private'
+                      ? 'cursor-not-allowed bg-slate-200 dark:bg-slate-800'
+                      : isTruePrivate
+                      ? 'cursor-pointer bg-purple-600'
+                      : 'cursor-pointer bg-slate-300 dark:bg-slate-700'
                   }`}
                 >
-                  <Lock className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      Make Event &ldquo;True Private&rdquo;
-                    </p>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                        eventType === 'public'
-                          ? 'bg-slate-200 dark:bg-slate-800 text-slate-500'
-                          : isTruePrivate
-                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                          : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                      }`}
-                    >
-                      {eventType === 'public'
-                        ? 'Disabled (Public Event)'
-                        : isTruePrivate
-                        ? 'True Private (Hidden)'
-                        : 'Standard Private (Listed)'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {eventType === 'public'
-                      ? 'Only available for private events. Switch to Private above to enable True Private.'
-                      : isTruePrivate
-                      ? 'Completely hidden from unauthenticated guests in the event list. Guests cannot access or view this event.'
-                      : 'Standard Private: visible in the public event list with a lock badge. Guests can view event info, but must sign in to RSVP.'}
-                  </p>
-                </div>
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      eventType === 'private' && isTruePrivate ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
-
-              {/* Toggle Switch */}
-              <button
-                type="button"
-                role="switch"
-                disabled={eventType !== 'private'}
-                aria-label="Toggle True Private"
-                aria-checked={isTruePrivate}
-                onClick={() => {
-                  if (eventType === 'private') {
-                    setIsTruePrivate(!isTruePrivate);
-                  }
-                }}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                  eventType !== 'private'
-                    ? 'cursor-not-allowed bg-slate-200 dark:bg-slate-800'
-                    : isTruePrivate
-                    ? 'cursor-pointer bg-purple-600'
-                    : 'cursor-pointer bg-slate-300 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    eventType === 'private' && isTruePrivate ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
             </div>
           </div>
 
