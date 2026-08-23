@@ -71,4 +71,22 @@ describe('EventCard Component', () => {
     expect(screen.getByText('#AI')).toBeInTheDocument();
     expect(screen.getByText('+2 more')).toBeInTheDocument();
   });
+
+  it('renders Members Only badge for private event when unauthenticated', () => {
+    const privateEvent: EventItem = {
+      ...mockEvent,
+      id: 2,
+      title: 'Private Executive Session',
+      eventType: 'private',
+    };
+
+    render(
+      <BrowserRouter>
+        <EventCard event={privateEvent} />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Private Executive Session')).toBeInTheDocument();
+    expect(screen.getByText('Members Only')).toBeInTheDocument();
+  });
 });

@@ -41,6 +41,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const currentPathWithSearch = location.pathname + location.search;
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const loginUrl = isAuthPage ? '/login' : `/login?redirect=${encodeURIComponent(currentPathWithSearch)}`;
+  const registerUrl = isAuthPage ? '/register' : `/register?redirect=${encodeURIComponent(currentPathWithSearch)}`;
+
   return (
     <nav className="sticky top-0 z-40 w-full glass border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -215,13 +220,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             ) : (
               <div className="flex items-center gap-2">
                 <Link
-                  to="/login"
+                  to={loginUrl}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/register"
+                  to={registerUrl}
                   className="px-4 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-all"
                 >
                   Sign Up
@@ -312,14 +317,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             ) : (
               <div className="flex flex-col gap-2">
                 <Link
-                  to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                  to={loginUrl}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-xl font-semibold bg-indigo-600 text-white"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to={`/register?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                  to={registerUrl}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-xl font-semibold border border-slate-300 dark:border-slate-700"
                 >

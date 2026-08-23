@@ -244,7 +244,9 @@ export class EventService {
           avatarUrl: e.creator_avatar,
         },
         tags: eventTagsMap[e.id] || [],
-        rsvpStats: rsvpStatsMap[e.id] || { yes: 0, maybe: 0, no: 0, total: 0 },
+        rsvpStats: (!currentUserId && e.event_type === 'private')
+          ? { yes: 0, maybe: 0, no: 0, total: 0 }
+          : (rsvpStatsMap[e.id] || { yes: 0, maybe: 0, no: 0, total: 0 }),
         userRsvp: userRsvpMap[e.id] || null,
         isCreator: currentUserId ? Number(e.creator_id) === Number(currentUserId) : false,
       };
@@ -313,21 +315,23 @@ export class EventService {
       .where('event_tags.event_id', id)
       .select('tags.id', 'tags.name', 'tags.color_hex');
 
-    // Fetch RSVP stats
-    const rsvpCounts = await db('rsvps')
-      .where('event_id', id)
-      .select('status')
-      .count('* as count')
-      .groupBy('status');
-
+    // Fetch RSVP stats (only if not a standard private guest)
     const rsvpStats = { yes: 0, maybe: 0, no: 0, total: 0 };
-    rsvpCounts.forEach((r) => {
-      const count = Number(r.count);
-      if (r.status === 'yes') rsvpStats.yes = count;
-      if (r.status === 'maybe') rsvpStats.maybe = count;
-      if (r.status === 'no') rsvpStats.no = count;
-      rsvpStats.total += count;
-    });
+    if (!isStandardPrivateGuest) {
+      const rsvpCounts = await db('rsvps')
+        .where('event_id', id)
+        .select('status')
+        .count('* as count')
+        .groupBy('status');
+
+      rsvpCounts.forEach((r) => {
+        const count = Number(r.count);
+        if (r.status === 'yes') rsvpStats.yes = count;
+        if (r.status === 'maybe') rsvpStats.maybe = count;
+        if (r.status === 'no') rsvpStats.no = count;
+        rsvpStats.total += count;
+      });
+    }
 
     // Fetch attendees list (users who RSVP'd yes/maybe) - only if not standard private guest
     let attendees: any[] = [];

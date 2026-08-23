@@ -334,148 +334,150 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Attendees List Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-500" />
-                  Community Responses ({event.attendees?.length || 0})
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {event.rsvpStats.yes} going • {event.rsvpStats.maybe} interested • {event.rsvpStats.no} declined
-                </p>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 self-start sm:self-auto text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setAttendeeFilter('all')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    attendeeFilter === 'all'
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  All ({event.attendees?.length || 0})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAttendeeFilter('yes')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    attendeeFilter === 'yes'
-                      ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'
-                  }`}
-                >
-                  Going ({event.rsvpStats.yes})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAttendeeFilter('maybe')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    attendeeFilter === 'maybe'
-                      ? 'bg-amber-500 text-white shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
-                  }`}
-                >
-                  Maybe ({event.rsvpStats.maybe})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAttendeeFilter('no')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    attendeeFilter === 'no'
-                      ? 'bg-rose-600 text-white shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-rose-600 dark:hover:text-rose-400'
-                  }`}
-                >
-                  No ({event.rsvpStats.no})
-                </button>
-              </div>
-            </div>
-
-            {(() => {
-              if (event.eventType === 'private' && !isAuthenticated) {
-                return (
-                  <div className="py-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-2.5">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      Attendee List is Private
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4 max-w-sm mx-auto">
-                      Only registered community members can view who has RSVP&apos;d to this private gathering.
-                    </p>
-                    <Link
-                      to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
-                    >
-                      Sign in to view attendees
-                    </Link>
-                  </div>
-                );
-              }
-
-              const filteredAttendees = (event.attendees || []).filter((a) => {
-                if (attendeeFilter === 'all') return true;
-                return a.status === attendeeFilter;
-              });
-
-              if (!event.attendees || event.attendees.length === 0) {
-                return (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
-                    No RSVPs recorded yet. Be the first to RSVP!
-                  </p>
-                );
-              }
-
-              if (filteredAttendees.length === 0) {
-                return (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
-                    No attendees in this category yet.
-                  </p>
-                );
-              }
-
-              return (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {filteredAttendees.map((attendee) => (
-                    <div
-                      key={attendee.id}
-                      className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
-                    >
-                      <img
-                        src={attendee.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${attendee.name}`}
-                        alt={attendee.name}
-                        className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 flex-shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{attendee.name}</p>
-                        <span
-                          className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border mt-0.5 ${
-                            attendee.status === 'yes'
-                              ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60'
-                              : attendee.status === 'maybe'
-                              ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60'
-                              : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60'
-                          }`}
-                        >
-                          {attendee.status === 'yes' ? 'Attending' : attendee.status === 'maybe' ? 'Interested' : 'Declined'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+            {event.eventType === 'private' && !isAuthenticated ? (
+              <div className="py-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-3">
+                  <Lock className="w-6 h-6" />
                 </div>
-              );
-            })()}
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  RSVP &amp; Attendance are Private
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 mb-5 max-w-sm mx-auto leading-relaxed">
+                  This gathering is private. Attendee responses and RSVP participation are accessible only to signed-in community members.
+                </p>
+                <Link
+                  to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 active:scale-95"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Sign In to View Attendance &amp; RSVP
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Users className="w-5 h-5 text-indigo-500" />
+                      Community Responses ({event.attendees?.length || 0})
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {event.rsvpStats.yes} going • {event.rsvpStats.maybe} interested • {event.rsvpStats.no} declined
+                    </p>
+                  </div>
+
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 self-start sm:self-auto text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        attendeeFilter === 'all'
+                          ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      All ({event.attendees?.length || 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeFilter('yes')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        attendeeFilter === 'yes'
+                          ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'
+                      }`}
+                    >
+                      Going ({event.rsvpStats.yes})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeFilter('maybe')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        attendeeFilter === 'maybe'
+                          ? 'bg-amber-500 text-white shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                      }`}
+                    >
+                      Maybe ({event.rsvpStats.maybe})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeFilter('no')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        attendeeFilter === 'no'
+                          ? 'bg-rose-600 text-white shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-rose-600 dark:hover:text-rose-400'
+                      }`}
+                    >
+                      No ({event.rsvpStats.no})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Attendee Roster Grid */}
+                {(() => {
+                  const filteredAttendees = (event.attendees || []).filter((a) => {
+                    if (attendeeFilter === 'all') return true;
+                    return a.status === attendeeFilter;
+                  });
+
+                  if (!event.attendees || event.attendees.length === 0) {
+                    return (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
+                        No RSVPs recorded yet. Be the first to RSVP!
+                      </p>
+                    );
+                  }
+
+                  if (filteredAttendees.length === 0) {
+                    return (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
+                        No attendees in this category yet.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {filteredAttendees.map((attendee) => (
+                        <div
+                          key={attendee.id}
+                          className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
+                        >
+                          <img
+                            src={attendee.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${attendee.name}`}
+                            alt={attendee.name}
+                            className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{attendee.name}</p>
+                            <span
+                              className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border mt-0.5 ${
+                                attendee.status === 'yes'
+                                  ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60'
+                                  : attendee.status === 'maybe'
+                                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60'
+                                  : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60'
+                              }`}
+                            >
+                              {attendee.status === 'yes' ? 'Attending' : attendee.status === 'maybe' ? 'Interested' : 'Declined'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </div>
         </div>
 
         {/* Right Sidebar: RSVP Widget & Organizer Card */}
         <div className="space-y-6">
-          {/* RSVP Widget: interactive for authenticated members; Sign-in CTA for unauthorized guests */}
-          {isAuthenticated ? (
+          {/* RSVP Widget: Full interactive for public events or authenticated private events; Locked card for guest private events */}
+          {event.eventType === 'public' || isAuthenticated ? (
             <RsvpButtonGroup
               eventId={event.id}
               initialStatus={event.userRsvp}
@@ -491,32 +493,16 @@ export const EventDetailPage: React.FC = () => {
             <div className="rounded-3xl glass-card p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-                  <span>RSVP & Attendance</span>
+                  <Lock className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  <span>Private Gathering</span>
                 </h4>
-                {event.capacity ? (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                    {event.rsvpStats.yes} / {event.capacity} spots
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                    {event.rsvpStats.yes} attending
-                  </span>
-                )}
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                  Members Only
+                </span>
               </div>
 
-              {/* Capacity bar */}
-              {event.capacity && (
-                <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-1.5 overflow-hidden mb-4">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.round((event.rsvpStats.yes / event.capacity) * 100))}%` }}
-                  />
-                </div>
-              )}
-
               <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
-                Sign in to your account to RSVP, save your spot, and receive event updates.
+                RSVP participation and attendee roster are restricted to signed-in community members.
               </p>
 
               <Link
@@ -524,7 +510,7 @@ export const EventDetailPage: React.FC = () => {
                 className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                Sign In to RSVP
+                Sign In to Participate
               </Link>
             </div>
           )}
