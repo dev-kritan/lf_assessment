@@ -161,11 +161,17 @@ export const EventDetailPage: React.FC = () => {
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
                 event.eventType === 'public'
                   ? 'bg-emerald-500/90 text-white'
+                  : event.isTruePrivate
+                  ? 'bg-purple-600/90 text-white'
                   : 'bg-indigo-600/90 text-white'
               }`}
             >
               {event.eventType === 'public' ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-              {event.eventType === 'public' ? 'Public Event' : 'Private Event'}
+              {event.eventType === 'public'
+                ? 'Public Event'
+                : event.isTruePrivate
+                ? 'True Private Event'
+                : 'Private Event'}
             </span>
 
             {isPast && (

@@ -20,6 +20,7 @@ export interface CreateEventInput {
   description: string;
   location: string;
   event_type: 'public' | 'private';
+  is_true_private?: boolean;
   start_time: string;
   end_time?: string | null;
   capacity?: number | null;
@@ -42,6 +43,7 @@ export class EventService {
         'events.description',
         'events.location',
         'events.event_type',
+        'events.is_true_private',
         'events.start_time',
         'events.end_time',
         'events.capacity',
@@ -54,10 +56,15 @@ export class EventService {
         'users.avatar_url as creator_avatar'
       );
 
-    // Private events policy:
-    // If not authenticated, private events cannot be viewed in the event list (only public events are shown).
+    // True Private events policy:
+    // If not authenticated, true private events cannot be viewed in the event list.
+    // Public events and standard private events (with is_true_private = false) ARE viewable.
     if (!currentUserId) {
-      baseQuery.where('events.event_type', 'public');
+      baseQuery.where((builder) => {
+        builder
+          .where('events.is_true_private', false)
+          .orWhereNull('events.is_true_private');
+      });
     }
 
     // Filter by Event Type (if explicitly specified)
@@ -222,6 +229,7 @@ export class EventService {
         description: e.description,
         location: e.location,
         eventType: e.event_type,
+        isTruePrivate: Boolean(e.is_true_private),
         startTime: e.start_time,
         endTime: e.end_time,
         capacity: e.capacity,
@@ -247,9 +255,9 @@ export class EventService {
     return {
       events: formattedEvents,
       pagination: {
+        total,
         page,
         limit,
-        total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
@@ -267,6 +275,7 @@ export class EventService {
         'events.description',
         'events.location',
         'events.event_type',
+        'events.is_true_private',
         'events.start_time',
         'events.end_time',
         'events.capacity',
@@ -287,13 +296,16 @@ export class EventService {
       throw error;
     }
 
-    // Authorization for private events
-    if (event.event_type === 'private' && !currentUserId) {
-      const error: any = new Error('This event is private. Please sign in to view details.');
+    // Logic 2: True Private event is strictly forbidden for unauthenticated visitors
+    if (Boolean(event.is_true_private) && !currentUserId) {
+      const error: any = new Error('This event is strictly private. Please sign in to view details.');
       error.statusCode = 403;
       error.code = 'PRIVATE_EVENT_FORBIDDEN';
       throw error;
     }
+
+    // Logic 1: Standard Private event allows preview to guests with restricted RSVP and masked attendees
+    const isStandardPrivateGuest = event.event_type === 'private' && !currentUserId;
 
     // Fetch tags
     const tags = await db('event_tags')
@@ -317,19 +329,22 @@ export class EventService {
       rsvpStats.total += count;
     });
 
-    // Fetch attendees list (users who RSVP'd yes/maybe)
-    const attendees = await db('rsvps')
-      .join('users', 'rsvps.user_id', 'users.id')
-      .where('rsvps.event_id', id)
-      .select(
-        'users.id',
-        'users.name',
-        'users.avatar_url',
-        'rsvps.status',
-        'rsvps.updated_at'
-      )
-      .orderBy('rsvps.updated_at', 'desc')
-      .limit(50);
+    // Fetch attendees list (users who RSVP'd yes/maybe) - only if not standard private guest
+    let attendees: any[] = [];
+    if (!isStandardPrivateGuest) {
+      attendees = await db('rsvps')
+        .join('users', 'rsvps.user_id', 'users.id')
+        .where('rsvps.event_id', id)
+        .select(
+          'users.id',
+          'users.name',
+          'users.avatar_url',
+          'rsvps.status',
+          'rsvps.updated_at'
+        )
+        .orderBy('rsvps.updated_at', 'desc')
+        .limit(50);
+    }
 
     // Current user's RSVP status
     let userRsvp = null;
@@ -351,6 +366,7 @@ export class EventService {
       description: event.description,
       location: event.location,
       eventType: event.event_type,
+      isTruePrivate: Boolean(event.is_true_private),
       startTime: event.start_time,
       endTime: event.end_time,
       capacity: event.capacity,
@@ -358,6 +374,7 @@ export class EventService {
       createdAt: event.created_at,
       updatedAt: event.updated_at,
       isPast,
+      isRestricted: isStandardPrivateGuest,
       creator: {
         id: event.creator_id,
         name: event.creator_name,
@@ -391,6 +408,8 @@ export class EventService {
       }
     }
 
+    const isTruePrivate = data.event_type === 'private' ? Boolean(data.is_true_private) : false;
+
     return await db.transaction(async (trx) => {
       const [eventIdRaw] = await trx('events').insert({
         creator_id: creatorId,
@@ -398,6 +417,7 @@ export class EventService {
         description: data.description.trim(),
         location: data.location.trim(),
         event_type: data.event_type,
+        is_true_private: isTruePrivate,
         start_time: new Date(data.start_time),
         end_time: data.end_time ? new Date(data.end_time) : null,
         capacity: data.capacity || null,
@@ -444,7 +464,16 @@ export class EventService {
     if (data.title !== undefined) updateFields.title = data.title.trim();
     if (data.description !== undefined) updateFields.description = data.description.trim();
     if (data.location !== undefined) updateFields.location = data.location.trim();
-    if (data.event_type !== undefined) updateFields.event_type = data.event_type;
+    if (data.event_type !== undefined) {
+      updateFields.event_type = data.event_type;
+      if (data.event_type === 'public') {
+        updateFields.is_true_private = false;
+      }
+    }
+    if (data.is_true_private !== undefined) {
+      const targetType = data.event_type || existing.event_type;
+      updateFields.is_true_private = targetType === 'private' ? Boolean(data.is_true_private) : false;
+    }
     if (data.start_time !== undefined) updateFields.start_time = new Date(data.start_time);
     if (data.end_time !== undefined) updateFields.end_time = data.end_time ? new Date(data.end_time) : null;
     if (data.capacity !== undefined) updateFields.capacity = data.capacity || null;

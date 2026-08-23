@@ -36,9 +36,13 @@ export class TagService {
       .join('events', 'event_tags.event_id', 'events.id')
       .select('event_tags.tag_id', 'events.id as event_id');
 
-    // If not authenticated, only public events are counted
+    // If not authenticated, true private events are excluded from tag counts
     if (!currentUserId) {
-      eventsSubquery.where('events.event_type', 'public');
+      eventsSubquery.where((builder) => {
+        builder
+          .where('events.is_true_private', false)
+          .orWhereNull('events.is_true_private');
+      });
     }
 
     // Filter by Event Type (if explicitly specified)

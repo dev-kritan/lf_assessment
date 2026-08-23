@@ -52,6 +52,8 @@ export const EventCard: React.FC<EventCardProps> = ({
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md transition-all ${
               event.eventType === 'public'
                 ? 'bg-emerald-500/85 text-white border border-emerald-400/30'
+                : event.isTruePrivate
+                ? 'bg-gradient-to-r from-purple-700/95 to-pink-700/95 text-white border border-purple-400/40 shadow-purple-500/30'
                 : 'bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white border border-violet-400/40 shadow-indigo-500/20'
             }`}
           >
@@ -60,7 +62,13 @@ export const EventCard: React.FC<EventCardProps> = ({
             ) : (
               <Lock className="w-3.5 h-3.5 text-amber-300" />
             )}
-            <span>{event.eventType === 'public' ? 'Public' : 'Private'}</span>
+            <span>
+              {event.eventType === 'public'
+                ? 'Public'
+                : event.isTruePrivate
+                ? 'True Private'
+                : 'Private'}
+            </span>
           </span>
 
           {isPast && (

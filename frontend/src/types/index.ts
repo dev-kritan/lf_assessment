@@ -36,6 +36,7 @@ export interface EventItem {
   description: string;
   location: string;
   eventType: 'public' | 'private';
+  isTruePrivate?: boolean;
   startTime: string;
   endTime?: string | null;
   capacity?: number | null;
