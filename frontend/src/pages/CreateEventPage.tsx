@@ -62,9 +62,9 @@ export const CreateEventPage: React.FC = () => {
     }).catch(() => {});
   }, []);
 
-  const handleToggleTag = (tagId: number) => {
+  const toggleTag = (id: number) => {
     setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+      prev.includes(id) ? prev.filter((tId) => tId !== id) : [...prev, id]
     );
   };
 

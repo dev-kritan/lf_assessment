@@ -1,52 +1,70 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogIn, Lock, Mail, ShieldCheck, KeyRound, Loader2, ArrowRight } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  LogIn,
+  Lock,
+  Mail,
+  ShieldCheck,
+  KeyRound,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const [requires2FA, setRequires2FA] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState("");
 
   const { login } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const redirectParam = searchParams.get('redirect');
-  const from = redirectParam || (location.state as any)?.from?.pathname || '/';
+  const redirectParam = searchParams.get("redirect");
+  const from = redirectParam || (location.state as any)?.from?.pathname || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
-    setFormError('');
+    setFormError("");
 
     if (!email.trim() || !password.trim()) {
-      setFormError('Please enter your email and password.');
+      setFormError("Please enter your email and password.");
       return;
     }
 
-    if (requires2FA && (!twoFactorCode.trim() || twoFactorCode.trim().length !== 6)) {
-      setFormError('Please enter the 6-digit 2FA code.');
+    if (
+      requires2FA &&
+      (!twoFactorCode.trim() || twoFactorCode.trim().length !== 6)
+    ) {
+      setFormError("Please enter the 6-digit 2FA code.");
       return;
     }
 
     try {
       setIsLoading(true);
-      const res = await login(email.trim(), password, requires2FA ? twoFactorCode.trim() : undefined);
+      const res = await login(
+        email.trim(),
+        password,
+        requires2FA ? twoFactorCode.trim() : undefined,
+      );
 
       if (res.requiresTwoFactor) {
         setRequires2FA(true);
-        success('Two-factor authentication code required.');
+        success("Two-factor authentication code required.");
       } else {
-        success('Signed in successfully!');
+        success("Signed in successfully!");
         navigate(from, { replace: true });
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error?.message || 'Login failed. Please check your credentials.';
+      const msg =
+        err.response?.data?.error?.message ||
+        "Login failed. Please check your credentials.";
       setFormError(msg);
       error(msg);
     } finally {
@@ -56,8 +74,8 @@ export const LoginPage: React.FC = () => {
 
   const fillDemoAccount = (demoEmail: string) => {
     setEmail(demoEmail);
-    setPassword('Password123!');
-    setFormError('');
+    setPassword("Password123!");
+    setFormError("");
     setRequires2FA(false);
   };
 
@@ -67,15 +85,19 @@ export const LoginPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 mx-auto flex items-center justify-center mb-3">
-            {requires2FA ? <ShieldCheck className="w-6 h-6" /> : <LogIn className="w-6 h-6" />}
+            {requires2FA ? (
+              <ShieldCheck className="w-6 h-6" />
+            ) : (
+              <LogIn className="w-6 h-6" />
+            )}
           </div>
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            {requires2FA ? 'Two-Factor Authentication' : 'Welcome Back'}
+            {requires2FA ? "Two-Factor Authentication" : "Welcome Back"}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {requires2FA
-              ? 'Enter the 6-digit code from your authenticator app'
-              : 'Sign in to create, manage, and RSVP to events'}
+              ? "Enter the 6-digit code from your authenticator app"
+              : "Sign in to create, manage, and RSVP to events"}
           </p>
         </div>
 
@@ -88,20 +110,28 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fillDemoAccount('alice@example.com')}
+                onClick={() => fillDemoAccount("alice@example.com")}
                 className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-400 transition-all text-left"
               >
-                <span className="font-bold text-indigo-600 dark:text-indigo-400">Alice (Organizer)</span>
-                <span className="block text-[10px] text-slate-400">alice@example.com</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                  Alice (Organizer)
+                </span>
+                <span className="block text-[10px] text-slate-400">
+                  alice@example.com
+                </span>
               </button>
 
               <button
                 type="button"
-                onClick={() => fillDemoAccount('bob@example.com')}
+                onClick={() => fillDemoAccount("bob@example.com")}
                 className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-400 transition-all text-left"
               >
-                <span className="font-bold text-purple-600 dark:text-purple-400">Bob (Attendee)</span>
-                <span className="block text-[10px] text-slate-400">bob@example.com</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">
+                  Bob (Attendee)
+                </span>
+                <span className="block text-[10px] text-slate-400">
+                  bob@example.com
+                </span>
               </button>
             </div>
           </div>
@@ -156,7 +186,9 @@ export const LoginPage: React.FC = () => {
                   type="text"
                   maxLength={6}
                   value={twoFactorCode}
-                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) =>
+                    setTwoFactorCode(e.target.value.replace(/\D/g, ""))
+                  }
                   placeholder="000000"
                   autoFocus
                   required
@@ -198,7 +230,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Footer Link */}
         <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-6">
-          Don&apos;t have an account yet?{' '}
+          Don&apos;t have an account yet?{" "}
           <Link
             to={`/register${location.search}`}
             className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
