@@ -29,6 +29,7 @@ export interface MetricEventsCacheEntry {
   events: EventItem[];
   page: number;
   hasMore: boolean;
+  total?: number;
 }
 
 // Client-side cache store for drawer events across drawer open/close lifecycles
@@ -86,6 +87,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
   // Pagination & infinite scroll state for upcoming/past events
   const [drawerEvents, setDrawerEvents] = useState<EventItem[]>([]);
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,6 +127,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       setDrawerEvents(cached.events);
       setPage(cached.page);
       setHasMore(cached.hasMore);
+      setServerTotal(cached.total ?? null);
       setIsLoading(false);
       setIsLoadingMore(false);
       return; // Skip backend request
@@ -134,6 +137,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     let isMounted = true;
     setIsLoading(true);
     setDrawerEvents([]);
+    setServerTotal(null);
     setPage(1);
     setHasMore(true);
 
@@ -148,13 +152,18 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
         if (!isMounted) return;
         if (res && res.data) {
           const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+          const total = res.meta ? res.meta.total : undefined;
           drawerEventsCache[metricType] = {
             events: res.data,
             page: 1,
             hasMore: hasNext,
+            total,
           };
           setDrawerEvents(res.data);
           setHasMore(hasNext);
+          if (total !== undefined) {
+            setServerTotal(total);
+          }
         }
       })
       .catch((err) => {
@@ -203,6 +212,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
       if (res && res.data) {
         const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+        const total = res.meta ? res.meta.total : undefined;
         setDrawerEvents((prev) => {
           const existingIds = new Set(prev.map((e) => e.id));
           const newItems = res.data.filter((e) => !existingIds.has(e.id));
@@ -213,12 +223,16 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
             events: updated,
             page: nextPage,
             hasMore: hasNext,
+            total: total ?? drawerEventsCache[metricType]?.total,
           };
 
           return updated;
         });
         setPage(nextPage);
         setHasMore(hasNext);
+        if (total !== undefined) {
+          setServerTotal(total);
+        }
       } else {
         setHasMore(false);
         if (drawerEventsCache[metricType]) {
@@ -252,7 +266,9 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     );
 
     observer.observe(sentinel);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [hasMore, isLoading, isLoadingMore, loadMore]);
 
   if (!isOpen || !metricType) return null;
@@ -278,35 +294,49 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   const maybePercentage = totalLoadedRsvps > 0 ? Math.round((aggregatedRsvps.maybe / totalLoadedRsvps) * 100) : 0;
   const noPercentage = totalLoadedRsvps > 0 ? Math.round((aggregatedRsvps.no / totalLoadedRsvps) * 100) : 0;
 
+  // Ensure displayed totals never drop below the number of events currently loaded
+  const effectiveUpcomingTotal = Math.max(
+    drawerEvents.length,
+    serverTotal ?? metrics.upcomingEvents
+  );
+  const effectivePastTotal = Math.max(
+    drawerEvents.length,
+    serverTotal ?? metrics.pastEvents
+  );
+
   const metricConfig = {
     upcoming: {
       title: 'Upcoming Events',
-      subtitle: 'Events currently active and scheduled on the platform',
-      badge: `${metrics.upcomingEvents} Scheduled`,
+      subtitle: 'Scheduled gatherings and events happening soon',
+      metricLabel: 'Total Upcoming Events',
+      badge: `${effectiveUpcomingTotal} Upcoming`,
       icon: <Calendar className="w-6 h-6 text-white" />,
       colorClass: 'bg-gradient-to-tr from-indigo-600 to-indigo-500',
       badgeClass: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300',
     },
     rsvps: {
-      title: 'Total RSVPs & Engagement',
-      subtitle: 'Community attendance responses and participation metrics',
-      badge: `${metrics.totalRsvps} Responses`,
+      title: 'Community RSVPs',
+      subtitle: 'Attendance responses and participation metrics across events',
+      metricLabel: 'Total Confirmed RSVPs',
+      badge: `${metrics.totalRsvps} Confirmed RSVPs`,
       icon: <Users className="w-6 h-6 text-white" />,
       colorClass: 'bg-gradient-to-tr from-emerald-600 to-emerald-500',
       badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300',
     },
     categories: {
       title: 'Categories & Tags',
-      subtitle: 'Filterable tags and topics organizing gatherings',
+      subtitle: 'Topics and tags organizing community events',
+      metricLabel: 'Total Categories',
       badge: `${metrics.totalTags} Categories`,
       icon: <TagIcon className="w-6 h-6 text-white" />,
       colorClass: 'bg-gradient-to-tr from-amber-600 to-amber-500',
       badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300',
     },
     past: {
-      title: 'Past Events Archive',
-      subtitle: 'Historical records of previously hosted events',
-      badge: `${metrics.pastEvents} Archived`,
+      title: 'Past Events',
+      subtitle: 'Browse completed community gatherings and past events',
+      metricLabel: 'Total Past Events',
+      badge: `${effectivePastTotal} Past Events`,
       icon: <Flame className="w-6 h-6 text-white" />,
       colorClass: 'bg-gradient-to-tr from-purple-600 to-purple-500',
       badgeClass: 'bg-purple-50 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300',
@@ -365,13 +395,13 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
             <div className="glass-card rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between flex-shrink-0">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Global Stat Metric
+                  {currentConfig.metricLabel}
                 </span>
                 <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
-                  {metricType === 'upcoming' && metrics.upcomingEvents}
+                  {metricType === 'upcoming' && effectiveUpcomingTotal}
                   {metricType === 'rsvps' && metrics.totalRsvps}
                   {metricType === 'categories' && metrics.totalTags}
-                  {metricType === 'past' && metrics.pastEvents}
+                  {metricType === 'past' && effectivePastTotal}
                 </div>
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${currentConfig.badgeClass}`}>
@@ -384,11 +414,11 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Upcoming Schedule
+                    Upcoming Events List
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                      {drawerEvents.length} of {metrics.upcomingEvents}
+                      Showing {drawerEvents.length} of {effectiveUpcomingTotal}
                     </span>
                     {hasMore && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full animate-pulse border border-indigo-200 dark:border-indigo-800/60">
@@ -469,9 +499,9 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Or click here to load next batch</p>
                           </div>
                         </div>
-                        {metrics.upcomingEvents > drawerEvents.length && (
+                        {effectiveUpcomingTotal > drawerEvents.length && (
                           <span className="text-[10px] font-bold bg-indigo-200/70 dark:bg-indigo-900/80 text-indigo-800 dark:text-indigo-200 px-2.5 py-1 rounded-full">
-                            +{metrics.upcomingEvents - drawerEvents.length} more
+                            +{effectiveUpcomingTotal - drawerEvents.length} more
                           </span>
                         )}
                       </button>
@@ -491,7 +521,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                     {/* End of list banner */}
                     {!hasMore && drawerEvents.length > 0 && (
                       <div className="pt-2 pb-1 text-center text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
-                        All {drawerEvents.length} events loaded
+                        All {drawerEvents.length} upcoming events loaded
                       </div>
                     )}
                   </div>
@@ -509,16 +539,18 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                 <div className="space-y-3 flex-1 overflow-y-auto pr-1 min-h-0">
                   {/* Going (Yes) */}
                   <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/60">
-                    <div className="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1.5">
-                      <span className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        Confirmed Going (Yes)
+                        Confirmed Going
                       </span>
-                      <span>{aggregatedRsvps.yes} ({yesPercentage}%)</span>
+                      <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-200">
+                        {aggregatedRsvps.yes} ({yesPercentage}%)
+                      </span>
                     </div>
-                    <div className="w-full h-2 bg-emerald-200/60 dark:bg-emerald-950 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    <div className="w-full h-2 rounded-full bg-emerald-200/60 dark:bg-emerald-900/60 overflow-hidden">
+                      <div 
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
                         style={{ width: `${yesPercentage}%` }}
                       />
                     </div>
@@ -526,16 +558,18 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
                   {/* Interested (Maybe) */}
                   <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/60">
-                    <div className="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5">
-                      <span className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
                         <HelpCircle className="w-4 h-4 text-amber-600" />
-                        Interested (Maybe)
+                        Interested / Maybe
                       </span>
-                      <span>{aggregatedRsvps.maybe} ({maybePercentage}%)</span>
+                      <span className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
+                        {aggregatedRsvps.maybe} ({maybePercentage}%)
+                      </span>
                     </div>
-                    <div className="w-full h-2 bg-amber-200/60 dark:bg-amber-950 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                    <div className="w-full h-2 rounded-full bg-amber-200/60 dark:bg-amber-900/60 overflow-hidden">
+                      <div 
+                        className="h-full bg-amber-500 rounded-full transition-all duration-500" 
                         style={{ width: `${maybePercentage}%` }}
                       />
                     </div>
@@ -543,16 +577,18 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
                   {/* Declined (No) */}
                   <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/60">
-                    <div className="flex items-center justify-between text-xs font-bold text-rose-800 dark:text-rose-300 mb-1.5">
-                      <span className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-300">
                         <XCircle className="w-4 h-4 text-rose-600" />
-                        Declined (No)
+                        Declined
                       </span>
-                      <span>{aggregatedRsvps.no} ({noPercentage}%)</span>
+                      <span className="text-xs font-extrabold text-rose-900 dark:text-rose-200">
+                        {aggregatedRsvps.no} ({noPercentage}%)
+                      </span>
                     </div>
-                    <div className="w-full h-2 bg-rose-200/60 dark:bg-rose-950 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                    <div className="w-full h-2 rounded-full bg-rose-200/60 dark:bg-rose-900/60 overflow-hidden">
+                      <div 
+                        className="h-full bg-rose-500 rounded-full transition-all duration-500" 
                         style={{ width: `${noPercentage}%` }}
                       />
                     </div>
@@ -568,35 +604,31 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
             {/* Categories View */}
             {metricType === 'categories' && (
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
-                <div className="flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center justify-between gap-2 flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    All System Tags ({tags.length})
+                    All Categories ({filteredTags.length})
                   </h3>
-                  <span className="text-[11px] text-slate-400">Click to filter</span>
                 </div>
 
-                {tags.length > 4 && (
-                  <div className="relative flex-shrink-0">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search tags..."
-                      value={tagSearch}
-                      onChange={(e) => setTagSearch(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
-                    />
-                    {tagSearch && (
-                      <button
-                        type="button"
-                        onClick={() => setTagSearch('')}
-                        aria-label="Clear tag search"
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* Search Bar for tags */}
+                <div className="relative flex-shrink-0">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={tagSearch}
+                    onChange={(e) => setTagSearch(e.target.value)}
+                    placeholder="Filter tags by name..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500/50"
+                  />
+                  {tagSearch && (
+                    <button
+                      onClick={() => setTagSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex flex-wrap content-start gap-2 overflow-y-auto pr-1 p-1 flex-1 min-h-0">
                   {filteredTags.length === 0 ? (
@@ -676,11 +708,11 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Past Events Archive
+                    Past Events List
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
-                      {drawerEvents.length} of {metrics.pastEvents}
+                      Showing {drawerEvents.length} of {effectivePastTotal}
                     </span>
                     {hasMore && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/80 px-2 py-0.5 rounded-full animate-pulse border border-purple-200 dark:border-purple-800/60">
@@ -757,13 +789,13 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                             <ChevronDown className="w-4 h-4 animate-bounce" />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-xs text-slate-900 dark:text-white">Scroll down to load more events</p>
+                            <p className="font-bold text-xs text-slate-900 dark:text-white">Scroll down to load more past events</p>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Or click here to load next batch</p>
                           </div>
                         </div>
-                        {metrics.pastEvents > drawerEvents.length && (
+                        {effectivePastTotal > drawerEvents.length && (
                           <span className="text-[10px] font-bold bg-purple-200/70 dark:bg-purple-900/80 text-purple-800 dark:text-purple-200 px-2.5 py-1 rounded-full">
-                            +{metrics.pastEvents - drawerEvents.length} more
+                            +{effectivePastTotal - drawerEvents.length} more
                           </span>
                         )}
                       </button>
@@ -783,7 +815,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                     {/* End of list banner */}
                     {!hasMore && drawerEvents.length > 0 && (
                       <div className="pt-2 pb-1 text-center text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
-                        All {drawerEvents.length} events loaded
+                        All {drawerEvents.length} past events loaded
                       </div>
                     )}
                   </div>
@@ -817,7 +849,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 flex items-center justify-center gap-1.5 transition-all"
               >
-                <span>Browse Past Events Archive</span>
+                <span>Filter by Past Events</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}

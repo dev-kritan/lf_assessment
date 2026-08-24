@@ -49,6 +49,7 @@ describe('MetricDetailDrawer Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (eventsApi.getEvents as any).mockReset();
     clearDrawerEventsCache();
     (eventsApi.getEvents as any).mockResolvedValue({
       success: true,
@@ -56,7 +57,7 @@ describe('MetricDetailDrawer Component', () => {
       meta: {
         page: 1,
         limit: 10,
-        total: 1,
+        total: 7,
         totalPages: 1,
         hasNextPage: false,
         hasPrevPage: false,
@@ -86,7 +87,7 @@ describe('MetricDetailDrawer Component', () => {
     await waitFor(() => {
       expect(screen.getByText('Upcoming Tech Summit')).toBeInTheDocument();
     });
-    expect(screen.getByText('7 Scheduled')).toBeInTheDocument();
+    expect(screen.getByText('7 Upcoming')).toBeInTheDocument();
 
     const filterBtn = screen.getByRole('button', { name: /filter by upcoming events/i });
     fireEvent.click(filterBtn);
@@ -137,10 +138,10 @@ describe('MetricDetailDrawer Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByRole('heading', { name: 'Total RSVPs & Engagement' })).toBeInTheDocument();
-    expect(screen.getByText(/Confirmed Going \(Yes\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Interested \(Maybe\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Declined \(No\)/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Community RSVPs' })).toBeInTheDocument();
+    expect(screen.getByText(/Confirmed Going/i)).toBeInTheDocument();
+    expect(screen.getByText(/Interested \/ Maybe/i)).toBeInTheDocument();
+    expect(screen.getByText(/Declined/i)).toBeInTheDocument();
   });
 
   it('closes on close button click and Escape key', () => {
@@ -193,7 +194,7 @@ describe('MetricDetailDrawer Component', () => {
       </BrowserRouter>
     );
 
-    const searchInput = screen.getByPlaceholderText(/search tags/i);
+    const searchInput = screen.getByPlaceholderText(/filter tags/i);
     expect(searchInput).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: 'desi' } });
@@ -355,7 +356,7 @@ describe('MetricDetailDrawer Component', () => {
     });
 
     // When all events are loaded (hasMore is false), end banner is shown
-    expect(screen.getByText(/All 2 events loaded/i)).toBeInTheDocument();
+    expect(screen.getByText(/All 2 upcoming events loaded/i)).toBeInTheDocument();
   });
 
   it('reuses cached events and does not trigger backend API request when closing and reopening sidebar', async () => {
@@ -492,7 +493,7 @@ describe('MetricDetailDrawer Component', () => {
     expect(getEventsSpy).toHaveBeenCalledTimes(1);
 
     // Load page 2
-    const loadMoreBtn = screen.getByRole('button', { name: /Scroll down to load more events/i });
+    const loadMoreBtn = screen.getByRole('button', { name: /Scroll down to load more/i });
     fireEvent.click(loadMoreBtn);
 
     await waitFor(() => {
@@ -534,5 +535,53 @@ describe('MetricDetailDrawer Component', () => {
 
     // No new backend request was fired (still exactly 2)
     expect(getEventsSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('renders clear and user-friendly labels on past events drawer', async () => {
+    const pastEvt: EventItem = {
+      ...mockEvents[0],
+      id: 501,
+      title: 'Previous Community Meetup',
+      isPast: true,
+    };
+
+    (eventsApi.getEvents as any).mockResolvedValueOnce({
+      success: true,
+      data: [pastEvt],
+      meta: {
+        page: 1,
+        limit: 10,
+        total: 3,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+
+    render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="past"
+          metrics={mockMetrics}
+          events={[pastEvt]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Title and human-friendly labels
+    expect(screen.getByRole('heading', { name: 'Past Events' })).toBeInTheDocument();
+    expect(screen.getByText('Total Past Events')).toBeInTheDocument();
+    expect(screen.getByText(/3 Past Events/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Previous Community Meetup')).toBeInTheDocument();
+      expect(screen.getByText(/Showing 1 of 3/i)).toBeInTheDocument();
+    });
+
+    // Footer action button
+    expect(screen.getByRole('button', { name: /filter by past events/i })).toBeInTheDocument();
   });
 });

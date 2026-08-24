@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const event_controller_1 = require("../controllers/event.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const validate_middleware_1 = require("../middlewares/validate.middleware");
+const event_validator_1 = require("../validators/event.validator");
+const router = (0, express_1.Router)();
+router.get('/metrics', event_controller_1.EventController.getMetrics);
+router.get('/', auth_middleware_1.optionalAuthenticate, (0, validate_middleware_1.validate)(event_validator_1.queryEventsSchema, 'query'), event_controller_1.EventController.getEvents);
+router.get('/:id', auth_middleware_1.optionalAuthenticate, event_controller_1.EventController.getEventById);
+router.post('/', auth_middleware_1.authenticate, (0, validate_middleware_1.validate)(event_validator_1.createEventSchema), event_controller_1.EventController.createEvent);
+router.put('/:id', auth_middleware_1.authenticate, (0, validate_middleware_1.validate)(event_validator_1.updateEventSchema), event_controller_1.EventController.updateEvent);
+router.patch('/:id', auth_middleware_1.authenticate, (0, validate_middleware_1.validate)(event_validator_1.updateEventSchema), event_controller_1.EventController.updateEvent);
+router.delete('/:id', auth_middleware_1.authenticate, event_controller_1.EventController.deleteEvent);
+exports.default = router;

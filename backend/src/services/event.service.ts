@@ -536,7 +536,7 @@ export class EventService {
   }
 
   static async getEventMetrics() {
-    const now = new Date().toISOString();
+    const now = new Date();
     const [totalEvents] = await db('events').count('* as count');
     const [upcomingEvents] = await db('events').where('start_time', '>=', now).count('* as count');
     const [pastEvents] = await db('events').where('start_time', '<', now).count('* as count');

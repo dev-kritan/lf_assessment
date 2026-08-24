@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const twoFactor_controller_1 = require("../controllers/twoFactor.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const validate_middleware_1 = require("../middlewares/validate.middleware");
+const auth_validator_1 = require("../validators/auth.validator");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.post('/setup', twoFactor_controller_1.TwoFactorController.setup2FA);
+router.post('/enable', (0, validate_middleware_1.validate)(auth_validator_1.twoFactorVerifySchema), twoFactor_controller_1.TwoFactorController.enable2FA);
+router.post('/disable', (0, validate_middleware_1.validate)(auth_validator_1.twoFactorVerifySchema), twoFactor_controller_1.TwoFactorController.disable2FA);
+exports.default = router;

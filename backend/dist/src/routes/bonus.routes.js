@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const bonus_controller_1 = require("../controllers/bonus.controller");
+const router = (0, express_1.Router)();
+router.get('/data', bonus_controller_1.BonusController.getBonusData);
+router.get('/q1', bonus_controller_1.BonusController.executeQ1);
+router.get('/q2', bonus_controller_1.BonusController.executeQ2);
+router.get('/q4', bonus_controller_1.BonusController.executeQ4);
+exports.default = router;
