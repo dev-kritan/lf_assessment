@@ -140,4 +140,46 @@ describe('MetricDetailDrawer Component', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it('filters tags by search query and supports edit/delete tag triggers', () => {
+    const onEditTag = vi.fn();
+    const onDeleteTag = vi.fn();
+    const multipleTags: Tag[] = [
+      { id: 1, name: 'Tech', colorHex: '#6366f1', eventCount: 4 },
+      { id: 2, name: 'Design', colorHex: '#ec4899', eventCount: 2 },
+      { id: 3, name: 'Marketing', colorHex: '#f59e0b', eventCount: 1 },
+      { id: 4, name: 'Health', colorHex: '#10b981', eventCount: 3 },
+      { id: 5, name: 'Music', colorHex: '#8b5cf6', eventCount: 5 },
+    ];
+
+    render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="categories"
+          metrics={mockMetrics}
+          events={mockEvents}
+          tags={multipleTags}
+          onEditTag={onEditTag}
+          onDeleteTag={onDeleteTag}
+        />
+      </BrowserRouter>
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search tags/i);
+    expect(searchInput).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'desi' } });
+    expect(screen.getByText('#Design')).toBeInTheDocument();
+    expect(screen.queryByText('#Tech')).not.toBeInTheDocument();
+
+    const editBtn = screen.getByTitle('Edit tag #Design');
+    fireEvent.click(editBtn);
+    expect(onEditTag).toHaveBeenCalledWith(multipleTags[1]);
+
+    const deleteBtn = screen.getByTitle('Delete tag #Design');
+    fireEvent.click(deleteBtn);
+    expect(onDeleteTag).toHaveBeenCalledWith(multipleTags[1]);
+  });
 });

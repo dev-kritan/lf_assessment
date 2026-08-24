@@ -2222,3 +2222,14 @@
 {"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 13.887 ms","service":"event-planner-api","timestamp":"2026-08-24 10:04:02"}
 {"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&tag=bungi&sort_by=date 200 5397 - 13.433 ms","service":"event-planner-api","timestamp":"2026-08-24 10:05:42"}
 {"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 12.255 ms","service":"event-planner-api","timestamp":"2026-08-24 10:05:43"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 4.064 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 15.202 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 20.627 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/auth/profile 304 - - 8.402 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 4.993 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/auth/profile 304 - - 3.349 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 13.751 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 10.289 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/tags 304 - - 3.480 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events/metrics 304 - - 10.270 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}
+{"level":"info","message":"GET /api/v1/events?page=1&limit=9&search=&timeframe=all&event_type=all&sort_by=date 304 - - 14.088 ms","service":"event-planner-api","timestamp":"2026-08-24 10:10:16"}

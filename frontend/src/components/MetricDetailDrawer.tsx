@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   X, 
   Calendar, 
@@ -12,9 +12,9 @@ import {
   HelpCircle, 
   XCircle,
   ExternalLink,
-  Sparkles,
   Edit2,
-  Trash2
+  Trash2,
+  Search
 } from 'lucide-react';
 import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -54,6 +54,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   onDeleteTag,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [tagSearch, setTagSearch] = useState('');
 
   // Close on Escape key
   useEffect(() => {
@@ -70,11 +71,23 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     };
   }, [isOpen, onClose]);
 
+  // Reset tag search when drawer closes or metricType changes
+  useEffect(() => {
+    if (!isOpen || metricType !== 'categories') {
+      setTagSearch('');
+    }
+  }, [isOpen, metricType]);
+
   if (!isOpen || !metricType) return null;
 
   // Derive metrics & previews
   const upcomingEventsList = events.filter((e) => !e.isPast);
   const pastEventsList = events.filter((e) => e.isPast);
+
+  // Filter tags based on tagSearch
+  const filteredTags = tagSearch.trim()
+    ? tags.filter((t) => t.name.toLowerCase().includes(tagSearch.trim().toLowerCase()))
+    : tags;
 
   // Aggregate RSVP breakdown from loaded events
   const aggregatedRsvps = events.reduce(
@@ -145,10 +158,10 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label={currentConfig.title}
-          className="pointer-events-auto w-full max-w-lg lg:max-w-md lg:w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-2xl rounded-3xl lg:rounded-none lg:rounded-l-3xl max-h-[90vh] lg:max-h-full flex flex-col justify-between overflow-hidden animate-fade-in lg:animate-slide-left"
+          className="pointer-events-auto w-full max-w-lg lg:max-w-md lg:w-full lg:h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-2xl rounded-3xl lg:rounded-none lg:rounded-l-3xl max-h-[90vh] lg:max-h-full flex flex-col justify-between overflow-hidden animate-fade-in lg:animate-slide-left"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/30">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/30 flex-shrink-0">
             <div className="flex items-center gap-3.5">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 ${currentConfig.colorClass}`}>
                 {currentConfig.icon}
@@ -174,9 +187,9 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
           </div>
 
           {/* Scrollable Content Body */}
-          <div className="p-6 overflow-y-auto space-y-6 flex-1">
+          <div className="p-6 overflow-y-auto space-y-6 flex-1 flex flex-col min-h-0">
             {/* KPI Highlight Card */}
-            <div className="glass-card rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between">
+            <div className="glass-card rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between flex-shrink-0">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Global Stat Metric
@@ -195,10 +208,10 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
             {/* Upcoming Events View */}
             {metricType === 'upcoming' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Next Upcoming Previews
+                    Upcoming Events ({upcomingEventsList.length})
                   </h3>
                   <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
                     {upcomingEventsList.length} loaded
@@ -206,10 +219,12 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                 </div>
 
                 {upcomingEventsList.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-4 text-center">No upcoming events currently loaded.</p>
+                  <p className="text-xs text-slate-400 py-8 text-center flex-1 flex items-center justify-center">
+                    No upcoming events currently loaded.
+                  </p>
                 ) : (
-                  <div className="space-y-2.5">
-                    {upcomingEventsList.slice(0, 4).map((evt) => {
+                  <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
+                    {upcomingEventsList.map((evt) => {
                       const startDate = parseISO(evt.startTime);
                       return (
                         <Link
@@ -246,12 +261,12 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
 
             {/* Total RSVPs View */}
             {metricType === 'rsvps' && (
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex-shrink-0">
                   Community Response Breakdown
                 </h3>
 
-                <div className="space-y-3">
+                <div className="space-y-3 flex-1 overflow-y-auto pr-1 min-h-0">
                   {/* Going (Yes) */}
                   <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/60">
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1.5">
@@ -302,97 +317,126 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 text-[11px] text-slate-500 dark:text-slate-400">
-                  💡 Real-time engagement is tracked automatically when community members RSVP to events.
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/50 text-[11px] text-slate-500 dark:text-slate-400">
+                    💡 Real-time engagement is tracked automatically when community members RSVP to events.
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Categories View */}
             {metricType === 'categories' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     All System Tags ({tags.length})
                   </h3>
                   <span className="text-[11px] text-slate-400">Click to filter</span>
                 </div>
 
-                <div className="flex flex-wrap gap-2 max-h-72 overflow-y-auto p-1">
-                  {tags.map((t) => (
-                    <div
-                      key={t.id}
-                      style={{
-                        backgroundColor: `${t.colorHex}18`,
-                        color: t.colorHex,
-                        borderColor: `${t.colorHex}35`,
-                      }}
-                      className="group px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5"
-                    >
+                {tags.length > 4 && (
+                  <div className="relative flex-shrink-0">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search tags..."
+                      value={tagSearch}
+                      onChange={(e) => setTagSearch(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
+                    />
+                    {tagSearch && (
                       <button
                         type="button"
-                        onClick={() => {
-                          if (onFilterTag) {
-                            onFilterTag(t.name);
-                          }
-                          onClose();
-                        }}
-                        className="flex items-center gap-1.5 cursor-pointer hover:underline focus:outline-none"
+                        onClick={() => setTagSearch('')}
+                        aria-label="Clear tag search"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
                       >
-                        <span>#{t.name}</span>
-                        {t.eventCount !== undefined && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/60 dark:bg-slate-900/60">
-                            {t.eventCount}
-                          </span>
-                        )}
+                        <X className="w-3 h-3" />
                       </button>
+                    )}
+                  </div>
+                )}
 
-                      {(onEditTag || onDeleteTag) && (
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity ml-1">
-                          {onEditTag && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditTag(t);
-                              }}
-                              title={`Edit tag #${t.name}`}
-                              aria-label={`Edit tag ${t.name}`}
-                              className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                          )}
-                          {onDeleteTag && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteTag(t);
-                              }}
-                              title={`Delete tag #${t.name}`}
-                              aria-label={`Delete tag ${t.name}`}
-                              className="p-1 rounded-lg hover:bg-rose-500 hover:text-white transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      )}
+                <div className="flex flex-wrap content-start gap-2 overflow-y-auto pr-1 p-1 flex-1 min-h-0">
+                  {filteredTags.length === 0 ? (
+                    <div className="w-full text-center py-8 text-xs text-slate-400">
+                      {tagSearch ? `No tags match "${tagSearch}"` : 'No tags found.'}
                     </div>
-                  ))}
+                  ) : (
+                    filteredTags.map((t) => (
+                      <div
+                        key={t.id}
+                        style={{
+                          backgroundColor: `${t.colorHex}18`,
+                          color: t.colorHex,
+                          borderColor: `${t.colorHex}35`,
+                        }}
+                        className="group px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 hover:shadow-sm"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onFilterTag) {
+                              onFilterTag(t.name);
+                            }
+                            onClose();
+                          }}
+                          className="flex items-center gap-1.5 cursor-pointer hover:underline focus:outline-none"
+                        >
+                          <span>#{t.name}</span>
+                          {t.eventCount !== undefined && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/60 dark:bg-slate-900/60">
+                              {t.eventCount}
+                            </span>
+                          )}
+                        </button>
+
+                        {(onEditTag || onDeleteTag) && (
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity ml-1">
+                            {onEditTag && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditTag(t);
+                                }}
+                                title={`Edit tag #${t.name}`}
+                                aria-label={`Edit tag ${t.name}`}
+                                className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            {onDeleteTag && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteTag(t);
+                                }}
+                                title={`Delete tag #${t.name}`}
+                                aria-label={`Delete tag ${t.name}`}
+                                className="p-1 rounded-lg hover:bg-rose-500 hover:text-white transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
 
             {/* Past Events View */}
             {metricType === 'past' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Previously Concluded Events
+                    Previously Concluded Events ({pastEventsList.length})
                   </h3>
                   <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
                     {pastEventsList.length} loaded
@@ -400,10 +444,12 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                 </div>
 
                 {pastEventsList.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-4 text-center">No past events currently loaded.</p>
+                  <p className="text-xs text-slate-400 py-8 text-center flex-1 flex items-center justify-center">
+                    No past events currently loaded.
+                  </p>
                 ) : (
-                  <div className="space-y-2.5">
-                    {pastEventsList.slice(0, 4).map((evt) => {
+                  <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
+                    {pastEventsList.map((evt) => {
                       const startDate = parseISO(evt.startTime);
                       return (
                         <Link
@@ -440,7 +486,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
           </div>
 
           {/* Footer Action Bar */}
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between gap-3">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between gap-3 flex-shrink-0">
             {metricType === 'upcoming' && (
               <button
                 type="button"
