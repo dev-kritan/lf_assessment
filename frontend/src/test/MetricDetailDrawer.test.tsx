@@ -281,4 +281,79 @@ describe('MetricDetailDrawer Component', () => {
 
     expect(screen.getByText('Past Workshop Part 1')).toBeInTheDocument();
   });
+
+  it('displays scroll notification badge and clickable load more banner when hasMore is true', async () => {
+    const page1Event: EventItem = {
+      ...mockEvents[0],
+      id: 301,
+      title: 'Upcoming Conference 2026',
+      isPast: false,
+    };
+    const page2Event: EventItem = {
+      ...mockEvents[0],
+      id: 302,
+      title: 'Upcoming Conference Day 2',
+      isPast: false,
+    };
+
+    (eventsApi.getEvents as any)
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page1Event],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false,
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page2Event],
+        meta: {
+          page: 2,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPrevPage: true,
+        },
+      });
+
+    render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="upcoming"
+          metrics={{ ...mockMetrics, upcomingEvents: 2 }}
+          events={[page1Event]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Upcoming Conference 2026')).toBeInTheDocument();
+    });
+
+    // Check that "Scroll for more" notification pill is rendered
+    expect(screen.getByText(/Scroll for more/i)).toBeInTheDocument();
+
+    // Check that interactive load more banner is rendered
+    const loadMoreBtn = screen.getByRole('button', { name: /Scroll down to load more events/i });
+    expect(loadMoreBtn).toBeInTheDocument();
+
+    // Click the load more banner
+    fireEvent.click(loadMoreBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Upcoming Conference Day 2')).toBeInTheDocument();
+    });
+
+    // When all events are loaded (hasMore is false), end banner is shown
+    expect(screen.getByText(/All 2 events loaded/i)).toBeInTheDocument();
+  });
 });

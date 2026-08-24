@@ -15,7 +15,8 @@ import {
   Edit2,
   Trash2,
   Search,
-  Loader2
+  Loader2,
+  ChevronDown
 } from 'lucide-react';
 import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -328,9 +329,17 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Upcoming Schedule
                   </h3>
-                  <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                    {drawerEvents.length} of {metrics.upcomingEvents}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                      {drawerEvents.length} of {metrics.upcomingEvents}
+                    </span>
+                    {hasMore && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full animate-pulse border border-indigo-200 dark:border-indigo-800/60">
+                        <ChevronDown className="w-3 h-3 animate-bounce" />
+                        Scroll for more
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {isLoading && drawerEvents.length === 0 ? (
@@ -386,6 +395,30 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                         </Link>
                       );
                     })}
+
+                    {/* Scroll Cue / Load More Interactive Banner */}
+                    {hasMore && !isLoading && !isLoadingMore && (
+                      <button
+                        type="button"
+                        onClick={loadMore}
+                        className="w-full py-3 px-3.5 rounded-2xl border border-dashed border-indigo-300 dark:border-indigo-700/80 bg-gradient-to-r from-indigo-50/90 via-white to-indigo-50/90 dark:from-indigo-950/40 dark:via-slate-900 dark:to-indigo-950/40 hover:from-indigo-100 dark:hover:from-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center justify-between shadow-sm transition-all group cursor-pointer my-1"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:translate-y-0.5 transition-transform shadow-xs">
+                            <ChevronDown className="w-4 h-4 animate-bounce" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-bold text-xs text-slate-900 dark:text-white">Scroll down to load more events</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Or click here to load next batch</p>
+                          </div>
+                        </div>
+                        {metrics.upcomingEvents > drawerEvents.length && (
+                          <span className="text-[10px] font-bold bg-indigo-200/70 dark:bg-indigo-900/80 text-indigo-800 dark:text-indigo-200 px-2.5 py-1 rounded-full">
+                            +{metrics.upcomingEvents - drawerEvents.length} more
+                          </span>
+                        )}
+                      </button>
+                    )}
 
                     {/* Sentinel element for infinite scroll detection */}
                     <div ref={sentinelRef} className="h-2 w-full pointer-events-none" />
@@ -588,9 +621,17 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Past Events Archive
                   </h3>
-                  <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
-                    {drawerEvents.length} of {metrics.pastEvents}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
+                      {drawerEvents.length} of {metrics.pastEvents}
+                    </span>
+                    {hasMore && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/80 px-2 py-0.5 rounded-full animate-pulse border border-purple-200 dark:border-purple-800/60">
+                        <ChevronDown className="w-3 h-3 animate-bounce" />
+                        Scroll for more
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {isLoading && drawerEvents.length === 0 ? (
@@ -646,6 +687,30 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                         </Link>
                       );
                     })}
+
+                    {/* Scroll Cue / Load More Interactive Banner */}
+                    {hasMore && !isLoading && !isLoadingMore && (
+                      <button
+                        type="button"
+                        onClick={loadMore}
+                        className="w-full py-3 px-3.5 rounded-2xl border border-dashed border-purple-300 dark:border-purple-700/80 bg-gradient-to-r from-purple-50/90 via-white to-purple-50/90 dark:from-purple-950/40 dark:via-slate-900 dark:to-purple-950/40 hover:from-purple-100 dark:hover:from-purple-900/60 text-purple-700 dark:text-purple-300 text-xs font-semibold flex items-center justify-between shadow-sm transition-all group cursor-pointer my-1"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:translate-y-0.5 transition-transform shadow-xs">
+                            <ChevronDown className="w-4 h-4 animate-bounce" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-bold text-xs text-slate-900 dark:text-white">Scroll down to load more events</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Or click here to load next batch</p>
+                          </div>
+                        </div>
+                        {metrics.pastEvents > drawerEvents.length && (
+                          <span className="text-[10px] font-bold bg-purple-200/70 dark:bg-purple-900/80 text-purple-800 dark:text-purple-200 px-2.5 py-1 rounded-full">
+                            +{metrics.pastEvents - drawerEvents.length} more
+                          </span>
+                        )}
+                      </button>
+                    )}
 
                     {/* Sentinel element for infinite scroll detection */}
                     <div ref={sentinelRef} className="h-2 w-full pointer-events-none" />
