@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { MetricDetailDrawer } from '../components/MetricDetailDrawer';
+import { MetricDetailDrawer, clearDrawerEventsCache } from '../components/MetricDetailDrawer';
 import { EventItem, Tag } from '../types';
 import { eventsApi } from '../api/events.api';
 
@@ -49,6 +49,7 @@ describe('MetricDetailDrawer Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    clearDrawerEventsCache();
     (eventsApi.getEvents as any).mockResolvedValue({
       success: true,
       data: mockEvents,
@@ -355,5 +356,183 @@ describe('MetricDetailDrawer Component', () => {
 
     // When all events are loaded (hasMore is false), end banner is shown
     expect(screen.getByText(/All 2 events loaded/i)).toBeInTheDocument();
+  });
+
+  it('reuses cached events and does not trigger backend API request when closing and reopening sidebar', async () => {
+    const getEventsSpy = vi.mocked(eventsApi.getEvents);
+    getEventsSpy.mockClear();
+
+    getEventsSpy.mockResolvedValueOnce({
+      success: true,
+      data: mockEvents,
+      meta: {
+        page: 1,
+        limit: 10,
+        total: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+
+    const { unmount, rerender } = render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="upcoming"
+          metrics={mockMetrics}
+          events={mockEvents}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Initial open: API called 1 time
+    await waitFor(() => {
+      expect(screen.getByText('Upcoming Tech Summit')).toBeInTheDocument();
+    });
+    expect(getEventsSpy).toHaveBeenCalledTimes(1);
+
+    // Simulate closing sidebar
+    rerender(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={false}
+          onClose={vi.fn()}
+          metricType={null}
+          metrics={mockMetrics}
+          events={mockEvents}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Simulate reopening sidebar for upcoming events
+    rerender(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="upcoming"
+          metrics={mockMetrics}
+          events={mockEvents}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Verify events are immediately rendered from cache
+    expect(screen.getByText('Upcoming Tech Summit')).toBeInTheDocument();
+
+    // Verify NO additional backend API request was triggered!
+    expect(getEventsSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves all scrolled pages in cache when sidebar is closed and reopened for past events', async () => {
+    const getEventsSpy = vi.mocked(eventsApi.getEvents);
+    getEventsSpy.mockClear();
+
+    const page1PastEvent: EventItem = {
+      ...mockEvents[0],
+      id: 401,
+      title: 'Historical Hackathon 2024',
+      isPast: true,
+    };
+    const page2PastEvent: EventItem = {
+      ...mockEvents[0],
+      id: 402,
+      title: 'Historical Hackathon 2023',
+      isPast: true,
+    };
+
+    getEventsSpy
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page1PastEvent],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false,
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page2PastEvent],
+        meta: {
+          page: 2,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPrevPage: true,
+        },
+      });
+
+    const { rerender } = render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="past"
+          metrics={{ ...mockMetrics, pastEvents: 2 }}
+          events={[page1PastEvent]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Initial page loaded
+    await waitFor(() => {
+      expect(screen.getByText('Historical Hackathon 2024')).toBeInTheDocument();
+    });
+    expect(getEventsSpy).toHaveBeenCalledTimes(1);
+
+    // Load page 2
+    const loadMoreBtn = screen.getByRole('button', { name: /Scroll down to load more events/i });
+    fireEvent.click(loadMoreBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Historical Hackathon 2023')).toBeInTheDocument();
+    });
+    expect(getEventsSpy).toHaveBeenCalledTimes(2);
+
+    // Close sidebar
+    rerender(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={false}
+          onClose={vi.fn()}
+          metricType={null}
+          metrics={{ ...mockMetrics, pastEvents: 2 }}
+          events={[page1PastEvent]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Reopen sidebar
+    rerender(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="past"
+          metrics={{ ...mockMetrics, pastEvents: 2 }}
+          events={[page1PastEvent]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    // Both page 1 and page 2 events are retained from cache
+    expect(screen.getByText('Historical Hackathon 2024')).toBeInTheDocument();
+    expect(screen.getByText('Historical Hackathon 2023')).toBeInTheDocument();
+
+    // No new backend request was fired (still exactly 2)
+    expect(getEventsSpy).toHaveBeenCalledTimes(2);
   });
 });

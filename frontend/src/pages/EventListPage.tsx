@@ -19,6 +19,7 @@ import { StatCard } from "../components/StatCard";
 import {
   MetricDetailDrawer,
   MetricType,
+  clearDrawerEventsCache,
 } from "../components/MetricDetailDrawer";
 import { EventFormModal } from "../components/EventFormModal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -177,6 +178,7 @@ export const EventListPage: React.FC = () => {
       const res = await eventsApi.deleteEvent(eventToDelete.id);
       if (res.success) {
         success("Event deleted successfully");
+        clearDrawerEventsCache();
         setEventToDelete(null);
         fetchEvents();
         fetchTagsAndMetrics();
@@ -449,6 +451,7 @@ export const EventListPage: React.FC = () => {
         }}
         eventToEdit={eventToEdit}
         onSuccess={() => {
+          clearDrawerEventsCache();
           fetchEvents();
           fetchTagsAndMetrics();
         }}

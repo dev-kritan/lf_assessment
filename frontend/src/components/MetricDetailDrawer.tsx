@@ -25,6 +25,30 @@ import { eventsApi } from '../api/events.api';
 
 export type MetricType = 'upcoming' | 'rsvps' | 'categories' | 'past';
 
+export interface MetricEventsCacheEntry {
+  events: EventItem[];
+  page: number;
+  hasMore: boolean;
+}
+
+// Client-side cache store for drawer events across drawer open/close lifecycles
+const drawerEventsCache: {
+  upcoming?: MetricEventsCacheEntry;
+  past?: MetricEventsCacheEntry;
+} = {};
+
+/**
+ * Utility helper to clear the drawer events cache (e.g. when events are created/mutated or during testing)
+ */
+export const clearDrawerEventsCache = (timeframe?: 'upcoming' | 'past') => {
+  if (timeframe) {
+    delete drawerEventsCache[timeframe];
+  } else {
+    delete drawerEventsCache.upcoming;
+    delete drawerEventsCache.past;
+  }
+};
+
 interface MetricDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -89,22 +113,30 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     }
   }, [isOpen, metricType]);
 
-  // Initial fetch when upcoming or past drawer opens
+  // Initial fetch or cache restore when upcoming or past drawer opens
   useEffect(() => {
     if (!isOpen || (metricType !== 'upcoming' && metricType !== 'past')) {
-      setDrawerEvents([]);
-      setPage(1);
-      setHasMore(true);
-      setIsLoading(false);
-      setIsLoadingMore(false);
       return;
     }
 
+    // 1. Check Cache Hit
+    const cached = drawerEventsCache[metricType];
+    if (cached && cached.events.length > 0) {
+      setDrawerEvents(cached.events);
+      setPage(cached.page);
+      setHasMore(cached.hasMore);
+      setIsLoading(false);
+      setIsLoadingMore(false);
+      return; // Skip backend request
+    }
+
+    // 2. Cache Miss: Fetch initial page 1 from backend
     let isMounted = true;
     setIsLoading(true);
+    setDrawerEvents([]);
     setPage(1);
+    setHasMore(true);
 
-    // Fetch initial page 1 from backend
     eventsApi.getEvents({
       timeframe: metricType,
       page: 1,
@@ -115,8 +147,13 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       .then((res) => {
         if (!isMounted) return;
         if (res && res.data) {
-          setDrawerEvents(res.data);
           const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+          drawerEventsCache[metricType] = {
+            events: res.data,
+            page: 1,
+            hasMore: hasNext,
+          };
+          setDrawerEvents(res.data);
           setHasMore(hasNext);
         }
       })
@@ -127,6 +164,11 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
           const fallback = metricType === 'upcoming' 
             ? events.filter((e) => !e.isPast)
             : events.filter((e) => e.isPast);
+          drawerEventsCache[metricType] = {
+            events: fallback,
+            page: 1,
+            hasMore: false,
+          };
           setDrawerEvents(fallback);
           setHasMore(false);
         }
@@ -142,7 +184,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     };
   }, [isOpen, metricType, events]);
 
-  // Load more events callback for infinite scroll
+  // Load more events callback for infinite scroll with cache persistence
   const loadMore = useCallback(async () => {
     if (!isOpen || (metricType !== 'upcoming' && metricType !== 'past')) return;
     if (isLoading || isLoadingMore || !hasMore) return;
@@ -160,20 +202,35 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       });
 
       if (res && res.data) {
+        const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
         setDrawerEvents((prev) => {
           const existingIds = new Set(prev.map((e) => e.id));
           const newItems = res.data.filter((e) => !existingIds.has(e.id));
-          return [...prev, ...newItems];
+          const updated = [...prev, ...newItems];
+
+          // Persist appended pages in cache
+          drawerEventsCache[metricType] = {
+            events: updated,
+            page: nextPage,
+            hasMore: hasNext,
+          };
+
+          return updated;
         });
         setPage(nextPage);
-        const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
         setHasMore(hasNext);
       } else {
         setHasMore(false);
+        if (drawerEventsCache[metricType]) {
+          drawerEventsCache[metricType]!.hasMore = false;
+        }
       }
     } catch (err) {
       console.error('Failed to load more events:', err);
       setHasMore(false);
+      if (drawerEventsCache[metricType]) {
+        drawerEventsCache[metricType]!.hasMore = false;
+      }
     } finally {
       setIsLoadingMore(false);
     }
