@@ -1,9 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Edit3, Check, Loader2, Calendar, Globe, Lock, X, Info, Palette } from 'lucide-react';
-import { Tag, TagUsageData } from '../types';
-import { eventsApi } from '../api/events.api';
-import { useToast } from '../contexts/ToastContext';
-import { format } from 'date-fns';
+import React, { useState, useEffect } from "react";
+import {
+  Edit3,
+  Check,
+  Loader2,
+  Calendar,
+  Globe,
+  Lock,
+  X,
+  Info,
+  Palette,
+} from "lucide-react";
+import { Tag, TagUsageData } from "../types";
+import { eventsApi } from "../api/events.api";
+import { useToast } from "../contexts/ToastContext";
+import { format } from "date-fns";
+import {
+  PRESET_TAG_COLORS,
+  DEFAULT_TAG_COLOR,
+  VALIDATION_RULES,
+  REGEX_PATTERNS,
+} from "../constants";
 
 interface TagEditModalProps {
   isOpen: boolean;
@@ -12,29 +28,14 @@ interface TagEditModalProps {
   onSuccess: (updatedTag: Tag) => void;
 }
 
-const PRESET_COLORS = [
-  '#6366f1', // Indigo
-  '#3b82f6', // Blue
-  '#06b6d4', // Cyan
-  '#10b981', // Emerald
-  '#84cc16', // Lime
-  '#f59e0b', // Amber
-  '#f97316', // Orange
-  '#ef4444', // Red
-  '#ec4899', // Pink
-  '#8b5cf6', // Purple
-  '#d946ef', // Fuchsia
-  '#64748b', // Slate
-];
-
 export const TagEditModal: React.FC<TagEditModalProps> = ({
   isOpen,
   tag,
   onClose,
   onSuccess,
 }) => {
-  const [name, setName] = useState('');
-  const [colorHex, setColorHex] = useState('#6366f1');
+  const [name, setName] = useState("");
+  const [colorHex, setColorHex] = useState(DEFAULT_TAG_COLOR);
   const [usageData, setUsageData] = useState<TagUsageData | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +46,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
   useEffect(() => {
     if (isOpen && tag) {
       setName(tag.name);
-      setColorHex(tag.colorHex || '#6366f1');
+      setColorHex(tag.colorHex || DEFAULT_TAG_COLOR);
       setFieldError(null);
       setIsLoadingUsage(true);
 
@@ -68,26 +69,33 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
         });
     } else {
       setUsageData(null);
-      setName('');
+      setName("");
       setFieldError(null);
     }
   }, [isOpen, tag]);
 
   if (!isOpen || !tag) return null;
 
-  const eventCount = usageData ? usageData.eventCount : (tag.eventCount || 0);
+  const eventCount = usageData ? usageData.eventCount : tag.eventCount || 0;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed || trimmed.length < 2 || trimmed.length > 50) {
-      setFieldError('Tag name must be between 2 and 50 characters');
+    if (
+      !trimmed ||
+      trimmed.length < VALIDATION_RULES.MIN_TAG_LENGTH ||
+      trimmed.length > VALIDATION_RULES.MAX_TAG_LENGTH
+    ) {
+      setFieldError(
+        `Tag name must be between ${VALIDATION_RULES.MIN_TAG_LENGTH} and ${VALIDATION_RULES.MAX_TAG_LENGTH} characters`,
+      );
       return;
     }
 
-    const hexRegex = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
-    if (!hexRegex.test(colorHex.trim())) {
-      setFieldError('Please select or enter a valid hex color code (e.g. #6366f1)');
+    if (!REGEX_PATTERNS.HEX_COLOR.test(colorHex.trim())) {
+      setFieldError(
+        `Please select or enter a valid hex color code (e.g. ${DEFAULT_TAG_COLOR})`,
+      );
       return;
     }
 
@@ -106,7 +114,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
         onClose();
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error?.message || 'Failed to update tag';
+      const msg = err.response?.data?.error?.message || "Failed to update tag";
       setFieldError(msg);
       error(msg);
     } finally {
@@ -117,7 +125,6 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 overflow-hidden">
-        
         {/* Header */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
@@ -128,7 +135,10 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Edit Tag
                 <span
-                  style={{ backgroundColor: `${tag.colorHex}20`, color: tag.colorHex }}
+                  style={{
+                    backgroundColor: `${tag.colorHex}20`,
+                    color: tag.colorHex,
+                  }}
                   className="px-2 py-0.5 rounded-full text-xs font-semibold"
                 >
                   #{tag.name}
@@ -150,10 +160,11 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          
           {/* Live Preview Pill */}
           <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Live Tag Preview:</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Live Tag Preview:
+            </span>
             <span
               style={{
                 backgroundColor: `${colorHex}18`,
@@ -162,7 +173,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
               }}
               className="px-3.5 py-1 rounded-full text-xs font-bold border transition-all shadow-sm"
             >
-              #{name.trim() || 'preview'}
+              #{name.trim() || "preview"}
             </span>
           </div>
 
@@ -185,7 +196,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
 
           {/* Tag Color Picker & Swatches */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <Palette className="w-3.5 h-3.5 text-indigo-500" />
               Tag Theme Color
             </label>
@@ -208,7 +219,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
 
             {/* Quick Swatches */}
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {PRESET_COLORS.map((preset) => (
+              {PRESET_TAG_COLORS.map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -216,8 +227,8 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
                   style={{ backgroundColor: preset }}
                   className={`w-6 h-6 rounded-lg transition-transform hover:scale-110 flex items-center justify-center ${
                     colorHex.toLowerCase() === preset.toLowerCase()
-                      ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900 scale-110'
-                      : ''
+                      ? "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900 scale-110"
+                      : ""
                   }`}
                   aria-label={`Select color ${preset}`}
                 >
@@ -250,11 +261,17 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
                   <div>
                     {eventCount > 0 ? (
                       <p>
-                        This tag is linked to <strong className="font-bold underline">{eventCount} {eventCount === 1 ? 'event' : 'events'}</strong>.
-                        Editing will automatically update the tag name and color across all {eventCount} events and global filters.
+                        This tag is linked to{" "}
+                        <strong className="font-bold underline">
+                          {eventCount} {eventCount === 1 ? "event" : "events"}
+                        </strong>
+                        . Editing will automatically update the tag name and
+                        color across all {eventCount} events and global filters.
                       </p>
                     ) : (
-                      <p>This tag is not currently associated with any events.</p>
+                      <p>
+                        This tag is not currently associated with any events.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -276,7 +293,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
                           {evt.title}
                         </span>
                         <span className="text-[10px] text-slate-400 flex-shrink-0">
-                          {format(new Date(evt.startTime), 'MMM d')}
+                          {format(new Date(evt.startTime), "MMM d")}
                         </span>
                       </div>
                     ))}

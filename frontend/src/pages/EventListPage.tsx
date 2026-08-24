@@ -28,6 +28,7 @@ import { TagDeleteModal } from "../components/TagDeleteModal";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
+import { PAGINATION_LIMITS, APP_ROUTES } from "../constants";
 
 export const EventListPage: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -45,7 +46,7 @@ export const EventListPage: React.FC = () => {
 
   const [pagination, setPagination] = useState<PaginationMeta>({
     page: 1,
-    limit: 9,
+    limit: PAGINATION_LIMITS.EVENT_LIST_DEFAULT,
     total: 0,
     totalPages: 1,
     hasNextPage: false,

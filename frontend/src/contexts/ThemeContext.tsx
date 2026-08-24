@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { STORAGE_KEYS } from '../constants';
 
 export type Theme = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
@@ -23,7 +24,7 @@ const getSystemTheme = (): ResolvedTheme => {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
-      const saved = localStorage.getItem('theme') as Theme | null;
+      const saved = localStorage.getItem(STORAGE_KEYS.THEME) as Theme | null;
       if (saved && (saved === 'light' || saved === 'dark' || saved === 'system')) {
         return saved;
       }
@@ -70,7 +71,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     try {
-      localStorage.setItem('theme', theme);
+      localStorage.setItem(STORAGE_KEYS.THEME, theme);
     } catch {
       // ignore
     }

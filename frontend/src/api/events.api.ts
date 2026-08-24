@@ -1,14 +1,15 @@
 import apiClient from './client';
 import { EventItem, Tag, TagUsageData, ApiResponse, EventQueryParams } from '../types';
+import { API_ENDPOINTS } from '../constants';
 
 export const eventsApi = {
   async getEvents(params: EventQueryParams = {}) {
-    const response = await apiClient.get<ApiResponse<EventItem[]>>('/events', { params });
+    const response = await apiClient.get<ApiResponse<EventItem[]>>(API_ENDPOINTS.EVENTS.BASE, { params });
     return response.data;
   },
 
   async getEventById(id: number) {
-    const response = await apiClient.get<ApiResponse<EventItem>>(`/events/${id}`);
+    const response = await apiClient.get<ApiResponse<EventItem>>(API_ENDPOINTS.EVENTS.DETAIL(id));
     return response.data;
   },
 
@@ -24,7 +25,7 @@ export const eventsApi = {
     tag_ids?: number[];
     new_tags?: string[];
   }) {
-    const response = await apiClient.post<ApiResponse<EventItem>>('/events', data);
+    const response = await apiClient.post<ApiResponse<EventItem>>(API_ENDPOINTS.EVENTS.BASE, data);
     return response.data;
   },
 
@@ -43,12 +44,12 @@ export const eventsApi = {
       new_tags?: string[];
     }>
   ) {
-    const response = await apiClient.put<ApiResponse<EventItem>>(`/events/${id}`, data);
+    const response = await apiClient.put<ApiResponse<EventItem>>(API_ENDPOINTS.EVENTS.DETAIL(id), data);
     return response.data;
   },
 
   async deleteEvent(id: number) {
-    const response = await apiClient.delete<ApiResponse>(`/events/${id}`);
+    const response = await apiClient.delete<ApiResponse>(API_ENDPOINTS.EVENTS.DETAIL(id));
     return response.data;
   },
 
@@ -59,32 +60,32 @@ export const eventsApi = {
       pastEvents: number;
       totalRsvps: number;
       totalTags: number;
-    }>>('/events/metrics');
+    }>>(API_ENDPOINTS.EVENTS.METRICS);
     return response.data;
   },
 
   async getTags(params?: { event_type?: string; timeframe?: string; search?: string }) {
-    const response = await apiClient.get<ApiResponse<Tag[]>>('/tags', { params });
+    const response = await apiClient.get<ApiResponse<Tag[]>>(API_ENDPOINTS.TAGS.BASE, { params });
     return response.data;
   },
 
   async createTag(name: string, colorHex?: string) {
-    const response = await apiClient.post<ApiResponse<Tag>>('/tags', { name, colorHex });
+    const response = await apiClient.post<ApiResponse<Tag>>(API_ENDPOINTS.TAGS.BASE, { name, colorHex });
     return response.data;
   },
 
   async getTagUsage(id: number) {
-    const response = await apiClient.get<ApiResponse<TagUsageData>>(`/tags/${id}/usage`);
+    const response = await apiClient.get<ApiResponse<TagUsageData>>(API_ENDPOINTS.TAGS.USAGE(id));
     return response.data;
   },
 
   async updateTag(id: number, data: { name?: string; colorHex?: string }) {
-    const response = await apiClient.put<ApiResponse<Tag>>(`/tags/${id}`, data);
+    const response = await apiClient.put<ApiResponse<Tag>>(API_ENDPOINTS.TAGS.DETAIL(id), data);
     return response.data;
   },
 
   async deleteTag(id: number) {
-    const response = await apiClient.delete<ApiResponse<{ deletedTag: Tag; affectedEventsCount: number }>>(`/tags/${id}`);
+    const response = await apiClient.delete<ApiResponse<{ deletedTag: Tag; affectedEventsCount: number }>>(API_ENDPOINTS.TAGS.DETAIL(id));
     return response.data;
   },
 };

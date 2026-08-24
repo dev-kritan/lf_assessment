@@ -18,6 +18,8 @@ import { EventFormModal } from './components/EventFormModal';
 import { eventsApi } from './api/events.api';
 import { Heart, Calendar, Github, ShieldCheck, Database, Layers } from 'lucide-react';
 
+import { APP_ROUTES } from './constants';
+
 export const AppContent: React.FC = () => {
   const [isGlobalCreateModalOpen, setIsGlobalCreateModalOpen] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
@@ -38,15 +40,15 @@ export const AppContent: React.FC = () => {
 
       <div className="flex-1">
         <Routes>
-          <Route path="/" element={<EventListPage />} />
-          <Route path="/events/:id" element={<EventDetailPage />} />
-          <Route path="/create-event" element={<CreateEventPage />} />
-          <Route path="/my-events" element={<MyEventsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/bonus-challenge" element={<BonusChallengePage />} />
+          <Route path={APP_ROUTES.HOME} element={<EventListPage />} />
+          <Route path={APP_ROUTES.EVENT_DETAIL_PATTERN} element={<EventDetailPage />} />
+          <Route path={APP_ROUTES.CREATE_EVENT} element={<CreateEventPage />} />
+          <Route path={APP_ROUTES.MY_EVENTS} element={<MyEventsPage />} />
+          <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+          <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
+          <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
+          <Route path={APP_ROUTES.BONUS_CHALLENGE} element={<BonusChallengePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

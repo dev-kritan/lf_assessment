@@ -1,12 +1,13 @@
 import { Response, CookieOptions } from 'express';
 import { config } from '../config/env';
 
-// 15 minutes for access token, 7 days for refresh token
-const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000;
-const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+import { AUTH_COOKIES, TOKEN_DURATIONS } from '../constants';
 
-export const ACCESS_TOKEN_COOKIE = 'accessToken';
-export const REFRESH_TOKEN_COOKIE = 'refreshToken';
+const ACCESS_TOKEN_MAX_AGE = TOKEN_DURATIONS.ACCESS_TOKEN_MS;
+const REFRESH_TOKEN_MAX_AGE = TOKEN_DURATIONS.REFRESH_TOKEN_MS;
+
+export const ACCESS_TOKEN_COOKIE = AUTH_COOKIES.ACCESS_TOKEN;
+export const REFRESH_TOKEN_COOKIE = AUTH_COOKIES.REFRESH_TOKEN;
 
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,

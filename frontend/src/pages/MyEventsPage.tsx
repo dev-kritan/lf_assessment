@@ -10,6 +10,7 @@ import { Pagination } from '../components/Pagination';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { APP_ROUTES, PAGINATION_LIMITS } from '../constants';
 
 export const MyEventsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'created' | 'rsvps'>('created');
@@ -18,7 +19,7 @@ export const MyEventsPage: React.FC = () => {
   const [createdEvents, setCreatedEvents] = useState<EventItem[]>([]);
   const [createdMeta, setCreatedMeta] = useState<PaginationMeta>({
     page: 1,
-    limit: 6,
+    limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
     total: 0,
     totalPages: 1,
     hasNextPage: false,
@@ -30,7 +31,7 @@ export const MyEventsPage: React.FC = () => {
   const [rsvpEvents, setRsvpEvents] = useState<EventItem[]>([]);
   const [rsvpMeta, setRsvpMeta] = useState<PaginationMeta>({
     page: 1,
-    limit: 6,
+    limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
     total: 0,
     totalPages: 1,
     hasNextPage: false,
@@ -58,7 +59,7 @@ export const MyEventsPage: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate('/login?redirect=/my-events');
+      navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.MY_EVENTS)}`);
     }
   }, [isAuthenticated, authLoading, navigate]);
 

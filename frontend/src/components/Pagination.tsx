@@ -1,7 +1,8 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PaginationMeta } from '../types';
-import { CustomSelect, SelectOption } from './CustomSelect';
+import { CustomSelect } from './CustomSelect';
+import { PER_PAGE_OPTIONS } from '../constants';
 
 interface PaginationProps {
   meta: PaginationMeta;
@@ -12,12 +13,7 @@ interface PaginationProps {
 export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLimitChange }) => {
   const { page, totalPages, total, limit } = meta;
 
-  const limitOptions: SelectOption<number>[] = [
-    { value: 6, label: '6 / page' },
-    { value: 9, label: '9 / page' },
-    { value: 15, label: '15 / page' },
-    { value: 30, label: '30 / page' },
-  ];
+  const limitOptions = PER_PAGE_OPTIONS as unknown as { value: number; label: string }[];
 
   if (totalPages <= 1 && total <= limit) {
     return (

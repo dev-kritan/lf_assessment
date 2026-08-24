@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus, User, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { APP_ROUTES, VALIDATION_RULES, UI_TIMINGS } from '../constants';
 
 export const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -21,13 +22,13 @@ export const RegisterPage: React.FC = () => {
 
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
-  const from = redirectParam || (location.state as any)?.from?.pathname || '/';
+  const from = redirectParam || (location.state as any)?.from?.pathname || APP_ROUTES.HOME;
 
   useEffect(() => {
     // Auto-focus full name input after elements load
     const timer = setTimeout(() => {
       nameInputRef.current?.focus();
-    }, 50);
+    }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -42,16 +43,16 @@ export const RegisterPage: React.FC = () => {
     if (isLoading) return;
     setFormError('');
 
-    if (!name.trim() || name.trim().length < 2) {
-      setFormError('Name must be at least 2 characters long.');
+    if (!name.trim() || name.trim().length < VALIDATION_RULES.MIN_NAME_LENGTH) {
+      setFormError(`Name must be at least ${VALIDATION_RULES.MIN_NAME_LENGTH} characters long.`);
       return;
     }
     if (!email.trim()) {
       setFormError('Please enter a valid email address.');
       return;
     }
-    if (password.length < 6) {
-      setFormError('Password must be at least 6 characters long.');
+    if (password.length < VALIDATION_RULES.MIN_PASSWORD_LENGTH) {
+      setFormError(`Password must be at least ${VALIDATION_RULES.MIN_PASSWORD_LENGTH} characters long.`);
       return;
     }
     if (password !== confirmPassword) {
@@ -191,7 +192,7 @@ export const RegisterPage: React.FC = () => {
         <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-6">
           Already have an account?{' '}
           <Link
-            to={`/login${location.search}`}
+            to={`${APP_ROUTES.LOGIN}${location.search}`}
             className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             Sign In

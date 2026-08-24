@@ -4,6 +4,7 @@ import { EventItem, Tag } from '../types';
 import { eventsApi } from '../api/events.api';
 import { useToast } from '../contexts/ToastContext';
 import { format, parseISO } from 'date-fns';
+import { DEFAULT_ASSETS, VALIDATION_RULES, UI_TIMINGS } from '../constants';
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     if (isOpen) {
       const timer = setTimeout(() => {
         titleInputRef.current?.focus();
-      }, 50);
+      }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -115,7 +116,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setStartTime(format(tomorrow, "yyyy-MM-dd'T'HH:mm"));
       setEndTime(format(endTomorrow, "yyyy-MM-dd'T'HH:mm"));
       setCapacity('');
-      setBannerUrl('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&auto=format&fit=crop&q=80');
+      setBannerUrl(DEFAULT_ASSETS.EVENT_BANNER);
       setSelectedTagIds([]);
     }
     setFormErrors({});
@@ -172,11 +173,11 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 
   const validateForm = (): Record<string, string> => {
     const errors: Record<string, string> = {};
-    if (!title.trim() || title.length < 3) {
-      errors.title = 'Title must be at least 3 characters long.';
+    if (!title.trim() || title.length < VALIDATION_RULES.MIN_TITLE_LENGTH) {
+      errors.title = `Title must be at least ${VALIDATION_RULES.MIN_TITLE_LENGTH} characters long.`;
     }
-    if (!description.trim() || description.length < 10) {
-      errors.description = 'Description must be at least 10 characters long.';
+    if (!description.trim() || description.length < VALIDATION_RULES.MIN_DESCRIPTION_LENGTH) {
+      errors.description = `Description must be at least ${VALIDATION_RULES.MIN_DESCRIPTION_LENGTH} characters long.`;
     }
     if (!location.trim()) {
       errors.location = 'Location is required.';

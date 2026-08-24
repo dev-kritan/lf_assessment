@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { UI_TIMINGS } from '../constants';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -31,7 +32,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTimeout(() => {
       removeToast(id);
-    }, 4000);
+    }, UI_TIMINGS.TOAST_DURATION_MS);
   }, [removeToast]);
 
   const success = useCallback((msg: string) => addToast(msg, 'success'), [addToast]);

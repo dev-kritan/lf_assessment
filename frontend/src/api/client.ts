@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS, CUSTOM_EVENTS } from '../constants';
 
-export const API_BASE_URL = '/api/v1';
+export { API_BASE_URL };
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -37,9 +38,9 @@ apiClient.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes('/auth/login') &&
-      !originalRequest.url?.includes('/auth/register') &&
-      !originalRequest.url?.includes('/auth/refresh-token')
+      !originalRequest.url?.includes(API_ENDPOINTS.AUTH.LOGIN) &&
+      !originalRequest.url?.includes(API_ENDPOINTS.AUTH.REGISTER) &&
+      !originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -55,7 +56,7 @@ apiClient.interceptors.response.use(
       try {
         // Refresh token is sent automatically via HttpOnly cookie
         await axios.post(
-          `${API_BASE_URL}/auth/refresh-token`,
+          `${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
           {},
           { withCredentials: true }
         );
@@ -64,8 +65,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        localStorage.removeItem('user');
-        window.dispatchEvent(new Event('auth:logout'));
+        localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+        window.dispatchEvent(new Event(CUSTOM_EVENTS.AUTH_LOGOUT));
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

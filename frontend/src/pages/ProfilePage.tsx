@@ -16,6 +16,7 @@ import { authApi } from '../api/auth.api';
 import { TwoFactorModal } from '../components/TwoFactorModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Link } from 'react-router-dom';
+import { APP_ROUTES, getDicebearAvatarUrl } from '../constants';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshProfile } = useAuth();
@@ -32,7 +33,7 @@ export const ProfilePage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <p className="text-sm text-slate-500">Please sign in to view your profile and security settings.</p>
-        <Link to="/login?redirect=/profile" className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
+        <Link to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.PROFILE)}`} className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
           Sign In
         </Link>
       </div>
@@ -63,16 +64,15 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleRequestVerificationEmail = async () => {
-    if (user?.isEmailVerified || isRequestingEmail) return;
     try {
       setIsRequestingEmail(true);
       const res = await authApi.requestVerificationLink();
       if (res.success && res.data) {
         setVerificationUrl(res.data.verificationUrl);
-        success('Verification link generated!');
+        info('Verification link generated below. In production this would be sent via SMTP.');
       }
-    } catch {
-      error('Failed to generate verification link');
+    } catch (err: any) {
+      error(err.response?.data?.error?.message || 'Failed to generate verification link');
     } finally {
       setIsRequestingEmail(false);
     }
@@ -83,7 +83,7 @@ export const ProfilePage: React.FC = () => {
       {/* Profile Header Card */}
       <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg flex flex-col sm:flex-row items-center gap-6">
         <img
-          src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+          src={user.avatarUrl || getDicebearAvatarUrl(user.name)}
           alt={user.name}
           className="w-24 h-24 rounded-3xl object-cover ring-4 ring-indigo-500/20 shadow-lg"
         />

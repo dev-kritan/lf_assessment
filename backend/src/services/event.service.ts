@@ -1,5 +1,6 @@
 import db from '../config/knex';
 import { TagService } from './tag.service';
+import { DB_TABLES, ERROR_CODES, PAGINATION_DEFAULTS } from '../constants';
 
 export interface EventQueryParams {
   page?: number;
@@ -31,12 +32,12 @@ export interface CreateEventInput {
 
 export class EventService {
   static async getEvents(params: EventQueryParams, currentUserId?: number) {
-    const page = Math.max(1, Number(params.page || 1));
-    const limit = Math.min(100, Math.max(1, Number(params.limit || 9)));
+    const page = Math.max(1, Number(params.page || PAGINATION_DEFAULTS.PAGE));
+    const limit = Math.min(PAGINATION_DEFAULTS.MAX_LIMIT, Math.max(1, Number(params.limit || PAGINATION_DEFAULTS.LIMIT)));
     const offset = (page - 1) * limit;
 
-    const baseQuery = db('events')
-      .leftJoin('users', 'events.creator_id', 'users.id')
+    const baseQuery = db(DB_TABLES.EVENTS)
+      .leftJoin(DB_TABLES.USERS, 'events.creator_id', 'users.id')
       .select(
         'events.id',
         'events.title',
@@ -100,15 +101,15 @@ export class EventService {
     if (params.tag_id) {
       baseQuery.whereExists(function () {
         this.select('*')
-          .from('event_tags')
+          .from(DB_TABLES.EVENT_TAGS)
           .whereRaw('event_tags.event_id = events.id')
           .where('event_tags.tag_id', params.tag_id);
       });
     } else if (params.tag && params.tag.trim()) {
       baseQuery.whereExists(function () {
         this.select('*')
-          .from('event_tags')
-          .join('tags', 'event_tags.tag_id', 'tags.id')
+          .from(DB_TABLES.EVENT_TAGS)
+          .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
           .whereRaw('event_tags.event_id = events.id')
           .whereRaw('LOWER(tags.name) = ?', [params.tag!.trim().toLowerCase()]);
       });
@@ -118,7 +119,7 @@ export class EventService {
     if (params.my_rsvps && currentUserId) {
       baseQuery.whereExists(function () {
         const sub = this.select('*')
-          .from('rsvps')
+          .from(DB_TABLES.RSVPS)
           .whereRaw('rsvps.event_id = events.id')
           .where('rsvps.user_id', currentUserId);
         if (params.my_rsvps !== 'all') {
@@ -128,7 +129,7 @@ export class EventService {
     }
 
     // Count total before pagination
-    const countQuery = db('events')
+    const countQuery = db(DB_TABLES.EVENTS)
       .modify((qb) => {
         // Clone where conditions
         (baseQuery as any)._statements.forEach((st: any) => {
@@ -172,8 +173,8 @@ export class EventService {
 
     if (eventIds.length > 0) {
       // Fetch tags
-      const tags = await db('event_tags')
-        .join('tags', 'event_tags.tag_id', 'tags.id')
+      const tags = await db(DB_TABLES.EVENT_TAGS)
+        .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
         .whereIn('event_tags.event_id', eventIds)
         .select('event_tags.event_id', 'tags.id', 'tags.name', 'tags.color_hex');
 
@@ -188,7 +189,7 @@ export class EventService {
       });
 
       // Fetch RSVP counts
-      const rsvpCounts = await db('rsvps')
+      const rsvpCounts = await db(DB_TABLES.RSVPS)
         .whereIn('event_id', eventIds)
         .select('event_id', 'status')
         .count('* as count')
@@ -208,7 +209,7 @@ export class EventService {
 
       // Fetch current user's RSVP status if logged in
       if (currentUserId) {
-        const userRsvps = await db('rsvps')
+        const userRsvps = await db(DB_TABLES.RSVPS)
           .whereIn('event_id', eventIds)
           .where('user_id', currentUserId)
           .select('event_id', 'status');
@@ -268,8 +269,8 @@ export class EventService {
   }
 
   static async getEventById(id: number, currentUserId?: number) {
-    const event = await db('events')
-      .leftJoin('users', 'events.creator_id', 'users.id')
+    const event = await db(DB_TABLES.EVENTS)
+      .leftJoin(DB_TABLES.USERS, 'events.creator_id', 'users.id')
       .where('events.id', id)
       .select(
         'events.id',
@@ -294,7 +295,7 @@ export class EventService {
     if (!event) {
       const error: any = new Error('Event not found.');
       error.statusCode = 404;
-      error.code = 'EVENT_NOT_FOUND';
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
@@ -302,7 +303,7 @@ export class EventService {
     if (Boolean(event.is_true_private) && !currentUserId) {
       const error: any = new Error('This event is strictly private. Please sign in to view details.');
       error.statusCode = 403;
-      error.code = 'PRIVATE_EVENT_FORBIDDEN';
+      error.code = ERROR_CODES.PRIVATE_EVENT_FORBIDDEN;
       throw error;
     }
 
@@ -310,15 +311,15 @@ export class EventService {
     const isStandardPrivateGuest = event.event_type === 'private' && !currentUserId;
 
     // Fetch tags
-    const tags = await db('event_tags')
-      .join('tags', 'event_tags.tag_id', 'tags.id')
+    const tags = await db(DB_TABLES.EVENT_TAGS)
+      .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
       .where('event_tags.event_id', id)
       .select('tags.id', 'tags.name', 'tags.color_hex');
 
     // Fetch RSVP stats (only if not a standard private guest)
     const rsvpStats = { yes: 0, maybe: 0, no: 0, total: 0 };
     if (!isStandardPrivateGuest) {
-      const rsvpCounts = await db('rsvps')
+      const rsvpCounts = await db(DB_TABLES.RSVPS)
         .where('event_id', id)
         .select('status')
         .count('* as count')
@@ -336,8 +337,8 @@ export class EventService {
     // Fetch attendees list (users who RSVP'd yes/maybe) - only if not standard private guest
     let attendees: any[] = [];
     if (!isStandardPrivateGuest) {
-      attendees = await db('rsvps')
-        .join('users', 'rsvps.user_id', 'users.id')
+      attendees = await db(DB_TABLES.RSVPS)
+        .join(DB_TABLES.USERS, 'rsvps.user_id', 'users.id')
         .where('rsvps.event_id', id)
         .select(
           'users.id',
@@ -347,13 +348,13 @@ export class EventService {
           'rsvps.updated_at'
         )
         .orderBy('rsvps.updated_at', 'desc')
-        .limit(50);
+        .limit(PAGINATION_DEFAULTS.ATTENDEES_LIMIT);
     }
 
     // Current user's RSVP status
     let userRsvp = null;
     if (currentUserId) {
-      const rsvpRecord = await db('rsvps')
+      const rsvpRecord = await db(DB_TABLES.RSVPS)
         .where({ event_id: id, user_id: currentUserId })
         .first();
       if (rsvpRecord) {
@@ -415,7 +416,7 @@ export class EventService {
     const isTruePrivate = data.event_type === 'private' ? Boolean(data.is_true_private) : false;
 
     return await db.transaction(async (trx) => {
-      const [eventIdRaw] = await trx('events').insert({
+      const [eventIdRaw] = await trx(DB_TABLES.EVENTS).insert({
         creator_id: creatorId,
         title: data.title.trim(),
         description: data.description.trim(),
@@ -435,11 +436,11 @@ export class EventService {
           event_id: eventId,
           tag_id: tagId,
         }));
-        await trx('event_tags').insert(tagRows);
+        await trx(DB_TABLES.EVENT_TAGS).insert(tagRows);
       }
 
       // Creator automatically has RSVP 'yes'
-      await trx('rsvps').insert({
+      await trx(DB_TABLES.RSVPS).insert({
         event_id: eventId,
         user_id: creatorId,
         status: 'yes',
@@ -450,17 +451,18 @@ export class EventService {
   }
 
   static async updateEvent(id: number, data: Partial<CreateEventInput>, currentUserId: number) {
-    const existing = await db('events').where({ id }).first();
+    const existing = await db(DB_TABLES.EVENTS).where({ id }).first();
     if (!existing) {
       const error: any = new Error('Event not found.');
       error.statusCode = 404;
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
     if (Number(existing.creator_id) !== Number(currentUserId)) {
       const error: any = new Error('Forbidden: Only the event creator can edit this event.');
       error.statusCode = 403;
-      error.code = 'FORBIDDEN';
+      error.code = ERROR_CODES.FORBIDDEN;
       throw error;
     }
 
@@ -486,7 +488,7 @@ export class EventService {
 
     await db.transaction(async (trx) => {
       if (Object.keys(updateFields).length > 0) {
-        await trx('events').where({ id }).update(updateFields);
+        await trx(DB_TABLES.EVENTS).where({ id }).update(updateFields);
       }
 
       // If tag_ids or new_tags provided, update junction table
@@ -502,13 +504,13 @@ export class EventService {
           }
         }
 
-        await trx('event_tags').where({ event_id: id }).del();
+        await trx(DB_TABLES.EVENT_TAGS).where({ event_id: id }).del();
         if (finalTagIds.length > 0) {
           const tagRows = finalTagIds.map((tagId) => ({
             event_id: id,
             tag_id: tagId,
           }));
-          await trx('event_tags').insert(tagRows);
+          await trx(DB_TABLES.EVENT_TAGS).insert(tagRows);
         }
       }
     });
@@ -517,31 +519,32 @@ export class EventService {
   }
 
   static async deleteEvent(id: number, currentUserId: number) {
-    const existing = await db('events').where({ id }).first();
+    const existing = await db(DB_TABLES.EVENTS).where({ id }).first();
     if (!existing) {
       const error: any = new Error('Event not found.');
       error.statusCode = 404;
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
     if (Number(existing.creator_id) !== Number(currentUserId)) {
       const error: any = new Error('Forbidden: Only the event creator can delete this event.');
       error.statusCode = 403;
-      error.code = 'FORBIDDEN';
+      error.code = ERROR_CODES.FORBIDDEN;
       throw error;
     }
 
-    await db('events').where({ id }).del();
+    await db(DB_TABLES.EVENTS).where({ id }).del();
     return { message: 'Event successfully deleted.' };
   }
 
   static async getEventMetrics() {
     const now = new Date();
-    const [totalEvents] = await db('events').count('* as count');
-    const [upcomingEvents] = await db('events').where('start_time', '>=', now).count('* as count');
-    const [pastEvents] = await db('events').where('start_time', '<', now).count('* as count');
-    const [totalRsvps] = await db('rsvps').where('status', 'yes').count('* as count');
-    const [totalTags] = await db('tags').count('* as count');
+    const [totalEvents] = await db(DB_TABLES.EVENTS).count('* as count');
+    const [upcomingEvents] = await db(DB_TABLES.EVENTS).where('start_time', '>=', now).count('* as count');
+    const [pastEvents] = await db(DB_TABLES.EVENTS).where('start_time', '<', now).count('* as count');
+    const [totalRsvps] = await db(DB_TABLES.RSVPS).where('status', 'yes').count('* as count');
+    const [totalTags] = await db(DB_TABLES.TAGS).count('* as count');
 
     return {
       totalEvents: Number(totalEvents?.count || 0),

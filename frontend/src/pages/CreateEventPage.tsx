@@ -18,6 +18,7 @@ import { eventsApi } from '../api/events.api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { format } from 'date-fns';
+import { APP_ROUTES, DEFAULT_ASSETS, VALIDATION_RULES, UI_TIMINGS } from '../constants';
 
 export const CreateEventPage: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -32,7 +33,7 @@ export const CreateEventPage: React.FC = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [capacity, setCapacity] = useState<string>('');
-  const [bannerUrl, setBannerUrl] = useState('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&auto=format&fit=crop&q=80');
+  const [bannerUrl, setBannerUrl] = useState<string>(DEFAULT_ASSETS.EVENT_BANNER);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
@@ -43,7 +44,7 @@ export const CreateEventPage: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate('/login?redirect=/create-event');
+      navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`);
     }
   }, [isAuthenticated, authLoading, navigate]);
 
@@ -51,7 +52,7 @@ export const CreateEventPage: React.FC = () => {
     // Focus title input on mount
     const timer = setTimeout(() => {
       titleInputRef.current?.focus();
-    }, 50);
+    }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -114,11 +115,11 @@ export const CreateEventPage: React.FC = () => {
 
   const validateForm = (): Record<string, string> => {
     const errors: Record<string, string> = {};
-    if (!title.trim() || title.length < 3) {
-      errors.title = 'Title must be at least 3 characters long.';
+    if (!title.trim() || title.length < VALIDATION_RULES.MIN_TITLE_LENGTH) {
+      errors.title = `Title must be at least ${VALIDATION_RULES.MIN_TITLE_LENGTH} characters long.`;
     }
-    if (!description.trim() || description.length < 10) {
-      errors.description = 'Description must be at least 10 characters long.';
+    if (!description.trim() || description.length < VALIDATION_RULES.MIN_DESCRIPTION_LENGTH) {
+      errors.description = `Description must be at least ${VALIDATION_RULES.MIN_DESCRIPTION_LENGTH} characters long.`;
     }
     if (!location.trim()) {
       errors.location = 'Location is required.';
@@ -158,7 +159,7 @@ export const CreateEventPage: React.FC = () => {
             : targetElement.querySelector<HTMLElement>('input, textarea, select');
         focusable?.focus?.();
       }
-    }, 50);
+    }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,7 +189,7 @@ export const CreateEventPage: React.FC = () => {
       const res = await eventsApi.createEvent(payload);
       if (res.success) {
         success('Event created successfully!');
-        navigate(`/events/${res.data.id}`);
+        navigate(APP_ROUTES.EVENT_DETAIL(res.data.id));
       }
     } catch (err: any) {
       const message = err.response?.data?.error?.message || 'Failed to create event';

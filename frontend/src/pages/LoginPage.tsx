@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { APP_ROUTES, UI_TIMINGS } from "../constants";
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get("redirect");
-  const from = redirectParam || (location.state as any)?.from?.pathname || "/";
+  const from = redirectParam || (location.state as any)?.from?.pathname || APP_ROUTES.HOME;
 
   useEffect(() => {
     // Auto-focus email input (or 2FA code input) after elements load
@@ -39,7 +40,7 @@ export const LoginPage: React.FC = () => {
       } else {
         emailInputRef.current?.focus();
       }
-    }, 50);
+    }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
     return () => clearTimeout(timer);
   }, [requires2FA]);
 
@@ -259,7 +260,7 @@ export const LoginPage: React.FC = () => {
         <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-6">
           Don&apos;t have an account yet?{" "}
           <Link
-            to={`/register${location.search}`}
+            to={`${APP_ROUTES.REGISTER}${location.search}`}
             className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             Sign Up

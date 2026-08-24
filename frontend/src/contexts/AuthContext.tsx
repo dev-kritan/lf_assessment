@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { authApi } from '../api/auth.api';
+import { STORAGE_KEYS, CUSTOM_EVENTS } from '../constants';
 
 interface AuthContextType {
   user: User | null;
@@ -17,7 +18,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
+    const saved = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
     return saved ? JSON.parse(saved) : null;
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -27,14 +28,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await authApi.getProfile();
       if (res.success && res.data) {
         setUser(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(res.data));
       } else {
         setUser(null);
-        localStorage.removeItem('user');
+        localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
       }
     } catch {
       setUser(null);
-      localStorage.removeItem('user');
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     } finally {
       setIsLoading(false);
     }
@@ -45,11 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleLogoutEvent = () => {
       setUser(null);
-      localStorage.removeItem('user');
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     };
 
-    window.addEventListener('auth:logout', handleLogoutEvent);
-    return () => window.removeEventListener('auth:logout', handleLogoutEvent);
+    window.addEventListener(CUSTOM_EVENTS.AUTH_LOGOUT, handleLogoutEvent);
+    return () => window.removeEventListener(CUSTOM_EVENTS.AUTH_LOGOUT, handleLogoutEvent);
   }, [refreshProfile]);
 
   const login = async (email: string, password: string, twoFactorCode?: string) => {
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (res.data.user) {
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(res.data.user));
       setUser(res.data.user);
     }
     return { requiresTwoFactor: false };
@@ -68,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     const res = await authApi.register({ name, email, password });
     if (res.data.user) {
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(res.data.user));
       setUser(res.data.user);
     }
   };
@@ -79,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Continue cleanup even if API fails
     } finally {
-      localStorage.removeItem('user');
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
       setUser(null);
     }
   };

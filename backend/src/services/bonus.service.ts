@@ -1,9 +1,10 @@
 import db from '../config/knex';
+import { DB_TABLES } from '../constants';
 
 export class BonusService {
   static async getRawTables() {
-    const designations = await db('emp_designation_log').orderBy('txn_id', 'asc');
-    const allocations = await db('emp_allocation_log').orderBy('allocation_id', 'asc');
+    const designations = await db(DB_TABLES.EMP_DESIGNATION_LOG).orderBy('txn_id', 'asc');
+    const allocations = await db(DB_TABLES.EMP_ALLOCATION_LOG).orderBy('allocation_id', 'asc');
     return {
       empDesignationLog: designations,
       empAllocationLog: allocations,

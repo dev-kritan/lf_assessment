@@ -1,9 +1,18 @@
 import { z } from 'zod';
+import { VALIDATION_LIMITS, PAGINATION_DEFAULTS } from '../constants';
 
 export const baseEventSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters').max(255),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  location: z.string().min(2, 'Location is required').max(255),
+  title: z
+    .string()
+    .min(VALIDATION_LIMITS.EVENT_TITLE_MIN, `Title must be at least ${VALIDATION_LIMITS.EVENT_TITLE_MIN} characters`)
+    .max(VALIDATION_LIMITS.EVENT_TITLE_MAX),
+  description: z
+    .string()
+    .min(VALIDATION_LIMITS.EVENT_DESC_MIN, `Description must be at least ${VALIDATION_LIMITS.EVENT_DESC_MIN} characters`),
+  location: z
+    .string()
+    .min(VALIDATION_LIMITS.EVENT_LOC_MIN, 'Location is required')
+    .max(VALIDATION_LIMITS.EVENT_LOC_MAX),
   event_type: z.enum(['public', 'private'], {
     errorMap: () => ({ message: 'Event type must be either public or private' }),
   }),
@@ -21,7 +30,10 @@ export const baseEventSchema = z.object({
   capacity: z.number().int().positive().optional().nullable(),
   banner_url: z.string().url().optional().nullable().or(z.literal('')),
   tag_ids: z.array(z.number().int().positive()).optional().default([]),
-  new_tags: z.array(z.string().min(2).max(50)).optional().default([]),
+  new_tags: z
+    .array(z.string().min(VALIDATION_LIMITS.TAG_NAME_MIN).max(VALIDATION_LIMITS.TAG_NAME_MAX))
+    .optional()
+    .default([]),
 });
 
 export const createEventSchema = baseEventSchema.refine(
@@ -40,8 +52,13 @@ export const createEventSchema = baseEventSchema.refine(
 export const updateEventSchema = baseEventSchema.partial();
 
 export const queryEventsSchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(9),
+  page: z.coerce.number().int().positive().default(PAGINATION_DEFAULTS.PAGE),
+  limit: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(PAGINATION_DEFAULTS.MAX_LIMIT)
+    .default(PAGINATION_DEFAULTS.LIMIT),
   search: z.string().optional().default(''),
   tag: z.string().optional(),
   tag_id: z.coerce.number().int().positive().optional(),

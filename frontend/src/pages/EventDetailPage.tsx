@@ -24,6 +24,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { format, parseISO } from 'date-fns';
 import { TagsPopover } from '../components/TagsPopover';
+import { APP_ROUTES, DEFAULT_ASSETS, getDicebearAvatarUrl } from '../constants';
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +72,7 @@ export const EventDetailPage: React.FC = () => {
       const res = await eventsApi.deleteEvent(event.id);
       if (res.success) {
         success('Event deleted successfully');
-        navigate('/');
+        navigate(APP_ROUTES.HOME);
       }
     } catch (err: any) {
       error(err.response?.data?.error?.message || 'Failed to delete event');
@@ -101,14 +102,14 @@ export const EventDetailPage: React.FC = () => {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
-            to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+            to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
             className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <LogIn className="w-4 h-4" />
             Sign In to View
           </Link>
           <Link
-            to="/"
+            to={APP_ROUTES.HOME}
             className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
           >
             Browse Public Events
@@ -123,7 +124,7 @@ export const EventDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Event Not Found</h2>
         <p className="text-slate-500 mt-2 mb-6">The event you are looking for does not exist or has been removed.</p>
-        <Link to="/" className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm">
+        <Link to={APP_ROUTES.HOME} className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm">
           Return to Events
         </Link>
       </div>
@@ -138,7 +139,7 @@ export const EventDetailPage: React.FC = () => {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20">
       {/* Back Button */}
       <Link
-        to="/"
+        to={APP_ROUTES.HOME}
         className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -149,7 +150,7 @@ export const EventDetailPage: React.FC = () => {
       <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-200/80 dark:border-slate-800">
         <div className="relative h-72 sm:h-96 w-full">
           <img
-            src={event.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80'}
+            src={event.bannerUrl || DEFAULT_ASSETS.EVENT_BANNER}
             alt={event.title}
             className="w-full h-full object-cover"
           />
@@ -446,7 +447,7 @@ export const EventDetailPage: React.FC = () => {
                           className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
                         >
                           <img
-                            src={attendee.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${attendee.name}`}
+                            src={attendee.avatarUrl || getDicebearAvatarUrl(attendee.name)}
                             alt={attendee.name}
                             className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 flex-shrink-0"
                           />
@@ -506,7 +507,7 @@ export const EventDetailPage: React.FC = () => {
               </p>
 
               <Link
-                to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
                 className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <LogIn className="w-3.5 h-3.5" />
@@ -520,7 +521,7 @@ export const EventDetailPage: React.FC = () => {
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Event Organizer</h3>
             <div className="flex items-center gap-3">
               <img
-                src={event.creator.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.creator.name}`}
+                src={event.creator.avatarUrl || getDicebearAvatarUrl(event.creator.name)}
                 alt={event.creator.name}
                 className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-500/20"
               />

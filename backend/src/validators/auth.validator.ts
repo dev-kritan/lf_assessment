@@ -1,12 +1,16 @@
 import { z } from 'zod';
+import { VALIDATION_LIMITS } from '../constants';
 
 export const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  name: z
+    .string()
+    .min(VALIDATION_LIMITS.USER_NAME_MIN, `Name must be at least ${VALIDATION_LIMITS.USER_NAME_MIN} characters`)
+    .max(VALIDATION_LIMITS.USER_NAME_MAX),
   email: z.string().email('Please enter a valid email address').toLowerCase(),
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters')
-    .max(100),
+    .min(VALIDATION_LIMITS.PASSWORD_MIN, `Password must be at least ${VALIDATION_LIMITS.PASSWORD_MIN} characters`)
+    .max(VALIDATION_LIMITS.PASSWORD_MAX),
 });
 
 export const loginSchema = z.object({
@@ -20,7 +24,10 @@ export const refreshTokenSchema = z.object({
 });
 
 export const twoFactorVerifySchema = z.object({
-  token: z.string().min(6, '2FA token must be 6 digits').max(6),
+  token: z
+    .string()
+    .min(VALIDATION_LIMITS.TOTP_CODE_LENGTH, `2FA token must be ${VALIDATION_LIMITS.TOTP_CODE_LENGTH} digits`)
+    .max(VALIDATION_LIMITS.TOTP_CODE_LENGTH),
 });
 
 export const emailVerifySchema = z.object({

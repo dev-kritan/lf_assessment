@@ -22,6 +22,7 @@ import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { eventsApi } from '../api/events.api';
+import { PAGINATION_LIMITS, APP_ROUTES } from '../constants';
 
 export type MetricType = 'upcoming' | 'rsvps' | 'categories' | 'past';
 
@@ -81,17 +82,20 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   onEditTag,
   onDeleteTag,
 }) => {
+  const [tagSearch, setTagSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'details' | 'list'>('details');
+
+  // Dynamic server-side pagination and infinite scroll state for upcoming/past drawer lists
+  const [drawerEvents, setDrawerEvents] = useState<EventItem[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [tagSearch, setTagSearch] = useState('');
-
-  // Pagination & infinite scroll state for upcoming/past events
-  const [drawerEvents, setDrawerEvents] = useState<EventItem[]>([]);
-  const [serverTotal, setServerTotal] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -115,13 +119,13 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     }
   }, [isOpen, metricType]);
 
-  // Initial fetch or cache restore when upcoming or past drawer opens
+  // Sync / fetch metric events when drawer opens for 'upcoming' or 'past'
   useEffect(() => {
     if (!isOpen || (metricType !== 'upcoming' && metricType !== 'past')) {
       return;
     }
 
-    // 1. Check Cache Hit
+    // Check if we already have valid cached data for this metric timeframe
     const cached = drawerEventsCache[metricType];
     if (cached && cached.events.length > 0) {
       setDrawerEvents(cached.events);
@@ -129,11 +133,9 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       setHasMore(cached.hasMore);
       setServerTotal(cached.total ?? null);
       setIsLoading(false);
-      setIsLoadingMore(false);
-      return; // Skip backend request
+      return;
     }
 
-    // 2. Cache Miss: Fetch initial page 1 from backend
     let isMounted = true;
     setIsLoading(true);
     setDrawerEvents([]);
@@ -144,14 +146,14 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     eventsApi.getEvents({
       timeframe: metricType,
       page: 1,
-      limit: 10,
+      limit: PAGINATION_LIMITS.METRIC_DRAWER_DEFAULT,
       sort_by: 'date',
       sort_order: metricType === 'upcoming' ? 'asc' : 'desc',
     })
       .then((res) => {
         if (!isMounted) return;
         if (res && res.data) {
-          const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+          const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= PAGINATION_LIMITS.METRIC_DRAWER_DEFAULT;
           const total = res.meta ? res.meta.total : undefined;
           drawerEventsCache[metricType] = {
             events: res.data,
@@ -205,13 +207,13 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       const res = await eventsApi.getEvents({
         timeframe: metricType,
         page: nextPage,
-        limit: 10,
+        limit: PAGINATION_LIMITS.METRIC_DRAWER_DEFAULT,
         sort_by: 'date',
         sort_order: metricType === 'upcoming' ? 'asc' : 'desc',
       });
 
       if (res && res.data) {
-        const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+        const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= PAGINATION_LIMITS.METRIC_DRAWER_DEFAULT;
         const total = res.meta ? res.meta.total : undefined;
         setDrawerEvents((prev) => {
           const existingIds = new Set(prev.map((e) => e.id));
@@ -457,7 +459,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                       return (
                         <Link
                           key={evt.id}
-                          to={`/events/${evt.id}`}
+                          to={APP_ROUTES.EVENT_DETAIL(evt.id)}
                           onClick={onClose}
                           className="group block p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-indigo-500/40 bg-slate-50/40 dark:bg-slate-950/40 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
                         >
@@ -751,7 +753,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                       return (
                         <Link
                           key={evt.id}
-                          to={`/events/${evt.id}`}
+                          to={APP_ROUTES.EVENT_DETAIL(evt.id)}
                           onClick={onClose}
                           className="group block p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-purple-500/40 bg-slate-50/40 dark:bg-slate-950/40 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
                         >

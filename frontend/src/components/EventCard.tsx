@@ -15,6 +15,7 @@ import { format, parseISO } from 'date-fns';
 
 import { TagsPopover } from './TagsPopover';
 import { AuthContext } from '../contexts/AuthContext';
+import { DEFAULT_ASSETS, getDicebearAvatarUrl, APP_ROUTES } from '../constants';
 
 interface EventCardProps {
   event: EventItem;
@@ -43,7 +44,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* Banner / Header Visual */}
       <div className="relative h-48 w-full overflow-hidden bg-slate-800">
         <img
-          src={event.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80'}
+          src={event.bannerUrl || DEFAULT_ASSETS.EVENT_CARD_BANNER}
           alt={event.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -61,30 +62,25 @@ export const EventCard: React.FC<EventCardProps> = ({
             }`}
           >
             {event.eventType === 'public' ? (
-              <Globe className="w-3.5 h-3.5 text-emerald-100" />
+              <Globe className="w-3.5 h-3.5" />
             ) : (
-              <Lock className="w-3.5 h-3.5 text-amber-300" />
+              <Lock className="w-3.5 h-3.5" />
             )}
-            <span>
-              {event.eventType === 'public'
-                ? 'Public'
-                : event.isTruePrivate
-                ? 'True Private'
-                : 'Private'}
-            </span>
+            {event.eventType === 'public' ? 'Public' : event.isTruePrivate ? 'True Private' : 'Private'}
           </span>
 
           {isPast && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-900/80 text-slate-300 backdrop-blur-md">
-              <Clock className="w-3 h-3" /> Past
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/80 backdrop-blur-md text-white border border-amber-400/30 shadow-md">
+              <Clock className="w-3 h-3" />
+              Past
             </span>
           )}
 
           {event.userRsvp && (
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
                 event.userRsvp === 'yes'
-                  ? 'bg-emerald-600/90 text-white'
+                  ? 'bg-indigo-600/90 text-white'
                   : event.userRsvp === 'maybe'
                   ? 'bg-amber-600/90 text-white'
                   : 'bg-rose-600/90 text-white'
@@ -129,7 +125,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           </div>
 
           {/* Title */}
-          <Link to={`/events/${event.id}`}>
+          <Link to={APP_ROUTES.EVENT_DETAIL(event.id)}>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
               {event.title}
             </h3>
@@ -140,13 +136,14 @@ export const EventCard: React.FC<EventCardProps> = ({
             {event.description}
           </p>
 
-          {/* Meta Details (Time & Location) */}
-          <div className="mt-4 space-y-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2 truncate">
+          {/* Meta Info */}
+          <div className="mt-4 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-              <span>{format(startDate, 'MMM dd, yyyy • h:mm a')}</span>
+              <span>
+                {format(startDate, 'EEE, MMM d, yyyy • h:mm a')}
+              </span>
             </div>
-
             <div className="flex items-center gap-2 truncate">
               <MapPin className="w-4 h-4 text-rose-500 flex-shrink-0" />
               <span className="truncate">{event.location}</span>
@@ -158,7 +155,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img
-              src={event.creator.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.creator.name}`}
+              src={event.creator.avatarUrl || getDicebearAvatarUrl(event.creator.name)}
               alt={event.creator.name}
               className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700"
             />

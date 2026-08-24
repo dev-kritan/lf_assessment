@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { authApi } from '../api/auth.api';
 import { useAuth } from '../contexts/AuthContext';
+import { APP_ROUTES } from '../constants';
 
 export const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -58,7 +59,7 @@ export const VerifyEmailPage: React.FC = () => {
             </p>
             <div className="pt-4">
               <Link
-                to="/"
+                to={APP_ROUTES.HOME}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition-all"
               >
                 Go to Events Dashboard <ArrowRight className="w-4 h-4" />
@@ -76,7 +77,7 @@ export const VerifyEmailPage: React.FC = () => {
             <p className="text-xs text-slate-600 dark:text-slate-300">{errorMessage}</p>
             <div className="pt-4">
               <Link
-                to="/profile"
+                to={APP_ROUTES.PROFILE}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 text-white font-bold text-sm shadow-md hover:bg-slate-700 transition-all"
               >
                 Back to Profile

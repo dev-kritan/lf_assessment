@@ -8,6 +8,8 @@ import { errorHandler } from './middlewares/error.middleware';
 import { setupSwagger } from './config/swagger';
 import apiRouter from './routes';
 
+import { ERROR_CODES, VALIDATION_LIMITS } from './constants';
+
 export function createApp(): Express {
   const app = express();
 
@@ -23,8 +25,8 @@ export function createApp(): Express {
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
 
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(express.json({ limit: VALIDATION_LIMITS.MAX_BODY_LIMIT }));
+  app.use(express.urlencoded({ extended: true, limit: VALIDATION_LIMITS.MAX_BODY_LIMIT }));
   app.use(cookieParser(config.cookieSecret));
 
   // Request logger (Morgan + Winston)
@@ -44,7 +46,7 @@ export function createApp(): Express {
       success: false,
       error: {
         message: `Endpoint ${req.method} ${req.originalUrl} not found. Refer to /api-docs for documentation.`,
-        code: 'ROUTE_NOT_FOUND',
+        code: ERROR_CODES.ROUTE_NOT_FOUND,
       },
     });
   });
