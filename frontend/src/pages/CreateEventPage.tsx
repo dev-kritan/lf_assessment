@@ -39,12 +39,21 @@ export const CreateEventPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const titleInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate('/login?redirect=/create-event');
     }
   }, [isAuthenticated, authLoading, navigate]);
+
+  useEffect(() => {
+    // Focus title input on mount
+    const timer = setTimeout(() => {
+      titleInputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Default to tomorrow 10:00 AM
@@ -233,6 +242,7 @@ export const CreateEventPage: React.FC = () => {
               Event Title *
             </label>
             <input
+              ref={titleInputRef}
               type="text"
               name="title"
               value={title}

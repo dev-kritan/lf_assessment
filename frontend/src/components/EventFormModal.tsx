@@ -24,6 +24,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 }) => {
   const { success, error } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +41,31 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // Auto-focus Event Title input when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -244,8 +270,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-4 sm:my-8">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-4 sm:my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -267,6 +299,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               Event Title *
             </label>
             <input
+              ref={titleInputRef}
               type="text"
               name="title"
               value={title}

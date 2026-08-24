@@ -109,4 +109,42 @@ describe('EventFormModal Component', () => {
     const tagButton = screen.getByText('#Hello');
     expect(tagButton).toHaveStyle({ color: 'rgb(255, 255, 255)' });
   });
+
+  it('auto-focuses the event title input and closes when clicking outside or pressing Escape', async () => {
+    const onCloseMock = vi.fn();
+
+    vi.mocked(eventsApi.getTags).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+
+    render(
+      <ToastProvider>
+        <EventFormModal
+          isOpen={true}
+          onClose={onCloseMock}
+          onSuccess={vi.fn()}
+        />
+      </ToastProvider>
+    );
+
+    const titleInput = screen.getByPlaceholderText(/NextGen Web & AI Conference/i);
+    expect(titleInput).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(titleInput);
+    });
+
+    // Test Escape key closes modal
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCloseMock).toHaveBeenCalledTimes(1);
+
+    // Test clicking on outer backdrop closes modal
+    const backdrop = titleInput.closest('.fixed.inset-0');
+    expect(backdrop).toBeInTheDocument();
+    if (backdrop) {
+      fireEvent.click(backdrop);
+      expect(onCloseMock).toHaveBeenCalledTimes(2);
+    }
+  });
 });
