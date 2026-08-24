@@ -1,8 +1,15 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { MetricDetailDrawer } from '../components/MetricDetailDrawer';
 import { EventItem, Tag } from '../types';
+import { eventsApi } from '../api/events.api';
+
+vi.mock('../api/events.api', () => ({
+  eventsApi: {
+    getEvents: vi.fn(),
+  },
+}));
 
 describe('MetricDetailDrawer Component', () => {
   const mockMetrics = {
@@ -40,7 +47,23 @@ describe('MetricDetailDrawer Component', () => {
     },
   ];
 
-  it('renders upcoming events detail and triggers onFilterTimeframe when action clicked', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (eventsApi.getEvents as any).mockResolvedValue({
+      success: true,
+      data: mockEvents,
+      meta: {
+        page: 1,
+        limit: 10,
+        total: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+  });
+
+  it('renders upcoming events detail and triggers onFilterTimeframe when action clicked', async () => {
     const onClose = vi.fn();
     const onFilterTimeframe = vi.fn();
 
@@ -59,7 +82,9 @@ describe('MetricDetailDrawer Component', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Upcoming Events' })).toBeInTheDocument();
-    expect(screen.getByText('Upcoming Tech Summit')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Upcoming Tech Summit')).toBeInTheDocument();
+    });
     expect(screen.getByText('7 Scheduled')).toBeInTheDocument();
 
     const filterBtn = screen.getByRole('button', { name: /filter by upcoming events/i });
@@ -181,5 +206,79 @@ describe('MetricDetailDrawer Component', () => {
     const deleteBtn = screen.getByTitle('Delete tag #Design');
     fireEvent.click(deleteBtn);
     expect(onDeleteTag).toHaveBeenCalledWith(multipleTags[1]);
+  });
+
+  it('fetches and appends next page when scrolling past events list', async () => {
+    const page1Event: EventItem = {
+      ...mockEvents[0],
+      id: 201,
+      title: 'Past Workshop Part 1',
+      isPast: true,
+    };
+    const page2Event: EventItem = {
+      ...mockEvents[0],
+      id: 202,
+      title: 'Past Workshop Part 2',
+      isPast: true,
+    };
+
+    (eventsApi.getEvents as any)
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page1Event],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false,
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: [page2Event],
+        meta: {
+          page: 2,
+          limit: 10,
+          total: 2,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPrevPage: true,
+        },
+      });
+
+    render(
+      <BrowserRouter>
+        <MetricDetailDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          metricType="past"
+          metrics={mockMetrics}
+          events={[page1Event]}
+          tags={mockTags}
+        />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Past Workshop Part 1')).toBeInTheDocument();
+    });
+
+    const scrollContainer = screen.getByText('Past Workshop Part 1').closest('div[class*="overflow-y-auto"]');
+    expect(scrollContainer).toBeInTheDocument();
+
+    if (scrollContainer) {
+      Object.defineProperty(scrollContainer, 'scrollHeight', { value: 550, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollTop', { value: 500, configurable: true });
+      fireEvent.scroll(scrollContainer);
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Past Workshop Part 2')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Past Workshop Part 1')).toBeInTheDocument();
   });
 });

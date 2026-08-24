@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { 
   X, 
   Calendar, 
@@ -14,11 +14,13 @@ import {
   ExternalLink,
   Edit2,
   Trash2,
-  Search
+  Search,
+  Loader2
 } from 'lucide-react';
 import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { eventsApi } from '../api/events.api';
 
 export type MetricType = 'upcoming' | 'rsvps' | 'categories' | 'past';
 
@@ -54,7 +56,15 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   onDeleteTag,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [tagSearch, setTagSearch] = useState('');
+
+  // Pagination & infinite scroll state for upcoming/past events
+  const [drawerEvents, setDrawerEvents] = useState<EventItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -78,11 +88,116 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
     }
   }, [isOpen, metricType]);
 
-  if (!isOpen || !metricType) return null;
+  // Initial fetch when upcoming or past drawer opens
+  useEffect(() => {
+    if (!isOpen || (metricType !== 'upcoming' && metricType !== 'past')) {
+      setDrawerEvents([]);
+      setPage(1);
+      setHasMore(true);
+      setIsLoading(false);
+      setIsLoadingMore(false);
+      return;
+    }
 
-  // Derive metrics & previews
-  const upcomingEventsList = events.filter((e) => !e.isPast);
-  const pastEventsList = events.filter((e) => e.isPast);
+    let isMounted = true;
+    setIsLoading(true);
+    setPage(1);
+
+    // Fetch initial page 1 from backend
+    eventsApi.getEvents({
+      timeframe: metricType,
+      page: 1,
+      limit: 10,
+      sort_by: 'date',
+      sort_order: metricType === 'upcoming' ? 'asc' : 'desc',
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        if (res && res.data) {
+          setDrawerEvents(res.data);
+          const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+          setHasMore(hasNext);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load metric events:', err);
+        // Fallback to locally passed events if API request fails
+        if (isMounted) {
+          const fallback = metricType === 'upcoming' 
+            ? events.filter((e) => !e.isPast)
+            : events.filter((e) => e.isPast);
+          setDrawerEvents(fallback);
+          setHasMore(false);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, metricType, events]);
+
+  // Load more events callback for infinite scroll
+  const loadMore = useCallback(async () => {
+    if (!isOpen || (metricType !== 'upcoming' && metricType !== 'past')) return;
+    if (isLoading || isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const res = await eventsApi.getEvents({
+        timeframe: metricType,
+        page: nextPage,
+        limit: 10,
+        sort_by: 'date',
+        sort_order: metricType === 'upcoming' ? 'asc' : 'desc',
+      });
+
+      if (res && res.data) {
+        setDrawerEvents((prev) => {
+          const existingIds = new Set(prev.map((e) => e.id));
+          const newItems = res.data.filter((e) => !existingIds.has(e.id));
+          return [...prev, ...newItems];
+        });
+        setPage(nextPage);
+        const hasNext = res.meta ? res.meta.hasNextPage : res.data.length >= 10;
+        setHasMore(hasNext);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more events:', err);
+      setHasMore(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isOpen, metricType, isLoading, isLoadingMore, hasMore, page]);
+
+  // IntersectionObserver to auto-fetch next page on scrolling near bottom
+  useEffect(() => {
+    if (!hasMore || isLoading || isLoadingMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '80px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, isLoadingMore, loadMore]);
+
+  if (!isOpen || !metricType) return null;
 
   // Filter tags based on tagSearch
   const filteredTags = tagSearch.trim()
@@ -206,25 +321,42 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
               </span>
             </div>
 
-            {/* Upcoming Events View */}
+            {/* Upcoming Events View with Infinite Scroll */}
             {metricType === 'upcoming' && (
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Upcoming Events ({upcomingEventsList.length})
+                    Upcoming Schedule
                   </h3>
                   <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                    {upcomingEventsList.length} loaded
+                    {drawerEvents.length} of {metrics.upcomingEvents}
                   </span>
                 </div>
 
-                {upcomingEventsList.length === 0 ? (
+                {isLoading && drawerEvents.length === 0 ? (
+                  <div className="space-y-3 py-2 flex-1">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 animate-pulse space-y-2">
+                        <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                        <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : drawerEvents.length === 0 ? (
                   <p className="text-xs text-slate-400 py-8 text-center flex-1 flex items-center justify-center">
                     No upcoming events currently loaded.
                   </p>
                 ) : (
-                  <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
-                    {upcomingEventsList.map((evt) => {
+                  <div 
+                    className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0"
+                    onScroll={(e) => {
+                      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                      if (scrollHeight - scrollTop - clientHeight < 60 && hasMore && !isLoadingMore && !isLoading) {
+                        loadMore();
+                      }
+                    }}
+                  >
+                    {drawerEvents.map((evt) => {
                       const startDate = parseISO(evt.startTime);
                       return (
                         <Link
@@ -254,6 +386,24 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                         </Link>
                       );
                     })}
+
+                    {/* Sentinel element for infinite scroll detection */}
+                    <div ref={sentinelRef} className="h-2 w-full pointer-events-none" />
+
+                    {/* Loading More Spinner */}
+                    {isLoadingMore && (
+                      <div className="py-3 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
+                        <span>Loading more upcoming events...</span>
+                      </div>
+                    )}
+
+                    {/* End of list banner */}
+                    {!hasMore && drawerEvents.length > 0 && (
+                      <div className="pt-2 pb-1 text-center text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+                        All {drawerEvents.length} events loaded
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -431,25 +581,42 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
               </div>
             )}
 
-            {/* Past Events View */}
+            {/* Past Events View with Infinite Scroll */}
             {metricType === 'past' && (
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Previously Concluded Events ({pastEventsList.length})
+                    Past Events Archive
                   </h3>
                   <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
-                    {pastEventsList.length} loaded
+                    {drawerEvents.length} of {metrics.pastEvents}
                   </span>
                 </div>
 
-                {pastEventsList.length === 0 ? (
+                {isLoading && drawerEvents.length === 0 ? (
+                  <div className="space-y-3 py-2 flex-1">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 animate-pulse space-y-2">
+                        <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                        <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : drawerEvents.length === 0 ? (
                   <p className="text-xs text-slate-400 py-8 text-center flex-1 flex items-center justify-center">
                     No past events currently loaded.
                   </p>
                 ) : (
-                  <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
-                    {pastEventsList.map((evt) => {
+                  <div 
+                    className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0"
+                    onScroll={(e) => {
+                      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                      if (scrollHeight - scrollTop - clientHeight < 60 && hasMore && !isLoadingMore && !isLoading) {
+                        loadMore();
+                      }
+                    }}
+                  >
+                    {drawerEvents.map((evt) => {
                       const startDate = parseISO(evt.startTime);
                       return (
                         <Link
@@ -479,6 +646,24 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                         </Link>
                       );
                     })}
+
+                    {/* Sentinel element for infinite scroll detection */}
+                    <div ref={sentinelRef} className="h-2 w-full pointer-events-none" />
+
+                    {/* Loading More Spinner */}
+                    {isLoadingMore && (
+                      <div className="py-3 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400" />
+                        <span>Loading more past events...</span>
+                      </div>
+                    )}
+
+                    {/* End of list banner */}
+                    {!hasMore && drawerEvents.length > 0 && (
+                      <div className="pt-2 pb-1 text-center text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+                        All {drawerEvents.length} events loaded
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
