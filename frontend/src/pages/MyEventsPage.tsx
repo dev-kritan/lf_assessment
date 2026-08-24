@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BookmarkCheck, Calendar, Users, PlusCircle, Loader2, ListFilter, CheckCircle2, HelpCircle, XCircle } from 'lucide-react';
 import { EventItem, Tag, PaginationMeta } from '../types';
 import { eventsApi } from '../api/events.api';
+import { rsvpApi } from '../api/rsvp.api';
 import { EventCard } from '../components/EventCard';
 import { EventFormModal } from '../components/EventFormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -36,6 +37,12 @@ export const MyEventsPage: React.FC = () => {
     hasPrevPage: false,
   });
   const [rsvpStatusFilter, setRsvpStatusFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>('all');
+  const [rsvpCounts, setRsvpCounts] = useState<{
+    all: number;
+    yes: number;
+    maybe: number;
+    no: number;
+  }>({ all: 0, yes: 0, maybe: 0, no: 0 });
   const [isRsvpLoading, setIsRsvpLoading] = useState(true);
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -120,11 +127,33 @@ export const MyEventsPage: React.FC = () => {
     }
   }, [user, rsvpMeta.page, rsvpMeta.limit, rsvpStatusFilter, error]);
 
+  // Fetch RSVP counts for all status types
+  const fetchRsvpCounts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await rsvpApi.getMyRsvps();
+      if (res.success && res.data) {
+        const counts = { all: 0, yes: 0, maybe: 0, no: 0 };
+        res.data.forEach((r: any) => {
+          counts.all++;
+          const st = (r.user_rsvp_status || '').toLowerCase();
+          if (st === 'yes') counts.yes++;
+          else if (st === 'maybe') counts.maybe++;
+          else if (st === 'no') counts.no++;
+        });
+        setRsvpCounts(counts);
+      }
+    } catch {
+      // Fallback
+    }
+  }, [user]);
+
   // Initial fetch on user availability
   useEffect(() => {
     if (user) {
       fetchCreatedEvents(1, createdMeta.limit);
       fetchRsvpEvents(1, rsvpMeta.limit, rsvpStatusFilter);
+      fetchRsvpCounts();
     }
   }, [user]);
 
@@ -154,6 +183,7 @@ export const MyEventsPage: React.FC = () => {
   const refreshAll = () => {
     fetchCreatedEvents();
     fetchRsvpEvents();
+    fetchRsvpCounts();
   };
 
   const handleDelete = async () => {
@@ -222,7 +252,7 @@ export const MyEventsPage: React.FC = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          My RSVPs ({rsvpMeta.total})
+          My RSVPs ({rsvpCounts.all || rsvpMeta.total})
         </button>
       </div>
 
@@ -285,10 +315,10 @@ export const MyEventsPage: React.FC = () => {
               Filter by RSVP:
             </span>
             {[
-              { id: 'all', label: 'All Responses' },
-              { id: 'yes', label: 'Going (Yes)', icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> },
-              { id: 'maybe', label: 'Interested (Maybe)', icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" /> },
-              { id: 'no', label: 'Declined (No)', icon: <XCircle className="w-3.5 h-3.5 text-rose-500" /> },
+              { id: 'all', label: 'All', count: rsvpCounts.all },
+              { id: 'yes', label: 'Going', count: rsvpCounts.yes, icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> },
+              { id: 'maybe', label: 'Interested', count: rsvpCounts.maybe, icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" /> },
+              { id: 'no', label: 'Declined', count: rsvpCounts.no, icon: <XCircle className="w-3.5 h-3.5 text-rose-500" /> },
             ].map((pill) => (
               <button
                 key={pill.id}
@@ -300,7 +330,16 @@ export const MyEventsPage: React.FC = () => {
                 }`}
               >
                 {pill.icon}
-                {pill.label}
+                <span>{pill.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    rsvpStatusFilter === pill.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {pill.count}
+                </span>
               </button>
             ))}
           </div>
@@ -316,7 +355,7 @@ export const MyEventsPage: React.FC = () => {
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">No RSVPs found</h3>
               <p className="text-xs text-slate-500 mt-1 mb-6">
                 {rsvpStatusFilter !== 'all'
-                  ? `You haven't responded with "${rsvpStatusFilter.toUpperCase()}" to any events yet.`
+                  ? `You haven't responded as "${rsvpStatusFilter === 'yes' ? 'Going' : rsvpStatusFilter === 'maybe' ? 'Interested' : 'Declined'}" to any events yet.`
                   : 'Browse upcoming community events and RSVP to attend!'}
               </p>
               <Link

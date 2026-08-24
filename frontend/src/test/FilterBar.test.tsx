@@ -87,4 +87,36 @@ describe('FilterBar Component', () => {
     fireEvent.click(screen.getByText('Most Popular (RSVP)'));
     expect(onSortChange).toHaveBeenCalledWith('popularity');
   });
+
+  it('renders timeframe counts beside toggle tab buttons when provided', () => {
+    render(
+      <FilterBar
+        search=""
+        onSearchChange={vi.fn()}
+        selectedTimeframe="all"
+        onTimeframeChange={vi.fn()}
+        selectedType="all"
+        onTypeChange={vi.fn()}
+        selectedTag=""
+        onTagChange={vi.fn()}
+        sortBy="date"
+        onSortChange={vi.fn()}
+        tags={mockTags}
+        viewMode="grid"
+        onViewModeChange={vi.fn()}
+        onReset={vi.fn()}
+        hasActiveFilters={false}
+        timeframeCounts={{
+          all: 25,
+          upcoming: 18,
+          past: 7,
+        }}
+      />
+    );
+
+    expect(screen.getByText('All Events')).toBeInTheDocument();
+    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByText('18')).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
+  });
 });

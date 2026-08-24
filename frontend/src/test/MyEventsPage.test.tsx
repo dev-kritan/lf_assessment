@@ -15,6 +15,20 @@ vi.mock('../api/events.api', () => ({
   },
 }));
 
+vi.mock('../api/rsvp.api', () => ({
+  rsvpApi: {
+    getMyRsvps: vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        { id: 1, user_rsvp_status: 'yes' },
+        { id: 2, user_rsvp_status: 'yes' },
+        { id: 3, user_rsvp_status: 'maybe' },
+        { id: 4, user_rsvp_status: 'no' },
+      ],
+    }),
+  },
+}));
+
 const mockUser = {
   id: 42,
   name: 'Test Creator',
@@ -239,7 +253,7 @@ describe('MyEventsPage Component', () => {
     });
 
     // Check filter by RSVP status button
-    const goingFilterBtn = screen.getByRole('button', { name: /Going \(Yes\)/i });
+    const goingFilterBtn = screen.getByRole('button', { name: /Going/i });
     fireEvent.click(goingFilterBtn);
 
     await waitFor(() => {

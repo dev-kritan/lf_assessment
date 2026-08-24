@@ -82,7 +82,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           {event.userRsvp && (
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md capitalize ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
                 event.userRsvp === 'yes'
                   ? 'bg-emerald-600/90 text-white'
                   : event.userRsvp === 'maybe'
@@ -90,7 +90,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   : 'bg-rose-600/90 text-white'
               }`}
             >
-              RSVP: {event.userRsvp}
+              RSVP: {event.userRsvp === 'yes' ? 'Going' : event.userRsvp === 'maybe' ? 'Interested' : 'Declined'}
             </span>
           )}
         </div>

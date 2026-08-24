@@ -353,6 +353,15 @@ export const EventListPage: React.FC = () => {
           hasActiveFilters={hasActiveFilters}
           onEditTag={handleEditTag}
           onDeleteTag={handleDeleteTag}
+          timeframeCounts={
+            metrics
+              ? {
+                  all: metrics.totalEvents,
+                  upcoming: metrics.upcomingEvents,
+                  past: metrics.pastEvents,
+                }
+              : undefined
+          }
         />
 
         {/* Loading Spinner */}

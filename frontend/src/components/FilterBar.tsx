@@ -36,6 +36,11 @@ interface FilterBarProps {
   hasActiveFilters: boolean;
   onEditTag?: (tag: Tag) => void;
   onDeleteTag?: (tag: Tag) => void;
+  timeframeCounts?: {
+    all?: number;
+    upcoming?: number;
+    past?: number;
+  };
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -56,6 +61,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   hasActiveFilters,
   onEditTag,
   onDeleteTag,
+  timeframeCounts,
 }) => {
   const eventTypeOptions: SelectOption<"all" | "public" | "private">[] = [
     {
@@ -168,23 +174,39 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       {/* Middle Bar: Timeframe Tabs (All, Upcoming, Past) */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md">
-          {(["all", "upcoming", "past"] as const).map((tf) => (
-            <button
-              key={tf}
-              onClick={() => onTimeframeChange(tf)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
-                selectedTimeframe === tf
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {tf === "all"
-                ? "All Events"
-                : tf === "upcoming"
-                  ? "✨ Upcoming Events"
-                  : "🕰️ Past Events"}
-            </button>
-          ))}
+          {(["all", "upcoming", "past"] as const).map((tf) => {
+            const count = timeframeCounts ? timeframeCounts[tf] : undefined;
+            return (
+              <button
+                key={tf}
+                onClick={() => onTimeframeChange(tf)}
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all flex items-center gap-2 ${
+                  selectedTimeframe === tf
+                    ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>
+                  {tf === "all"
+                    ? "All Events"
+                    : tf === "upcoming"
+                      ? "✨ Upcoming Events"
+                      : "🕰️ Past Events"}
+                </span>
+                {typeof count === "number" && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      selectedTimeframe === tf
+                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                        : "bg-slate-300/80 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {hasActiveFilters && (
