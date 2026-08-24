@@ -12,6 +12,7 @@ export const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const { register } = useAuth();
   const { success, error } = useToast();
@@ -21,6 +22,14 @@ export const RegisterPage: React.FC = () => {
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
   const from = redirectParam || (location.state as any)?.from?.pathname || '/';
+
+  useEffect(() => {
+    // Auto-focus full name input after elements load
+    const timer = setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (formError && errorRef.current) {
@@ -87,10 +96,12 @@ export const RegisterPage: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
+                ref={nameInputRef}
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Alice Johnson"
+                autoFocus
                 required
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
               />

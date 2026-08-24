@@ -20,6 +20,8 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const twoFactorInputRef = useRef<HTMLInputElement>(null);
 
   const { login } = useAuth();
   const { success, error } = useToast();
@@ -28,6 +30,18 @@ export const LoginPage: React.FC = () => {
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get("redirect");
   const from = redirectParam || (location.state as any)?.from?.pathname || "/";
+
+  useEffect(() => {
+    // Auto-focus email input (or 2FA code input) after elements load
+    const timer = setTimeout(() => {
+      if (requires2FA) {
+        twoFactorInputRef.current?.focus();
+      } else {
+        emailInputRef.current?.focus();
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [requires2FA]);
 
   useEffect(() => {
     if (formError && errorRef.current) {
@@ -155,10 +169,12 @@ export const LoginPage: React.FC = () => {
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
+                    ref={emailInputRef}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    autoFocus
                     required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                   />
@@ -190,6 +206,7 @@ export const LoginPage: React.FC = () => {
               <div className="relative">
                 <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
+                  ref={twoFactorInputRef}
                   type="text"
                   maxLength={6}
                   value={twoFactorCode}
