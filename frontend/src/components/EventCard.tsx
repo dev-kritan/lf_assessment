@@ -79,6 +79,20 @@ export const EventCard: React.FC<EventCardProps> = ({
               <Clock className="w-3 h-3" /> Past
             </span>
           )}
+
+          {event.userRsvp && (
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md capitalize ${
+                event.userRsvp === 'yes'
+                  ? 'bg-emerald-600/90 text-white'
+                  : event.userRsvp === 'maybe'
+                  ? 'bg-amber-600/90 text-white'
+                  : 'bg-rose-600/90 text-white'
+              }`}
+            >
+              RSVP: {event.userRsvp}
+            </span>
+          )}
         </div>
 
         {/* Date Stamp Widget */}
