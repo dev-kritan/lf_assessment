@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Sparkles,
   Calendar,
@@ -27,10 +27,32 @@ import { TagEditModal } from "../components/TagEditModal";
 import { TagDeleteModal } from "../components/TagDeleteModal";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
-import { Link } from "react-router-dom";
-import { PAGINATION_LIMITS, APP_ROUTES } from "../constants";
+import { Link, useSearchParams } from "react-router-dom";
+import { PAGINATION_LIMITS } from "../constants";
 
 export const EventListPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read initial query params from URL
+  const initialPage = Math.max(
+    1,
+    parseInt(searchParams.get("page") || "1", 10) || 1
+  );
+  const initialLimit =
+    parseInt(
+      searchParams.get("limit") || `${PAGINATION_LIMITS.EVENT_LIST_DEFAULT}`,
+      10
+    ) || PAGINATION_LIMITS.EVENT_LIST_DEFAULT;
+  const initialSearch = searchParams.get("search") || "";
+  const initialTimeframe =
+    (searchParams.get("timeframe") as "all" | "upcoming" | "past") || "all";
+  const initialEventType =
+    (searchParams.get("event_type") as "all" | "public" | "private") || "all";
+  const initialTag = searchParams.get("tag") || "";
+  const initialSort =
+    (searchParams.get("sort_by") as "date" | "popularity" | "created_at") ||
+    "date";
+
   const [events, setEvents] = useState<EventItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [metrics, setMetrics] = useState<{
@@ -45,8 +67,8 @@ export const EventListPage: React.FC = () => {
     useState<MetricType | null>(null);
 
   const [pagination, setPagination] = useState<PaginationMeta>({
-    page: 1,
-    limit: PAGINATION_LIMITS.EVENT_LIST_DEFAULT,
+    page: initialPage,
+    limit: initialLimit,
     total: 0,
     totalPages: 1,
     hasNextPage: false,
@@ -54,18 +76,15 @@ export const EventListPage: React.FC = () => {
   });
 
   // Filter States
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [timeframe, setTimeframe] = useState<"all" | "upcoming" | "past">(
-    "all",
-  );
-  const [eventType, setEventType] = useState<"all" | "public" | "private">(
-    "all",
-  );
-  const [selectedTag, setSelectedTag] = useState("");
-  const [sortBy, setSortBy] = useState<"date" | "popularity" | "created_at">(
-    "date",
-  );
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [timeframe, setTimeframe] =
+    useState<"all" | "upcoming" | "past">(initialTimeframe);
+  const [eventType, setEventType] =
+    useState<"all" | "public" | "private">(initialEventType);
+  const [selectedTag, setSelectedTag] = useState(initialTag);
+  const [sortBy, setSortBy] =
+    useState<"date" | "popularity" | "created_at">(initialSort);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [isLoading, setIsLoading] = useState(true);
@@ -81,14 +100,111 @@ export const EventListPage: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const { success, error } = useToast();
 
+  // Helper to synchronize state with URL search params
+  const updateUrlParams = (paramsToUpdate: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    timeframe?: string;
+    event_type?: string;
+    tag?: string;
+    sort_by?: string;
+  }) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+
+        // Page
+        if (paramsToUpdate.page !== undefined) {
+          if (paramsToUpdate.page > 1) {
+            next.set("page", String(paramsToUpdate.page));
+          } else {
+            next.delete("page");
+          }
+        }
+
+        // Limit
+        if (paramsToUpdate.limit !== undefined) {
+          if (paramsToUpdate.limit !== PAGINATION_LIMITS.EVENT_LIST_DEFAULT) {
+            next.set("limit", String(paramsToUpdate.limit));
+          } else {
+            next.delete("limit");
+          }
+        }
+
+        // Search
+        if (paramsToUpdate.search !== undefined) {
+          if (paramsToUpdate.search.trim()) {
+            next.set("search", paramsToUpdate.search.trim());
+          } else {
+            next.delete("search");
+          }
+        }
+
+        // Timeframe
+        if (paramsToUpdate.timeframe !== undefined) {
+          if (paramsToUpdate.timeframe && paramsToUpdate.timeframe !== "all") {
+            next.set("timeframe", paramsToUpdate.timeframe);
+          } else {
+            next.delete("timeframe");
+          }
+        }
+
+        // Event Type
+        if (paramsToUpdate.event_type !== undefined) {
+          if (
+            paramsToUpdate.event_type &&
+            paramsToUpdate.event_type !== "all"
+          ) {
+            next.set("event_type", paramsToUpdate.event_type);
+          } else {
+            next.delete("event_type");
+          }
+        }
+
+        // Tag
+        if (paramsToUpdate.tag !== undefined) {
+          if (paramsToUpdate.tag.trim()) {
+            next.set("tag", paramsToUpdate.tag.trim());
+          } else {
+            next.delete("tag");
+          }
+        }
+
+        // Sort By
+        if (paramsToUpdate.sort_by !== undefined) {
+          if (paramsToUpdate.sort_by && paramsToUpdate.sort_by !== "date") {
+            next.set("sort_by", paramsToUpdate.sort_by);
+          } else {
+            next.delete("sort_by");
+          }
+        }
+
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const isFirstSearchEffect = useRef(true);
+
   // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
-      setPagination((prev) => ({ ...prev, page: 1 }));
     }, 300);
     return () => clearTimeout(handler);
   }, [search]);
+
+  // Sync debounced search with URL and reset page
+  useEffect(() => {
+    if (isFirstSearchEffect.current) {
+      isFirstSearchEffect.current = false;
+      return;
+    }
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    updateUrlParams({ search: debouncedSearch, page: 1 });
+  }, [debouncedSearch]);
 
   // Fetch Tags and Metrics with active filter context
   const fetchTagsAndMetrics = useCallback(async () => {
@@ -112,14 +228,14 @@ export const EventListPage: React.FC = () => {
     fetchTagsAndMetrics();
   }, [fetchTagsAndMetrics]);
 
-  // Fetch Events
+  // Fetch Events from Server with Pagination & Filter parameters
   const fetchEvents = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await eventsApi.getEvents({
         page: pagination.page,
         limit: pagination.limit,
-        search: debouncedSearch,
+        search: debouncedSearch || undefined,
         timeframe,
         event_type: eventType,
         tag: selectedTag || undefined,
@@ -145,14 +261,23 @@ export const EventListPage: React.FC = () => {
     eventType,
     selectedTag,
     sortBy,
-    isAuthenticated,
-    user,
-    error,
   ]);
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  // Pagination Change Handlers
+  const handlePageChange = (newPage: number) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+    updateUrlParams({ page: newPage, limit: pagination.limit });
+    window.scrollTo({ top: 320, behavior: "smooth" });
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setPagination((prev) => ({ ...prev, limit: newLimit, page: 1 }));
+    updateUrlParams({ page: 1, limit: newLimit });
+  };
 
   const handleResetFilters = () => {
     setSearch("");
@@ -162,6 +287,7 @@ export const EventListPage: React.FC = () => {
     setSelectedTag("");
     setSortBy("date");
     setPagination((prev) => ({ ...prev, page: 1 }));
+    setSearchParams({}, { replace: true });
   };
 
   const hasActiveFilters = !!(
@@ -210,6 +336,7 @@ export const EventListPage: React.FC = () => {
   const handleTagEditedSuccess = (updatedTag: Tag) => {
     if (selectedTag === tagToEdit?.name) {
       setSelectedTag(updatedTag.name);
+      updateUrlParams({ tag: updatedTag.name });
     }
     fetchTagsAndMetrics();
     fetchEvents();
@@ -219,11 +346,11 @@ export const EventListPage: React.FC = () => {
     if (selectedTag === deletedTag.name) {
       setSelectedTag("");
       setPagination((prev) => ({ ...prev, page: 1 }));
+      updateUrlParams({ tag: "", page: 1 });
     }
     fetchTagsAndMetrics();
     fetchEvents();
   };
-
 
   return (
     <div className="min-w-full pb-16">
@@ -331,21 +458,25 @@ export const EventListPage: React.FC = () => {
           onTimeframeChange={(tf) => {
             setTimeframe(tf);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ timeframe: tf, page: 1 });
           }}
           selectedType={eventType}
           onTypeChange={(type) => {
             setEventType(type);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ event_type: type, page: 1 });
           }}
           selectedTag={selectedTag}
           onTagChange={(tag) => {
             setSelectedTag(tag);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ tag, page: 1 });
           }}
           sortBy={sortBy}
           onSortChange={(sort) => {
             setSortBy(sort);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ sort_by: sort, page: 1 });
           }}
           tags={tags}
           viewMode={viewMode}
@@ -438,16 +569,12 @@ export const EventListPage: React.FC = () => {
           </div>
         )}
 
-        {/* Pagination */}
-        {!isLoading && events.length > 0 && (
+        {/* Server-Side Pagination */}
+        {!isLoading && (
           <Pagination
             meta={pagination}
-            onPageChange={(page) =>
-              setPagination((prev) => ({ ...prev, page }))
-            }
-            onLimitChange={(limit) =>
-              setPagination((prev) => ({ ...prev, limit, page: 1 }))
-            }
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
           />
         )}
       </main>
@@ -493,10 +620,12 @@ export const EventListPage: React.FC = () => {
           onFilterTimeframe={(tf) => {
             setTimeframe(tf);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ timeframe: tf, page: 1 });
           }}
           onFilterTag={(tag) => {
             setSelectedTag(tag);
             setPagination((prev) => ({ ...prev, page: 1 }));
+            updateUrlParams({ tag, page: 1 });
           }}
           onEditTag={handleEditTag}
           onDeleteTag={handleDeleteTag}

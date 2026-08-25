@@ -61,4 +61,26 @@ describe('CustomSelect Component', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
+
+  it('renders with top placement (drop-up) and right alignment when specified', () => {
+    const onChange = vi.fn();
+    render(
+      <CustomSelect
+        value="all"
+        onChange={onChange}
+        options={options}
+        placement="top"
+        align="right"
+      />
+    );
+
+    const trigger = screen.getByRole('button', { name: /all types/i });
+    fireEvent.click(trigger);
+
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toBeInTheDocument();
+    expect(listbox.className).toContain('bottom-full');
+    expect(listbox.className).toContain('mb-2');
+    expect(listbox.className).toContain('right-0');
+  });
 });

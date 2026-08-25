@@ -65,7 +65,7 @@ export const AppContent: React.FC = () => {
       />
 
       {/* Modern Footer */}
-      <footer className="glass border-t border-slate-200/80 dark:border-slate-800/80 py-10 transition-colors mt-auto">
+      <footer className="glass border-t border-slate-200/80 dark:border-slate-800/80 py-10 transition-colors mt-auto relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">

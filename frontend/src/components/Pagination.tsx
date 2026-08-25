@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Server } from 'lucide-react';
 import { PaginationMeta } from '../types';
 import { CustomSelect } from './CustomSelect';
 import { PER_PAGE_OPTIONS } from '../constants';
@@ -11,17 +11,12 @@ interface PaginationProps {
 }
 
 export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLimitChange }) => {
-  const { page, totalPages, total, limit } = meta;
+  const { page, totalPages, total, limit, hasPrevPage, hasNextPage } = meta;
 
   const limitOptions = PER_PAGE_OPTIONS as unknown as { value: number; label: string }[];
 
-  if (totalPages <= 1 && total <= limit) {
-    return (
-      <div className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">
-        Showing all <span className="font-semibold text-slate-800 dark:text-slate-200">{total}</span> events
-      </div>
-    );
-  }
+  const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
+  const endItem = Math.min(total, page * limit);
 
   const getPageNumbers = () => {
     const pages = [];
@@ -40,31 +35,59 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
   };
 
   return (
-    <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 py-4 border-t border-slate-200 dark:border-slate-800">
-      {/* Count Info */}
-      <div className="text-xs text-slate-500 dark:text-slate-400">
-        Showing page <span className="font-semibold text-slate-800 dark:text-slate-200">{page}</span> of{' '}
-        <span className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</span> (
-        <span className="font-semibold text-slate-800 dark:text-slate-200">{total}</span> total events)
+    <div className="mt-10 relative z-20 flex flex-col md:flex-row items-center justify-between gap-4 py-4 px-2 sm:px-4 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm">
+      {/* Count & Server Indicator */}
+      <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+          <Server className="w-3 h-3 text-indigo-500" />
+          Server Paginated
+        </span>
+        {total > 0 ? (
+          <span>
+            Showing page <span className="font-bold text-slate-800 dark:text-slate-200">{page}</span> of{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{totalPages}</span> ({startItem}–{endItem} of{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{total}</span> total events)
+          </span>
+        ) : (
+          <span>0 total events found</span>
+        )}
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 sm:gap-1.5">
+        {/* First Page Button */}
+        {totalPages > 3 && (
+          <button
+            onClick={() => onPageChange(1)}
+            disabled={!hasPrevPage}
+            aria-label="First page"
+            title="First page"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+          >
+            <ChevronsLeft className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Previous Page Button */}
         <button
           onClick={() => onPageChange(page - 1)}
-          disabled={!meta.hasPrevPage}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          disabled={!hasPrevPage}
+          aria-label="Previous page"
+          title="Previous page"
+          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
 
+        {/* Numbered Page Buttons */}
         {getPageNumbers().map((p) => (
           <button
             key={p}
             onClick={() => onPageChange(p)}
-            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+            aria-current={page === p ? 'page' : undefined}
+            className={`min-w-[36px] h-9 px-2.5 rounded-xl text-xs font-bold transition-all ${
               page === p
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25 scale-105'
                 : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -72,13 +95,29 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
           </button>
         ))}
 
+        {/* Next Page Button */}
         <button
           onClick={() => onPageChange(page + 1)}
-          disabled={!meta.hasNextPage}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          disabled={!hasNextPage}
+          aria-label="Next page"
+          title="Next page"
+          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
+
+        {/* Last Page Button */}
+        {totalPages > 3 && (
+          <button
+            onClick={() => onPageChange(totalPages)}
+            disabled={!hasNextPage}
+            aria-label="Last page"
+            title="Last page"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+          >
+            <ChevronsRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Per Page Selector */}
@@ -90,6 +129,8 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
             onChange={(val) => onLimitChange(Number(val))}
             options={limitOptions}
             size="sm"
+            placement="top"
+            align="right"
             ariaLabel="Select events per page"
           />
         </div>

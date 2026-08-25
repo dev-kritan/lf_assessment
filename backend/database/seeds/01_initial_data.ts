@@ -67,14 +67,18 @@ export async function seed(knex: Knex): Promise<void> {
   // Dates for upcoming & past events
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const inFiveDays = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const inTenDays = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
   const inTwoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const inEighteenDays = new Date(now.getTime() + 18 * 24 * 60 * 60 * 1000);
+  const inTwentyDays = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
   const inOneMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // 3. Insert Events
+  // 3. Insert 10 Events
   const eventsData = [
     {
       creator_id: u1,
@@ -122,6 +126,50 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       creator_id: u1,
+      title: 'AI & Next-Gen Large Language Models Forum',
+      description: 'Exploring state-of-the-art developments in generative AI, local model deployments, agents architecture, and enterprise security.',
+      location: 'Silicon Oasis Auditorium 2',
+      event_type: 'public',
+      start_time: inFiveDays,
+      end_time: new Date(inFiveDays.getTime() + 6 * 60 * 60 * 1000),
+      capacity: 250,
+      banner_url: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1000&auto=format&fit=crop&q=80',
+    },
+    {
+      creator_id: u2,
+      title: 'DevOps & Kubernetes Production Masterclass',
+      description: 'Practical deep dive into container orchestration, GitOps with ArgoCD, cluster monitoring, and zero-downtime rollouts.',
+      location: 'Cloud Academy Training Center',
+      event_type: 'public',
+      start_time: inTenDays,
+      end_time: new Date(inTenDays.getTime() + 5 * 60 * 60 * 1000),
+      capacity: 60,
+      banner_url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1000&auto=format&fit=crop&q=80',
+    },
+    {
+      creator_id: u1,
+      title: 'Annual Tech Founders Charity Gala',
+      description: 'Connecting innovators, angel investors, and philanthropy leaders to support open tech education initiatives.',
+      location: 'Metropolitan Ballroom, Grand Hotel',
+      event_type: 'public',
+      start_time: inTwentyDays,
+      end_time: new Date(inTwentyDays.getTime() + 4 * 60 * 60 * 1000),
+      capacity: 150,
+      banner_url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1000&auto=format&fit=crop&q=80',
+    },
+    {
+      creator_id: u2,
+      title: 'Seed & Series-A Startup Pitch Night',
+      description: 'Exclusive private pitch showcase for selected early-stage technology founders pitching before top venture partners.',
+      location: 'Venture Studio Level 18, Bay Tower',
+      event_type: 'private',
+      start_time: inEighteenDays,
+      end_time: new Date(inEighteenDays.getTime() + 3 * 60 * 60 * 1000),
+      capacity: 45,
+      banner_url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1000&auto=format&fit=crop&q=80',
+    },
+    {
+      creator_id: u1,
       title: 'Frontend Developers Quarterly Meetup (Past)',
       description: 'A look back at modern CSS architecture, React 19 server components, and state management techniques in 2026.',
       location: 'Downtown Tech Hub, Auditorium',
@@ -162,6 +210,18 @@ export async function seed(knex: Knex): Promise<void> {
     { event_id: eventMap.get('Product Design & UI/UX Meetup')!, tag_id: tagMap.get('Design')! },
     { event_id: eventMap.get('Product Design & UI/UX Meetup')!, tag_id: tagMap.get('Meetup')! },
 
+    { event_id: eventMap.get('AI & Next-Gen Large Language Models Forum')!, tag_id: tagMap.get('Tech')! },
+    { event_id: eventMap.get('AI & Next-Gen Large Language Models Forum')!, tag_id: tagMap.get('Conference')! },
+
+    { event_id: eventMap.get('DevOps & Kubernetes Production Masterclass')!, tag_id: tagMap.get('Workshop')! },
+    { event_id: eventMap.get('DevOps & Kubernetes Production Masterclass')!, tag_id: tagMap.get('Tech')! },
+
+    { event_id: eventMap.get('Annual Tech Founders Charity Gala')!, tag_id: tagMap.get('Networking')! },
+    { event_id: eventMap.get('Annual Tech Founders Charity Gala')!, tag_id: tagMap.get('Meetup')! },
+
+    { event_id: eventMap.get('Seed & Series-A Startup Pitch Night')!, tag_id: tagMap.get('Networking')! },
+    { event_id: eventMap.get('Seed & Series-A Startup Pitch Night')!, tag_id: tagMap.get('Tech')! },
+
     { event_id: eventMap.get('Frontend Developers Quarterly Meetup (Past)')!, tag_id: tagMap.get('Tech')! },
     { event_id: eventMap.get('Frontend Developers Quarterly Meetup (Past)')!, tag_id: tagMap.get('Meetup')! },
 
@@ -177,6 +237,10 @@ export async function seed(knex: Knex): Promise<void> {
   const summitId = eventMap.get('Global Tech Summit 2026');
   const workshopId = eventMap.get('Full-Stack TypeScript & Cloud Workshop');
   const birthdayId = eventMap.get('Alice’s Milestone 30th Birthday Celebration');
+  const aiForumId = eventMap.get('AI & Next-Gen Large Language Models Forum');
+  const devopsId = eventMap.get('DevOps & Kubernetes Production Masterclass');
+  const galaId = eventMap.get('Annual Tech Founders Charity Gala');
+  const pitchId = eventMap.get('Seed & Series-A Startup Pitch Night');
 
   const rsvpsToInsert = [];
   if (summitId) {
@@ -196,6 +260,31 @@ export async function seed(knex: Knex): Promise<void> {
     rsvpsToInsert.push(
       { event_id: birthdayId, user_id: u1, status: 'yes' },
       { event_id: birthdayId, user_id: u2, status: 'yes' }
+    );
+  }
+  if (aiForumId) {
+    rsvpsToInsert.push(
+      { event_id: aiForumId, user_id: u1, status: 'yes' },
+      { event_id: aiForumId, user_id: u2, status: 'yes' },
+      { event_id: aiForumId, user_id: u3, status: 'maybe' }
+    );
+  }
+  if (devopsId) {
+    rsvpsToInsert.push(
+      { event_id: devopsId, user_id: u2, status: 'yes' },
+      { event_id: devopsId, user_id: u1, status: 'maybe' }
+    );
+  }
+  if (galaId) {
+    rsvpsToInsert.push(
+      { event_id: galaId, user_id: u1, status: 'yes' },
+      { event_id: galaId, user_id: u3, status: 'yes' }
+    );
+  }
+  if (pitchId) {
+    rsvpsToInsert.push(
+      { event_id: pitchId, user_id: u2, status: 'yes' },
+      { event_id: pitchId, user_id: u1, status: 'yes' }
     );
   }
 
