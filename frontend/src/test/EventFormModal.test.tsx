@@ -147,4 +147,108 @@ describe('EventFormModal Component', () => {
       expect(onCloseMock).toHaveBeenCalledTimes(2);
     }
   });
+
+  it('removes validation errors automatically in real-time as user types valid inputs', async () => {
+    vi.mocked(eventsApi.getTags).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+
+    render(
+      <ToastProvider>
+        <EventFormModal
+          isOpen={true}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />
+      </ToastProvider>
+    );
+
+    const getFieldError = (fieldName: string) => {
+      const container = document.querySelector(`[data-field="${fieldName}"]`);
+      return container?.querySelector('.text-rose-500')?.textContent || null;
+    };
+
+    const titleInput = screen.getByPlaceholderText(/NextGen Web & AI Conference/i);
+    const descriptionInput = screen.getByPlaceholderText(/Provide event overview/i);
+    const locationInput = screen.getByPlaceholderText(/Grand Hall or Zoom Link/i);
+    const submitBtn = screen.getByRole('button', { name: /Create Event/i });
+
+    // 1. Submit empty form to trigger validation errors
+    fireEvent.click(submitBtn);
+
+    expect(getFieldError('title')).toMatch(/Title must be at least 3 characters|Event title is required/i);
+    expect(getFieldError('description')).toMatch(/Description must be at least 10 characters|Description is required/i);
+    expect(getFieldError('location')).toMatch(/Location must be at least 2 characters|Location is required/i);
+
+    // 2. Type valid title -> title error should disappear automatically
+    fireEvent.change(titleInput, { target: { value: 'AI Workshop 2026' } });
+    expect(getFieldError('title')).toBeNull();
+
+    // Description and location errors still remain
+    expect(getFieldError('description')).toMatch(/Description must be at least 10 characters|Description is required/i);
+    expect(getFieldError('location')).toMatch(/Location must be at least 2 characters|Location is required/i);
+
+    // 3. Type valid location -> location error should disappear automatically
+    fireEvent.change(locationInput, { target: { value: 'Main Hall' } });
+    expect(getFieldError('location')).toBeNull();
+
+    // 4. Type short description (< 10 chars) -> description error still present
+    fireEvent.change(descriptionInput, { target: { value: 'Short' } });
+    expect(getFieldError('description')).toMatch(/Description must be at least 10 characters/i);
+
+    // 5. Type valid description (>= 10 chars) -> description error should disappear automatically
+    fireEvent.change(descriptionInput, { target: { value: 'Comprehensive deep dive into React and TypeScript.' } });
+    expect(getFieldError('description')).toBeNull();
+  });
+
+  it('clears end_time date ordering error automatically when end_time is adjusted to be after start_time', async () => {
+    vi.mocked(eventsApi.getTags).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+
+    render(
+      <ToastProvider>
+        <EventFormModal
+          isOpen={true}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />
+      </ToastProvider>
+    );
+
+    const getFieldError = (fieldName: string) => {
+      const container = document.querySelector(`[data-field="${fieldName}"]`);
+      return container?.querySelector('.text-rose-500')?.textContent || null;
+    };
+
+    const titleInput = screen.getByPlaceholderText(/NextGen Web & AI Conference/i);
+    const descriptionInput = screen.getByPlaceholderText(/Provide event overview/i);
+    const locationInput = screen.getByPlaceholderText(/Grand Hall or Zoom Link/i);
+    const submitBtn = screen.getByRole('button', { name: /Create Event/i });
+
+    // Fill valid base fields
+    fireEvent.change(titleInput, { target: { value: 'Valid Title Here' } });
+    fireEvent.change(descriptionInput, { target: { value: 'Valid description with enough characters.' } });
+    fireEvent.change(locationInput, { target: { value: 'Conference Room 1' } });
+
+    // Set endTime earlier than startTime
+    const dateInputs = document.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]');
+    const startInput = dateInputs[0];
+    const endInput = dateInputs[1];
+
+    fireEvent.change(startInput, { target: { value: '2026-09-01T14:00' } });
+    fireEvent.change(endInput, { target: { value: '2026-09-01T10:00' } });
+
+    // Submit form -> triggers "End time must be after start time"
+    fireEvent.click(submitBtn);
+    expect(getFieldError('endTime')).toBe('End time must be after start time');
+
+    // Fix endTime to be after startTime
+    fireEvent.change(endInput, { target: { value: '2026-09-01T18:00' } });
+
+    // Error should be removed automatically in real-time
+    expect(getFieldError('endTime')).toBeNull();
+  });
 });

@@ -42,6 +42,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const [newTagInput, setNewTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Close on Escape key
@@ -83,6 +84,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   }, [isOpen, allTags]);
 
   useEffect(() => {
+    setHasSubmitted(false);
     if (eventToEdit) {
       setTitle(eventToEdit.title);
       setDescription(eventToEdit.description);
@@ -123,10 +125,72 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     setFormErrors({});
   }, [eventToEdit, isOpen]);
 
+  const validateFieldOnChange = (
+    field: string,
+    updatedValues: {
+      title?: string;
+      description?: string;
+      location?: string;
+      eventType?: 'public' | 'private';
+      isTruePrivate?: boolean;
+      startTime?: string;
+      endTime?: string;
+      capacity?: string;
+      bannerUrl?: string;
+      tagIds?: number[];
+    }
+  ) => {
+    if (Object.keys(formErrors).length === 0 && !hasSubmitted) return;
+
+    const currentData = {
+      title: updatedValues.title ?? title,
+      description: updatedValues.description ?? description,
+      location: updatedValues.location ?? location,
+      eventType: updatedValues.eventType ?? eventType,
+      isTruePrivate: updatedValues.isTruePrivate ?? isTruePrivate,
+      startTime: updatedValues.startTime ?? startTime,
+      endTime: (updatedValues.endTime ?? endTime) || undefined,
+      capacity: (updatedValues.capacity ?? capacity) ? Number(updatedValues.capacity ?? capacity) : undefined,
+      bannerUrl: (updatedValues.bannerUrl ?? bannerUrl) ? (updatedValues.bannerUrl ?? bannerUrl).trim() : undefined,
+      tagIds: updatedValues.tagIds ?? selectedTagIds,
+    };
+
+    const validation = validateWithZod(eventFormSchema, currentData);
+
+    setFormErrors((prev) => {
+      const next = { ...prev };
+
+      // Check if the modified field is now valid
+      if (!validation.errors[field]) {
+        delete next[field];
+      } else {
+        next[field] = validation.errors[field];
+      }
+
+      // Special handling for interdependent fields: startTime and endTime
+      if (field === 'startTime' || field === 'endTime') {
+        if (!validation.errors.startTime) {
+          delete next.startTime;
+        } else {
+          next.startTime = validation.errors.startTime;
+        }
+        if (!validation.errors.endTime) {
+          delete next.endTime;
+        } else {
+          next.endTime = validation.errors.endTime;
+        }
+      }
+
+      return next;
+    });
+  };
+
   const toggleTag = (tagId: number) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-    );
+    setSelectedTagIds((prev) => {
+      const updated = prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId];
+      validateFieldOnChange('tagIds', { tagIds: updated });
+      return updated;
+    });
   };
 
   const handleAddNewTag = async () => {
@@ -139,9 +203,11 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     );
 
     if (existingTag) {
-      setSelectedTagIds((prev) =>
-        prev.includes(existingTag.id) ? prev : [...prev, existingTag.id]
-      );
+      setSelectedTagIds((prev) => {
+        const updated = prev.includes(existingTag.id) ? prev : [...prev, existingTag.id];
+        validateFieldOnChange('tagIds', { tagIds: updated });
+        return updated;
+      });
       setNewTagInput('');
       success(`Tag #${existingTag.name} selected`);
       return;
@@ -199,6 +265,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+    setHasSubmitted(true);
     setFormErrors({});
 
     const validation = validateWithZod(eventFormSchema, {
@@ -301,10 +368,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               type="text"
               name="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setTitle(val);
+                validateFieldOnChange('title', { title: val });
+              }}
               placeholder="e.g. NextGen Web & AI Conference 2026"
               className={`w-full px-3.5 sm:px-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                formErrors.title ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                formErrors.title ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
               }`}
             />
             {formErrors.title && <p className="text-xs text-rose-500 mt-1">{formErrors.title}</p>}
@@ -319,10 +390,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               rows={3}
               name="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setDescription(val);
+                validateFieldOnChange('description', { description: val });
+              }}
               placeholder="Provide event overview, schedule, highlights..."
               className={`w-full px-3.5 sm:px-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                formErrors.description ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                formErrors.description ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
               }`}
             />
             {formErrors.description && <p className="text-xs text-rose-500 mt-1">{formErrors.description}</p>}
@@ -340,10 +415,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                   type="text"
                   name="location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setLocation(val);
+                    validateFieldOnChange('location', { location: val });
+                  }}
                   placeholder="e.g. Grand Hall or Zoom Link"
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                    formErrors.location ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                    formErrors.location ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
               </div>
@@ -361,10 +440,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                   name="capacity"
                   min="1"
                   value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCapacity(val);
+                    validateFieldOnChange('capacity', { capacity: val });
+                  }}
                   placeholder="Leave empty for unlimited"
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                    formErrors.capacity ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                    formErrors.capacity ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
               </div>
@@ -384,9 +467,13 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                   type="datetime-local"
                   name="startTime"
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setStartTime(val);
+                    validateFieldOnChange('startTime', { startTime: val });
+                  }}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                    formErrors.startTime ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                    formErrors.startTime ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
               </div>
@@ -403,9 +490,13 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                   type="datetime-local"
                   name="endTime"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEndTime(val);
+                    validateFieldOnChange('endTime', { endTime: val });
+                  }}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
-                    formErrors.endTime ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
+                    formErrors.endTime ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
               </div>
@@ -426,6 +517,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                 onClick={() => {
                   setEventType('public');
                   setIsTruePrivate(false);
+                  validateFieldOnChange('eventType', { eventType: 'public', isTruePrivate: false });
                 }}
                 className={`flex items-start gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left transition-all ${
                   eventType === 'public'
@@ -448,7 +540,10 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setEventType('private')}
+                onClick={() => {
+                  setEventType('private');
+                  validateFieldOnChange('eventType', { eventType: 'private' });
+                }}
                 className={`flex items-start gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left transition-all ${
                   eventType === 'private'
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
@@ -530,7 +625,9 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                   aria-checked={isTruePrivate}
                   onClick={() => {
                     if (eventType === 'private') {
-                      setIsTruePrivate(!isTruePrivate);
+                      const nextVal = !isTruePrivate;
+                      setIsTruePrivate(nextVal);
+                      validateFieldOnChange('isTruePrivate', { isTruePrivate: nextVal });
                     }
                   }}
                   className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 mt-0.5 ${
@@ -552,7 +649,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
           </div>
 
           {/* Banner Image URL */}
-          <div>
+          <div data-field="bannerUrl">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Cover Image URL (Optional)
             </label>
@@ -560,12 +657,20 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="url"
+                name="bannerUrl"
                 value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setBannerUrl(val);
+                  validateFieldOnChange('bannerUrl', { bannerUrl: val });
+                }}
                 placeholder="https://images.unsplash.com/..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                  formErrors.bannerUrl ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
+                }`}
               />
             </div>
+            {formErrors.bannerUrl && <p className="text-xs text-rose-500 mt-1">{formErrors.bannerUrl}</p>}
           </div>
 
           {/* Tags Selection & Dynamic Creation */}
