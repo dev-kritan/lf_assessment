@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BookmarkCheck, Calendar, Users, PlusCircle, Loader2, ListFilter, CheckCircle2, HelpCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  BookmarkCheck,
+  Calendar,
+  Users,
+  PlusCircle,
+  Loader2,
+  ListFilter,
+  CheckCircle2,
+  HelpCircle,
+  XCircle,
+  AlertTriangle,
+  RefreshCw,
+  CalendarX2,
+} from 'lucide-react';
 import { EventItem, Tag, PaginationMeta } from '../types';
 import { eventsApi } from '../api/events.api';
 import { rsvpApi } from '../api/rsvp.api';
@@ -7,20 +20,56 @@ import { EventCard } from '../components/EventCard';
 import { EventFormModal } from '../components/EventFormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination } from '../components/Pagination';
+import { FilterBar } from '../components/FilterBar';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { APP_ROUTES, PAGINATION_LIMITS } from '../constants';
 
 export const MyEventsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'created' | 'rsvps'>('created');
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { success, error } = useToast();
+  const navigate = useNavigate();
+
+  // Read initial states from URL search params
+  const initialTab = searchParams.get('tab') === 'rsvps' ? 'rsvps' : 'created';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const initialLimit = parseInt(
+    searchParams.get('limit') || String(PAGINATION_LIMITS.MY_EVENTS_DEFAULT),
+    10
+  );
+  const initialSearch = searchParams.get('search') || '';
+  const initialTimeframe =
+    (searchParams.get('timeframe') as 'all' | 'upcoming' | 'past') || 'all';
+  const initialEventType =
+    (searchParams.get('event_type') as 'all' | 'public' | 'private') || 'all';
+  const initialTag = searchParams.get('tag') || '';
+  const initialSort =
+    (searchParams.get('sort_by') as 'date' | 'popularity' | 'created_at') || 'date';
+  const initialRsvpStatus =
+    (searchParams.get('rsvp_status') as 'all' | 'yes' | 'maybe' | 'no') || 'all';
+  const initialViewMode =
+    (searchParams.get('view_mode') as 'grid' | 'list') || 'grid';
+
+  // Active Tab state
+  const [activeTab, setActiveTab] = useState<'created' | 'rsvps'>(initialTab);
+
+  // Common Server-Side Filter States
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [timeframe, setTimeframe] = useState<'all' | 'upcoming' | 'past'>(initialTimeframe);
+  const [eventType, setEventType] = useState<'all' | 'public' | 'private'>(initialEventType);
+  const [selectedTag, setSelectedTag] = useState(initialTag);
+  const [sortBy, setSortBy] = useState<'date' | 'popularity' | 'created_at'>(initialSort);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
+
   // Created events pagination state
   const [createdEvents, setCreatedEvents] = useState<EventItem[]>([]);
   const [createdError, setCreatedError] = useState<string | null>(null);
   const [createdMeta, setCreatedMeta] = useState<PaginationMeta>({
-    page: 1,
-    limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
+    page: activeTab === 'created' ? initialPage : 1,
+    limit: initialLimit,
     total: 0,
     totalPages: 1,
     hasNextPage: false,
@@ -28,18 +77,18 @@ export const MyEventsPage: React.FC = () => {
   });
   const [isCreatedLoading, setIsCreatedLoading] = useState(true);
 
-  // RSVP events pagination state
+  // RSVP events pagination & status filter state
   const [rsvpEvents, setRsvpEvents] = useState<EventItem[]>([]);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [rsvpMeta, setRsvpMeta] = useState<PaginationMeta>({
-    page: 1,
-    limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
+    page: activeTab === 'rsvps' ? initialPage : 1,
+    limit: initialLimit,
     total: 0,
     totalPages: 1,
     hasNextPage: false,
     hasPrevPage: false,
   });
-  const [rsvpStatusFilter, setRsvpStatusFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>('all');
+  const [rsvpStatusFilter, setRsvpStatusFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>(initialRsvpStatus);
   const [rsvpCounts, setRsvpCounts] = useState<{
     all: number;
     yes: number;
@@ -50,42 +99,184 @@ export const MyEventsPage: React.FC = () => {
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
 
+  // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<EventItem | null>(null);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { success, error } = useToast();
-  const navigate = useNavigate();
-
+  // Redirect if unauthenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.MY_EVENTS)}`);
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Load system tags for create modal
+  // Load system tags for filter bar and create modal
   useEffect(() => {
-    eventsApi.getTags().then((res) => {
-      if (res.success && res.data) {
-        setAllTags(res.data);
-      }
-    }).catch(() => {});
+    eventsApi
+      .getTags()
+      .then((res) => {
+        if (res.success && res.data) {
+          setAllTags(res.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Fetch paginated Created Events
-  const fetchCreatedEvents = useCallback(async (page = createdMeta.page, limit = createdMeta.limit) => {
+  // Helper to synchronize state with URL search params
+  const updateUrlParams = useCallback((paramsToUpdate: {
+    tab?: 'created' | 'rsvps';
+    page?: number;
+    limit?: number;
+    search?: string;
+    timeframe?: string;
+    event_type?: string;
+    tag?: string;
+    sort_by?: string;
+    rsvp_status?: string;
+    view_mode?: string;
+  }) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+
+        // Tab
+        if (paramsToUpdate.tab !== undefined) {
+          if (paramsToUpdate.tab === 'rsvps') {
+            next.set('tab', 'rsvps');
+          } else {
+            next.delete('tab');
+          }
+        }
+
+        // Page
+        if (paramsToUpdate.page !== undefined) {
+          if (paramsToUpdate.page > 1) {
+            next.set('page', String(paramsToUpdate.page));
+          } else {
+            next.delete('page');
+          }
+        }
+
+        // Limit
+        if (paramsToUpdate.limit !== undefined) {
+          if (paramsToUpdate.limit !== PAGINATION_LIMITS.MY_EVENTS_DEFAULT) {
+            next.set('limit', String(paramsToUpdate.limit));
+          } else {
+            next.delete('limit');
+          }
+        }
+
+        // Search
+        if (paramsToUpdate.search !== undefined) {
+          if (paramsToUpdate.search.trim()) {
+            next.set('search', paramsToUpdate.search.trim());
+          } else {
+            next.delete('search');
+          }
+        }
+
+        // Timeframe
+        if (paramsToUpdate.timeframe !== undefined) {
+          if (paramsToUpdate.timeframe && paramsToUpdate.timeframe !== 'all') {
+            next.set('timeframe', paramsToUpdate.timeframe);
+          } else {
+            next.delete('timeframe');
+          }
+        }
+
+        // Event Type
+        if (paramsToUpdate.event_type !== undefined) {
+          if (paramsToUpdate.event_type && paramsToUpdate.event_type !== 'all') {
+            next.set('event_type', paramsToUpdate.event_type);
+          } else {
+            next.delete('event_type');
+          }
+        }
+
+        // Tag
+        if (paramsToUpdate.tag !== undefined) {
+          if (paramsToUpdate.tag.trim()) {
+            next.set('tag', paramsToUpdate.tag.trim());
+          } else {
+            next.delete('tag');
+          }
+        }
+
+        // Sort By
+        if (paramsToUpdate.sort_by !== undefined) {
+          if (paramsToUpdate.sort_by && paramsToUpdate.sort_by !== 'date') {
+            next.set('sort_by', paramsToUpdate.sort_by);
+          } else {
+            next.delete('sort_by');
+          }
+        }
+
+        // RSVP Status
+        if (paramsToUpdate.rsvp_status !== undefined) {
+          if (paramsToUpdate.rsvp_status && paramsToUpdate.rsvp_status !== 'all') {
+            next.set('rsvp_status', paramsToUpdate.rsvp_status);
+          } else {
+            next.delete('rsvp_status');
+          }
+        }
+
+        // View Mode
+        if (paramsToUpdate.view_mode !== undefined) {
+          if (paramsToUpdate.view_mode === 'list') {
+            next.set('view_mode', 'list');
+          } else {
+            next.delete('view_mode');
+          }
+        }
+
+        return next;
+      },
+      { replace: true }
+    );
+  }, [setSearchParams]);
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const isFirstSearchEffect = useRef(true);
+
+  // When debounced search updates, sync with URL and reset page to 1
+  useEffect(() => {
+    if (isFirstSearchEffect.current) {
+      isFirstSearchEffect.current = false;
+      return;
+    }
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({ search: debouncedSearch, page: 1 });
+  }, [debouncedSearch]);
+
+  // Fetch paginated Created Events from Server
+  const fetchCreatedEvents = useCallback(async () => {
     if (!user) return;
     try {
       setIsCreatedLoading(true);
       setCreatedError(null);
       const res = await eventsApi.getEvents({
         creator_id: user.id,
-        page,
-        limit,
-        sort_by: 'date',
-        sort_order: 'desc',
+        page: createdMeta.page,
+        limit: createdMeta.limit,
+        search: debouncedSearch.trim() || undefined,
+        timeframe,
+        event_type: eventType,
+        tag: selectedTag.trim() || undefined,
+        sort_by: sortBy,
+        sort_order: sortBy === 'date' ? (timeframe === 'past' ? 'desc' : 'asc') : 'desc',
       });
 
       if (res.success && res.data) {
@@ -101,24 +292,34 @@ export const MyEventsPage: React.FC = () => {
     } finally {
       setIsCreatedLoading(false);
     }
-  }, [user, createdMeta.page, createdMeta.limit, error]);
+  }, [
+    user,
+    createdMeta.page,
+    createdMeta.limit,
+    debouncedSearch,
+    timeframe,
+    eventType,
+    selectedTag,
+    sortBy,
+    error,
+  ]);
 
-  // Fetch paginated RSVP Events
-  const fetchRsvpEvents = useCallback(async (
-    page = rsvpMeta.page,
-    limit = rsvpMeta.limit,
-    status = rsvpStatusFilter
-  ) => {
+  // Fetch paginated RSVP Events from Server
+  const fetchRsvpEvents = useCallback(async () => {
     if (!user) return;
     try {
       setIsRsvpLoading(true);
       setRsvpError(null);
       const res = await eventsApi.getEvents({
-        my_rsvps: status,
-        page,
-        limit,
-        sort_by: 'date',
-        sort_order: 'asc',
+        my_rsvps: rsvpStatusFilter,
+        page: rsvpMeta.page,
+        limit: rsvpMeta.limit,
+        search: debouncedSearch.trim() || undefined,
+        timeframe,
+        event_type: eventType,
+        tag: selectedTag.trim() || undefined,
+        sort_by: sortBy,
+        sort_order: sortBy === 'date' ? (timeframe === 'past' ? 'desc' : 'asc') : 'desc',
       });
 
       if (res.success && res.data) {
@@ -134,9 +335,20 @@ export const MyEventsPage: React.FC = () => {
     } finally {
       setIsRsvpLoading(false);
     }
-  }, [user, rsvpMeta.page, rsvpMeta.limit, rsvpStatusFilter, error]);
+  }, [
+    user,
+    rsvpMeta.page,
+    rsvpMeta.limit,
+    rsvpStatusFilter,
+    debouncedSearch,
+    timeframe,
+    eventType,
+    selectedTag,
+    sortBy,
+    error,
+  ]);
 
-  // Fetch RSVP counts for all status types
+  // Fetch RSVP total counts for status badge pills
   const fetchRsvpCounts = useCallback(async () => {
     if (!user) return;
     try {
@@ -153,48 +365,157 @@ export const MyEventsPage: React.FC = () => {
         setRsvpCounts(counts);
       }
     } catch {
-      // Fallback
+      // Non-blocking fallback
     }
   }, [user]);
 
-  // Initial fetch on user availability
+  // Reactive fetch on user/tab/filters change
   useEffect(() => {
     if (user) {
-      fetchCreatedEvents(1, createdMeta.limit);
-      fetchRsvpEvents(1, rsvpMeta.limit, rsvpStatusFilter);
+      if (activeTab === 'created') {
+        fetchCreatedEvents();
+      } else {
+        fetchRsvpEvents();
+      }
       fetchRsvpCounts();
     }
-  }, [user]);
+  }, [user, activeTab, fetchCreatedEvents, fetchRsvpEvents, fetchRsvpCounts]);
 
-  // Handle Created page change
+  // Tab switching
+  const handleTabChange = (tab: 'created' | 'rsvps') => {
+    setActiveTab(tab);
+    updateUrlParams({
+      tab,
+      page: 1,
+    });
+    if (tab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+  };
+
+  // Filter change handlers
+  const handleTimeframeChange = (newTf: 'all' | 'upcoming' | 'past') => {
+    setTimeframe(newTf);
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({ timeframe: newTf, page: 1 });
+  };
+
+  const handleTypeChange = (newType: 'all' | 'public' | 'private') => {
+    setEventType(newType);
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({ event_type: newType, page: 1 });
+  };
+
+  const handleTagChange = (newTag: string) => {
+    setSelectedTag(newTag);
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({ tag: newTag, page: 1 });
+  };
+
+  const handleSortChange = (newSort: 'date' | 'popularity' | 'created_at') => {
+    setSortBy(newSort);
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({ sort_by: newSort, page: 1 });
+  };
+
+  const handleViewModeChange = (newMode: 'grid' | 'list') => {
+    setViewMode(newMode);
+    updateUrlParams({ view_mode: newMode });
+  };
+
+  // RSVP Sub-Filter change
+  const handleRsvpStatusFilterChange = (status: 'all' | 'yes' | 'maybe' | 'no') => {
+    setRsvpStatusFilter(status);
+    setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    updateUrlParams({ rsvp_status: status, page: 1 });
+  };
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setTimeframe('all');
+    setEventType('all');
+    setSelectedTag('');
+    setSortBy('date');
+    if (activeTab === 'rsvps') {
+      setRsvpStatusFilter('all');
+    }
+    if (activeTab === 'created') {
+      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+    } else {
+      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+    }
+    updateUrlParams({
+      search: '',
+      timeframe: 'all',
+      event_type: 'all',
+      tag: '',
+      sort_by: 'date',
+      rsvp_status: 'all',
+      page: 1,
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = !!(
+    search.trim() ||
+    timeframe !== 'all' ||
+    eventType !== 'all' ||
+    selectedTag ||
+    sortBy !== 'date' ||
+    (activeTab === 'rsvps' && rsvpStatusFilter !== 'all')
+  );
+
+  // Pagination change handlers
   const handleCreatedPageChange = (newPage: number) => {
-    fetchCreatedEvents(newPage, createdMeta.limit);
+    setCreatedMeta((prev) => ({ ...prev, page: newPage }));
+    updateUrlParams({ page: newPage });
   };
 
   const handleCreatedLimitChange = (newLimit: number) => {
-    fetchCreatedEvents(1, newLimit);
+    setCreatedMeta((prev) => ({ ...prev, page: 1, limit: newLimit }));
+    updateUrlParams({ page: 1, limit: newLimit });
   };
 
-  // Handle RSVP page change
   const handleRsvpPageChange = (newPage: number) => {
-    fetchRsvpEvents(newPage, rsvpMeta.limit, rsvpStatusFilter);
+    setRsvpMeta((prev) => ({ ...prev, page: newPage }));
+    updateUrlParams({ page: newPage });
   };
 
   const handleRsvpLimitChange = (newLimit: number) => {
-    fetchRsvpEvents(1, newLimit, rsvpStatusFilter);
-  };
-
-  const handleRsvpFilterChange = (status: 'all' | 'yes' | 'maybe' | 'no') => {
-    setRsvpStatusFilter(status);
-    fetchRsvpEvents(1, rsvpMeta.limit, status);
+    setRsvpMeta((prev) => ({ ...prev, page: 1, limit: newLimit }));
+    updateUrlParams({ page: 1, limit: newLimit });
   };
 
   const refreshAll = () => {
-    fetchCreatedEvents();
-    fetchRsvpEvents();
+    if (activeTab === 'created') {
+      fetchCreatedEvents();
+    } else {
+      fetchRsvpEvents();
+    }
     fetchRsvpCounts();
   };
 
+  // Event Deletion
   const handleDelete = async () => {
     if (!eventToDelete || isDeleting) return;
     try {
@@ -239,9 +560,9 @@ export const MyEventsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md max-w-md mb-8">
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md max-w-md mb-6">
         <button
-          onClick={() => setActiveTab('created')}
+          onClick={() => handleTabChange('created')}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'created'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
@@ -253,7 +574,7 @@ export const MyEventsPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('rsvps')}
+          onClick={() => handleTabChange('rsvps')}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'rsvps'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
@@ -265,20 +586,96 @@ export const MyEventsPage: React.FC = () => {
         </button>
       </div>
 
+      {/* RSVP Quick Status Filter Pills (Active only on RSVPs tab) */}
+      {activeTab === 'rsvps' && (
+        <div className="flex flex-wrap items-center gap-2 mb-6 animate-fade-in">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
+            <ListFilter className="w-3.5 h-3.5" />
+            Filter by RSVP:
+          </span>
+          {[
+            { id: 'all', label: 'All', count: rsvpCounts.all },
+            {
+              id: 'yes',
+              label: 'Going',
+              count: rsvpCounts.yes,
+              icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />,
+            },
+            {
+              id: 'maybe',
+              label: 'Interested',
+              count: rsvpCounts.maybe,
+              icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" />,
+            },
+            {
+              id: 'no',
+              label: 'Declined',
+              count: rsvpCounts.no,
+              icon: <XCircle className="w-3.5 h-3.5 text-rose-500" />,
+            },
+          ].map((pill) => (
+            <button
+              key={pill.id}
+              onClick={() => handleRsvpStatusFilterChange(pill.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                rsvpStatusFilter === pill.id
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              {pill.icon}
+              <span>{pill.label}</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  rsvpStatusFilter === pill.id
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                {pill.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Server-Side Filter Bar */}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        selectedTimeframe={timeframe}
+        onTimeframeChange={handleTimeframeChange}
+        selectedType={eventType}
+        onTypeChange={handleTypeChange}
+        selectedTag={selectedTag}
+        onTagChange={handleTagChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        tags={allTags}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+        onReset={handleResetFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
+
       {/* Tab 1: Created by Me */}
       {activeTab === 'created' && (
-        <>
+        <div className="mt-8">
           {isCreatedLoading ? (
             <div className="py-24 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-              <p className="text-sm font-semibold text-slate-500">Loading your created events...</p>
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                Loading your created events...
+              </p>
             </div>
           ) : createdError && createdEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
               <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
                 <AlertTriangle className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unable to Load Created Events</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Unable to Load Created Events
+              </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
                 {createdError}
               </p>
@@ -292,21 +689,42 @@ export const MyEventsPage: React.FC = () => {
             </div>
           ) : createdEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
-              <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">You haven't created any events yet</h3>
-              <p className="text-xs text-slate-500 mt-1 mb-6">
-                Create an event to start inviting friends, colleagues, and community members.
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
+                <CalendarX2 className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {hasActiveFilters ? 'No Matching Events Found' : "You haven't created any events yet"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+                {hasActiveFilters
+                  ? 'No created events match your current filter criteria. Try adjusting or resetting your filters.'
+                  : 'Create an event to start inviting friends, colleagues, and community members.'}
               </p>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
-              >
-                Host Your First Event
-              </button>
+              {hasActiveFilters ? (
+                <button
+                  onClick={handleResetFilters}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
+                >
+                  Clear All Filters
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
+                >
+                  Host Your First Event
+                </button>
+              )}
             </div>
           ) : (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+                    : 'space-y-4'
+                }
+              >
                 {createdEvents.map((event) => (
                   <EventCard
                     key={event.id}
@@ -320,7 +738,7 @@ export const MyEventsPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Pagination for Created Events */}
+              {/* Server-Side Pagination for Created Events */}
               <Pagination
                 meta={createdMeta}
                 onPageChange={handleCreatedPageChange}
@@ -328,52 +746,18 @@ export const MyEventsPage: React.FC = () => {
               />
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Tab 2: My RSVPs */}
       {activeTab === 'rsvps' && (
-        <>
-          {/* Status Sub-Filters */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
-              <ListFilter className="w-3.5 h-3.5" />
-              Filter by RSVP:
-            </span>
-            {[
-              { id: 'all', label: 'All', count: rsvpCounts.all },
-              { id: 'yes', label: 'Going', count: rsvpCounts.yes, icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> },
-              { id: 'maybe', label: 'Interested', count: rsvpCounts.maybe, icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" /> },
-              { id: 'no', label: 'Declined', count: rsvpCounts.no, icon: <XCircle className="w-3.5 h-3.5 text-rose-500" /> },
-            ].map((pill) => (
-              <button
-                key={pill.id}
-                onClick={() => handleRsvpFilterChange(pill.id as any)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  rsvpStatusFilter === pill.id
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {pill.icon}
-                <span>{pill.label}</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    rsvpStatusFilter === pill.id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  {pill.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
+        <div className="mt-8">
           {isRsvpLoading ? (
             <div className="py-24 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-              <p className="text-sm font-semibold text-slate-500">Loading your RSVP'd events...</p>
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                Loading your RSVP'd events...
+              </p>
             </div>
           ) : rsvpError && rsvpEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
@@ -394,23 +778,44 @@ export const MyEventsPage: React.FC = () => {
             </div>
           ) : rsvpEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
-              <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">No RSVPs found</h3>
-              <p className="text-xs text-slate-500 mt-1 mb-6">
-                {rsvpStatusFilter !== 'all'
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
+                <Users className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {hasActiveFilters ? 'No Matching RSVPs Found' : 'No RSVPs found'}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+                {hasActiveFilters
+                  ? 'No RSVP events match your current filter criteria. Try adjusting or clearing filters.'
+                  : rsvpStatusFilter !== 'all'
                   ? `You haven't responded as "${rsvpStatusFilter === 'yes' ? 'Going' : rsvpStatusFilter === 'maybe' ? 'Interested' : 'Declined'}" to any events yet.`
                   : 'Browse upcoming community events and RSVP to attend!'}
               </p>
-              <Link
-                to="/"
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm inline-block"
-              >
-                Browse Upcoming Events
-              </Link>
+              {hasActiveFilters ? (
+                <button
+                  onClick={handleResetFilters}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
+                >
+                  Clear All Filters
+                </button>
+              ) : (
+                <Link
+                  to="/"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm inline-block"
+                >
+                  Browse Upcoming Events
+                </Link>
+              )}
             </div>
           ) : (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+                    : 'space-y-4'
+                }
+              >
                 {rsvpEvents.map((event) => (
                   <EventCard
                     key={event.id}
@@ -419,7 +824,7 @@ export const MyEventsPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Pagination for RSVP Events */}
+              {/* Server-Side Pagination for RSVP Events */}
               <Pagination
                 meta={rsvpMeta}
                 onPageChange={handleRsvpPageChange}
@@ -427,7 +832,7 @@ export const MyEventsPage: React.FC = () => {
               />
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Create / Edit Modal */}

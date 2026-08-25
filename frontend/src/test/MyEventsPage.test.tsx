@@ -10,7 +10,13 @@ import { EventItem } from '../types';
 vi.mock('../api/events.api', () => ({
   eventsApi: {
     getEvents: vi.fn(),
-    getTags: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    getTags: vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        { id: 1, name: 'Tech', colorHex: '#6366f1' },
+        { id: 2, name: 'Design', colorHex: '#10b981' },
+      ],
+    }),
     deleteEvent: vi.fn(),
   },
 }));
@@ -51,7 +57,7 @@ const mockEventItem: EventItem = {
   updatedAt: new Date().toISOString(),
   isPast: false,
   creator: { id: 42, name: 'Test Creator', email: 'creator@example.com' },
-  tags: [{ id: 1, name: 'Code', colorHex: '#6366f1' }],
+  tags: [{ id: 1, name: 'Tech', colorHex: '#6366f1' }],
   rsvpStats: { yes: 5, maybe: 2, no: 0, total: 7 },
   userRsvp: 'yes',
   isCreator: true,
@@ -80,6 +86,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('MyEventsPage Component', () => {
   beforeEach(() => {
+    window.history.pushState({}, '', '/');
     vi.clearAllMocks();
   });
 
@@ -117,7 +124,7 @@ describe('MyEventsPage Component', () => {
 
     // Check title and tab count
     expect(screen.getByRole('heading', { name: /My Events & RSVPs/i })).toBeInTheDocument();
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Created by Me \(15\)/i)).toBeInTheDocument();
       expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
@@ -262,6 +269,115 @@ describe('MyEventsPage Component', () => {
           my_rsvps: 'yes',
           page: 1,
           limit: 6,
+        })
+      );
+    });
+  });
+
+  it('triggers debounced server-side search when typing in search bar', async () => {
+    vi.mocked(eventsApi.getEvents).mockResolvedValue({
+      success: true,
+      data: [mockEventItem],
+      meta: {
+        page: 1,
+        limit: 6,
+        total: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search events by title, description, or location/i);
+    fireEvent.change(searchInput, { target: { value: 'Workshop' } });
+
+    await waitFor(
+      () => {
+        expect(eventsApi.getEvents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            creator_id: 42,
+            search: 'Workshop',
+          })
+        );
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('filters by timeframe (upcoming/past) and triggers server-side request', async () => {
+    vi.mocked(eventsApi.getEvents).mockResolvedValue({
+      success: true,
+      data: [mockEventItem],
+      meta: {
+        page: 1,
+        limit: 6,
+        total: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
+    });
+
+    // Click on Upcoming timeframe pill
+    const upcomingBtn = screen.getByRole('button', { name: /Upcoming/i });
+    fireEvent.click(upcomingBtn);
+
+    await waitFor(() => {
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creator_id: 42,
+          timeframe: 'upcoming',
+        })
+      );
+    });
+  });
+
+  it('displays empty state with Clear All Filters button when no events match filters', async () => {
+    vi.mocked(eventsApi.getEvents).mockResolvedValue({
+      success: true,
+      data: [],
+      meta: {
+        page: 1,
+        limit: 6,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    // Click on Past timeframe
+    const pastBtn = screen.getByRole('button', { name: /Past/i });
+    fireEvent.click(pastBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('No Matching Events Found')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Clear All Filters/i })).toBeInTheDocument();
+    });
+
+    // Click Clear All Filters
+    const clearBtn = screen.getByRole('button', { name: /Clear All Filters/i });
+    fireEvent.click(clearBtn);
+
+    await waitFor(() => {
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creator_id: 42,
+          timeframe: 'all',
         })
       );
     });
