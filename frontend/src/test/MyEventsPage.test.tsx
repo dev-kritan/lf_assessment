@@ -10,13 +10,7 @@ import { EventItem } from '../types';
 vi.mock('../api/events.api', () => ({
   eventsApi: {
     getEvents: vi.fn(),
-    getTags: vi.fn().mockResolvedValue({
-      success: true,
-      data: [
-        { id: 1, name: 'Tech', colorHex: '#6366f1' },
-        { id: 2, name: 'Design', colorHex: '#10b981' },
-      ],
-    }),
+    getTags: vi.fn(),
     deleteEvent: vi.fn(),
   },
 }));
@@ -88,6 +82,13 @@ describe('MyEventsPage Component', () => {
   beforeEach(() => {
     window.history.pushState({}, '', '/');
     vi.clearAllMocks();
+    vi.mocked(eventsApi.getTags).mockResolvedValue({
+      success: true,
+      data: [
+        { id: 1, name: 'Tech', colorHex: '#6366f1' },
+        { id: 2, name: 'Design', colorHex: '#10b981' },
+      ],
+    });
   });
 
   it('renders created events tab with pagination and total count', async () => {
@@ -412,6 +413,73 @@ describe('MyEventsPage Component', () => {
       expect(screen.getByRole('button', { name: /All Events 15/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Upcoming Events 10/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Past Events 5/i })).toBeInTheDocument();
+    });
+  });
+
+  it('updates timeframe counts dynamically according to the selected event tag filter', async () => {
+    vi.mocked(eventsApi.getEvents).mockImplementation(async (params: any) => {
+      if (params.tag === 'Tech') {
+        if (params.timeframe === 'upcoming') {
+          return {
+            success: true,
+            data: [mockEventItem],
+            meta: { page: 1, limit: 1, total: 3, totalPages: 3, hasNextPage: true, hasPrevPage: false },
+          };
+        }
+        if (params.timeframe === 'past') {
+          return {
+            success: true,
+            data: [],
+            meta: { page: 1, limit: 1, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+          };
+        }
+        return {
+          success: true,
+          data: [mockEventItem],
+          meta: { page: 1, limit: 6, total: 4, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        };
+      }
+      return {
+        success: true,
+        data: [mockEventItem],
+        meta: { page: 1, limit: 6, total: 15, totalPages: 3, hasNextPage: true, hasPrevPage: false },
+      };
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    // Select "#Tech" tag chip
+    const techChip = await screen.findByRole('button', { name: /#Tech/i });
+    fireEvent.click(techChip);
+
+    await waitFor(() => {
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creator_id: 42,
+          tag: 'Tech',
+          timeframe: 'all',
+        })
+      );
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creator_id: 42,
+          tag: 'Tech',
+          timeframe: 'upcoming',
+        })
+      );
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creator_id: 42,
+          tag: 'Tech',
+          timeframe: 'past',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /All Events 4/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Upcoming Events 3/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Past Events 1/i })).toBeInTheDocument();
     });
   });
 });

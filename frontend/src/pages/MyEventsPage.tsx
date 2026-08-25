@@ -135,11 +135,11 @@ export const MyEventsPage: React.FC = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Fetch all tags once for edit modal
+  // Fetch all tags once for edit modal & filter chips
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const res = await tagsApi.getTags();
+        const res = await eventsApi.getTags();
         if (res.success && res.data) {
           setAllTags(res.data);
         }
@@ -414,58 +414,80 @@ export const MyEventsPage: React.FC = () => {
     ],
   );
 
-  // Fetch RSVP total counts and timeframe breakdown for badge pills
+  // Fetch RSVP total counts and timeframe breakdown for badge pills dynamically filtered by tag, search, and event type
   const fetchRsvpCounts = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await rsvpApi.getMyRsvps();
-      if (res.success && res.data) {
-        const counts = { all: 0, yes: 0, maybe: 0, no: 0 };
-        const tfCounts = { all: 0, upcoming: 0, past: 0 };
-        const now = new Date();
+      const baseParams = {
+        my_rsvps: rsvpStatusFilter,
+        tag: selectedTag.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
+        event_type: eventType !== "all" ? eventType : undefined,
+        limit: 1,
+      };
 
-        res.data.forEach((r: any) => {
+      const [allRes, upcomingRes, pastRes, rawRsvpsRes] = await Promise.all([
+        eventsApi.getEvents({
+          ...baseParams,
+          timeframe: "all",
+        }),
+        eventsApi.getEvents({
+          ...baseParams,
+          timeframe: "upcoming",
+        }),
+        eventsApi.getEvents({
+          ...baseParams,
+          timeframe: "past",
+        }),
+        rsvpApi.getMyRsvps(),
+      ]);
+
+      setRsvpTimeframeCounts({
+        all: allRes.meta?.total || 0,
+        upcoming: upcomingRes.meta?.total || 0,
+        past: pastRes.meta?.total || 0,
+      });
+
+      if (rawRsvpsRes.success && rawRsvpsRes.data) {
+        const counts = { all: 0, yes: 0, maybe: 0, no: 0 };
+        rawRsvpsRes.data.forEach((r: any) => {
           counts.all++;
-          tfCounts.all++;
           const st = (r.user_rsvp_status || "").toLowerCase();
           if (st === "yes") counts.yes++;
           else if (st === "maybe") counts.maybe++;
           else if (st === "no") counts.no++;
-
-          const startTime = new Date(r.start_time);
-          if (startTime >= now) {
-            tfCounts.upcoming++;
-          } else {
-            tfCounts.past++;
-          }
         });
         setRsvpCounts(counts);
-        setRsvpTimeframeCounts(tfCounts);
       }
     } catch {
       // Non-blocking fallback
     }
-  }, [user]);
+  }, [user, selectedTag, debouncedSearch, eventType, rsvpStatusFilter]);
 
-  // Fetch Created Events timeframe counts (all, upcoming, past)
+  // Fetch Created Events timeframe counts (all, upcoming, past) dynamically filtered by tag, search, and event type
   const fetchCreatedCounts = useCallback(async () => {
     if (!user) return;
     try {
+      const baseParams = {
+        creator_id: user.id,
+        tag: selectedTag.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
+        event_type: eventType !== "all" ? eventType : undefined,
+        limit: 1,
+      };
+
       const [allRes, upcomingRes, pastRes] = await Promise.all([
         eventsApi.getEvents({
-          creator_id: user.id,
+          ...baseParams,
           timeframe: "all",
-          limit: 1,
         }),
         eventsApi.getEvents({
-          creator_id: user.id,
+          ...baseParams,
           timeframe: "upcoming",
-          limit: 1,
         }),
         eventsApi.getEvents({
-          creator_id: user.id,
+          ...baseParams,
           timeframe: "past",
-          limit: 1,
         }),
       ]);
 
@@ -477,7 +499,7 @@ export const MyEventsPage: React.FC = () => {
     } catch {
       // Non-blocking fallback
     }
-  }, [user]);
+  }, [user, selectedTag, debouncedSearch, eventType]);
 
   // Reactive fetch on user/tab/filters change
   useEffect(() => {
