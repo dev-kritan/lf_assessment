@@ -55,7 +55,13 @@ export const RegisterPage: React.FC = () => {
 
     if (!validation.isValid) {
       setFieldErrors(validation.errors);
-      setFormError(validation.firstError || 'Please correct the form errors.');
+      const firstField = Object.keys(validation.errors)[0];
+      if (firstField) {
+        const el = document.querySelector(`[data-field="${firstField}"]`);
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        const input = el?.querySelector('input');
+        input?.focus();
+      }
       return;
     }
 
@@ -92,8 +98,8 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
+          <div data-field="name">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Full Name
             </label>
@@ -102,14 +108,15 @@ export const RegisterPage: React.FC = () => {
               <input
                 ref={nameInputRef}
                 type="text"
+                name="name"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
                   if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: '' }));
+                  if (formError) setFormError('');
                 }}
                 placeholder="e.g. Alice Johnson"
                 autoFocus
-                required
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
                   fieldErrors.name ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                 } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
@@ -118,7 +125,7 @@ export const RegisterPage: React.FC = () => {
             {fieldErrors.name && <p className="text-xs text-rose-500 mt-1">{fieldErrors.name}</p>}
           </div>
 
-          <div>
+          <div data-field="email">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Email Address
             </label>
@@ -126,13 +133,14 @@ export const RegisterPage: React.FC = () => {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="email"
+                name="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                  if (formError) setFormError('');
                 }}
                 placeholder="alice@example.com"
-                required
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
                   fieldErrors.email ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                 } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
@@ -141,7 +149,7 @@ export const RegisterPage: React.FC = () => {
             {fieldErrors.email && <p className="text-xs text-rose-500 mt-1">{fieldErrors.email}</p>}
           </div>
 
-          <div>
+          <div data-field="password">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Password (min. 6 characters)
             </label>
@@ -149,13 +157,14 @@ export const RegisterPage: React.FC = () => {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
+                name="password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                  if (formError) setFormError('');
                 }}
                 placeholder="••••••••"
-                required
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
                   fieldErrors.password ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                 } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
@@ -164,7 +173,7 @@ export const RegisterPage: React.FC = () => {
             {fieldErrors.password && <p className="text-xs text-rose-500 mt-1">{fieldErrors.password}</p>}
           </div>
 
-          <div>
+          <div data-field="confirmPassword">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Confirm Password
             </label>
@@ -172,13 +181,14 @@ export const RegisterPage: React.FC = () => {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
+                name="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
                   if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                  if (formError) setFormError('');
                 }}
                 placeholder="••••••••"
-                required
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
                   fieldErrors.confirmPassword ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                 } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
@@ -189,7 +199,7 @@ export const RegisterPage: React.FC = () => {
             )}
           </div>
 
-          {formError && (
+          {formError && !Object.keys(fieldErrors).length && (
             <p
               ref={errorRef}
               className="text-xs text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60"
