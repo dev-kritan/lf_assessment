@@ -456,18 +456,6 @@ export const EventListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
-      {/* Metric Detail Drawer */}
-      <MetricDetailDrawer
-        isOpen={Boolean(activeMetricDetail)}
-        onClose={() => setActiveMetricDetail(null)}
-        metricType={activeMetricDetail}
-        onFilterTimeframe={(tf) => {
-          setTimeframe(tf);
-          setPagination((prev) => ({ ...prev, page: 1 }));
-          updateUrlParams({ timeframe: tf, page: 1 });
-        }}
-      />
-
       {/* Hero / Header Section */}
       <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-indigo-50/50 via-white to-transparent dark:from-indigo-950/20 dark:via-slate-950 dark:to-slate-950 border-b border-slate-200/60 dark:border-slate-800/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -504,24 +492,32 @@ export const EventListPage: React.FC = () => {
               )}
             </div>
 
-            {/* Quick Metrics Dashboard */}
+            {/* Quick Metrics Grid */}
             {metrics && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 lg:max-w-md w-full">
+              <div className="grid grid-cols-2 gap-3 w-full lg:w-auto min-w-[320px]">
                 <StatCard
-                  label="Total Events"
-                  value={metrics.totalEvents}
-                  icon={<Calendar className="w-5 h-5" />}
-                  colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
-                  description="All gatherings"
-                  onClick={() => setActiveMetricDetail("total")}
-                />
-                <StatCard
-                  label="Upcoming"
+                  label="Upcoming Events"
                   value={metrics.upcomingEvents}
                   icon={<Sparkles className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-emerald-600 to-emerald-500"
                   description="Next 30 days"
                   onClick={() => setActiveMetricDetail("upcoming")}
+                />
+                <StatCard
+                  label="Total RSVPs"
+                  value={metrics.totalRsvps}
+                  icon={<Users className="w-5 h-5" />}
+                  colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
+                  description="Confirmed attendees"
+                  onClick={() => setActiveMetricDetail("rsvps")}
+                />
+                <StatCard
+                  label="Categories"
+                  value={metrics.totalTags}
+                  icon={<TagIcon className="w-5 h-5" />}
+                  colorClass="bg-gradient-to-tr from-amber-600 to-amber-500"
+                  description="Filterable tags"
+                  onClick={() => setActiveMetricDetail("categories")}
                 />
                 <StatCard
                   label="Past Events"
