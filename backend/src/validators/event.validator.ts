@@ -14,7 +14,7 @@ export const baseEventSchema = z.object({
     .min(VALIDATION_LIMITS.EVENT_LOC_MIN, 'Location is required')
     .max(VALIDATION_LIMITS.EVENT_LOC_MAX),
   event_type: z.enum(['public', 'private'], {
-    errorMap: () => ({ message: 'Event type must be either public or private' }),
+    message: 'Event type must be either public or private',
   }),
   is_true_private: z.boolean().optional(),
   start_time: z.string().refine((val) => !isNaN(Date.parse(val)), {

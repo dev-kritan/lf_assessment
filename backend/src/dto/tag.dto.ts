@@ -3,7 +3,7 @@ import { VALIDATION_LIMITS, REGEX_PATTERNS } from '../constants';
 
 export const createTagSchema = z.object({
   name: z
-    .string({ required_error: 'Tag name is required' })
+    .string({ message: 'Tag name is required' })
     .trim()
     .min(VALIDATION_LIMITS.TAG_NAME_MIN, `Tag name must be at least ${VALIDATION_LIMITS.TAG_NAME_MIN} characters`)
     .max(VALIDATION_LIMITS.TAG_NAME_MAX, `Tag name cannot exceed ${VALIDATION_LIMITS.TAG_NAME_MAX} characters`),

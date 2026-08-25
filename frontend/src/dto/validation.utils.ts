@@ -1,5 +1,3 @@
-import { z, ZodSchema } from 'zod';
-
 export interface FormValidationResult<T> {
   isValid: boolean;
   data?: T;
@@ -7,11 +5,15 @@ export interface FormValidationResult<T> {
   firstError?: string;
 }
 
+export interface ZodLikeSchema<T> {
+  safeParse: (data: unknown) => { success: true; data: T } | { success: false; error: any };
+}
+
 /**
  * Validates form data against a Zod schema and extracts a field-by-field error map
  * and the primary first error message.
  */
-export function validateForm<T>(schema: ZodSchema<T>, formData: unknown): FormValidationResult<T> {
+export function validateForm<T>(schema: ZodLikeSchema<T>, formData: unknown): FormValidationResult<T> {
   const result = schema.safeParse(formData);
   if (!result.success) {
     const errors: Record<string, string> = {};

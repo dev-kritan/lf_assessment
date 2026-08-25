@@ -1,4 +1,4 @@
-import { z, ZodSchema, ZodError } from 'zod';
+import { z } from 'zod';
 
 export interface ValidationSuccess<T> {
   success: true;
@@ -20,15 +20,19 @@ export interface ValidationFailure {
 
 export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
 
+export interface ZodLike<T> {
+  safeParse: (data: unknown) => { success: true; data: T } | { success: false; error: any };
+}
+
 /**
- * Validates any payload against a Zod schema synchronously or asynchronously.
+ * Validates any payload against a Zod schema synchronously.
  * Returns a typed success object or a structured failure with field-level errors.
  */
-export function validateDto<T>(schema: ZodSchema<T>, data: unknown): ValidationResult<T> {
+export function validateDto<T>(schema: ZodLike<T>, data: unknown): ValidationResult<T> {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const formattedErrors: ValidationErrorDetail[] = result.error.errors.map((err) => ({
-      field: err.path.length > 0 ? err.path.join('.') : 'body',
+    const formattedErrors: ValidationErrorDetail[] = (result.error?.issues || result.error?.errors || []).map((err: any) => ({
+      field: err.path && err.path.length > 0 ? err.path.join('.') : 'body',
       message: err.message,
     }));
 

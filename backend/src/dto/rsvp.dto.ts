@@ -3,7 +3,7 @@ import { PAGINATION_DEFAULTS } from '../constants';
 
 export const setRsvpSchema = z.object({
   status: z.enum(['yes', 'maybe', 'no'], {
-    errorMap: () => ({ message: "RSVP status must be 'yes', 'maybe', or 'no'" }),
+    message: "RSVP status must be 'yes', 'maybe', or 'no'",
   }),
 });
 

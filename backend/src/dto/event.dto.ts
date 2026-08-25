@@ -1,27 +1,27 @@
-import { z } from 'zod';
+import { z, ZodType } from 'zod';
 import { VALIDATION_LIMITS, PAGINATION_DEFAULTS } from '../constants';
 import { CreateEventInput, EventQueryParams } from '../services/event.service';
 
 export const baseEventSchema = z.object({
   title: z
-    .string({ required_error: 'Title is required' })
+    .string({ message: 'Title is required' })
     .trim()
     .min(VALIDATION_LIMITS.EVENT_TITLE_MIN, `Title must be at least ${VALIDATION_LIMITS.EVENT_TITLE_MIN} characters`)
     .max(VALIDATION_LIMITS.EVENT_TITLE_MAX, `Title cannot exceed ${VALIDATION_LIMITS.EVENT_TITLE_MAX} characters`),
   description: z
-    .string({ required_error: 'Description is required' })
+    .string({ message: 'Description is required' })
     .trim()
     .min(VALIDATION_LIMITS.EVENT_DESC_MIN, `Description must be at least ${VALIDATION_LIMITS.EVENT_DESC_MIN} characters`),
   location: z
-    .string({ required_error: 'Location is required' })
+    .string({ message: 'Location is required' })
     .trim()
     .min(VALIDATION_LIMITS.EVENT_LOC_MIN, `Location must be at least ${VALIDATION_LIMITS.EVENT_LOC_MIN} characters`)
     .max(VALIDATION_LIMITS.EVENT_LOC_MAX, `Location cannot exceed ${VALIDATION_LIMITS.EVENT_LOC_MAX} characters`),
   event_type: z.enum(['public', 'private'], {
-    errorMap: () => ({ message: 'Event type must be either public or private' }),
+    message: 'Event type must be either public or private',
   }),
   is_true_private: z.boolean().optional().default(false),
-  start_time: z.string({ required_error: 'Start time is required' }).refine((val) => !isNaN(Date.parse(val)), {
+  start_time: z.string({ message: 'Start time is required' }).refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid start time format',
   }),
   end_time: z
@@ -40,7 +40,7 @@ export const baseEventSchema = z.object({
     .default([]),
 });
 
-export const createEventSchema: z.ZodType<CreateEventInput, z.ZodTypeDef, any> = z
+export const createEventSchema: ZodType<CreateEventInput, any, any> = z
   .preprocess((raw: any) => {
     if (typeof raw !== 'object' || raw === null) return raw;
     const transformed: any = { ...raw };
@@ -85,7 +85,7 @@ export const createEventSchema: z.ZodType<CreateEventInput, z.ZodTypeDef, any> =
 
 export type CreateEventDTO = CreateEventInput;
 
-export const updateEventSchema: z.ZodType<Partial<CreateEventInput>, z.ZodTypeDef, any> = z
+export const updateEventSchema: ZodType<Partial<CreateEventInput>, any, any> = z
   .preprocess((raw: any) => {
     if (typeof raw !== 'object' || raw === null) return raw;
     const transformed: any = { ...raw };

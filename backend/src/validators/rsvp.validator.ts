@@ -2,6 +2,6 @@ import { z } from 'zod';
 
 export const setRsvpSchema = z.object({
   status: z.enum(['yes', 'no', 'maybe'], {
-    errorMap: () => ({ message: 'RSVP status must be yes, no, or maybe' }),
+    message: 'RSVP status must be yes, no, or maybe',
   }),
 });
