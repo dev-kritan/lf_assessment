@@ -126,7 +126,7 @@ describe('MyEventsPage Component', () => {
     expect(screen.getByRole('heading', { name: /My Events & RSVPs/i })).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText(/Created by Me \(15\)/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Created by Me 15/i })).toBeInTheDocument();
       expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
     });
 

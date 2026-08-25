@@ -21,6 +21,7 @@ import { EventCard } from "../components/EventCard";
 import { EventFormModal } from "../components/EventFormModal";
 import { FilterBar } from "../components/FilterBar";
 import { Pagination } from "../components/Pagination";
+import { CountBadge } from "../components/CountBadge";
 import { APP_ROUTES, PAGINATION_LIMITS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -658,27 +659,36 @@ export const MyEventsPage: React.FC = () => {
       <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md max-w-md mb-6">
         <button
           onClick={() => handleTabChange("created")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "created"
               ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Calendar className="w-4 h-4" />
-          Created by Me ({createdTimeframeCounts.all || createdMeta.total})
+          <span>Created by Me</span>
+          <CountBadge
+            count={createdTimeframeCounts.all || createdMeta.total}
+            isActive={activeTab === "created"}
+          />
         </button>
 
         <button
           onClick={() => handleTabChange("rsvps")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "rsvps"
               ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Users className="w-4 h-4" />
-          My RSVPs (
-          {rsvpTimeframeCounts.all || rsvpCounts.all || rsvpMeta.total})
+          <span>My RSVPs</span>
+          <CountBadge
+            count={
+              rsvpTimeframeCounts.all || rsvpCounts.all || rsvpMeta.total
+            }
+            isActive={activeTab === "rsvps"}
+          />
         </button>
       </div>
 
@@ -721,15 +731,15 @@ export const MyEventsPage: React.FC = () => {
             >
               {pill.icon}
               <span>{pill.label}</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              <CountBadge
+                count={pill.count}
+                isActive={rsvpStatusFilter === pill.id}
+                className={
                   rsvpStatusFilter === pill.id
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                }`}
-              >
-                {pill.count}
-              </span>
+                    ? "bg-white/20 text-white dark:bg-white/20 dark:text-white"
+                    : undefined
+                }
+              />
             </button>
           ))}
         </div>

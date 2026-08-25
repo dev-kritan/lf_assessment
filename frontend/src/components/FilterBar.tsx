@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Tag } from "../types";
 import { CustomSelect, SelectOption } from "./CustomSelect";
+import { CountBadge } from "./CountBadge";
 
 interface FilterBarProps {
   search: string;
@@ -193,17 +194,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                       ? "✨ Upcoming Events"
                       : "🕰️ Past Events"}
                 </span>
-                {typeof count === "number" && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      selectedTimeframe === tf
-                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                        : "bg-slate-300/80 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
+                <CountBadge count={count} isActive={selectedTimeframe === tf} />
               </button>
             );
           })}
