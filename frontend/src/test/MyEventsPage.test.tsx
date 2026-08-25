@@ -26,10 +26,10 @@ vi.mock('../api/rsvp.api', () => ({
     getMyRsvps: vi.fn().mockResolvedValue({
       success: true,
       data: [
-        { id: 1, user_rsvp_status: 'yes' },
-        { id: 2, user_rsvp_status: 'yes' },
-        { id: 3, user_rsvp_status: 'maybe' },
-        { id: 4, user_rsvp_status: 'no' },
+        { id: 1, user_rsvp_status: 'yes', start_time: new Date(Date.now() + 86400000).toISOString() },
+        { id: 2, user_rsvp_status: 'yes', start_time: new Date(Date.now() + 172800000).toISOString() },
+        { id: 3, user_rsvp_status: 'maybe', start_time: new Date(Date.now() - 86400000).toISOString() },
+        { id: 4, user_rsvp_status: 'no', start_time: new Date(Date.now() - 172800000).toISOString() },
       ],
     }),
   },
@@ -331,7 +331,7 @@ describe('MyEventsPage Component', () => {
     });
 
     // Click on Upcoming timeframe pill
-    const upcomingBtn = screen.getByRole('button', { name: /Upcoming/i });
+    const upcomingBtn = screen.getByRole('button', { name: /Upcoming Events/i });
     fireEvent.click(upcomingBtn);
 
     await waitFor(() => {
@@ -361,7 +361,7 @@ describe('MyEventsPage Component', () => {
     renderWithProviders(<MyEventsPage />);
 
     // Click on Past timeframe
-    const pastBtn = screen.getByRole('button', { name: /Past/i });
+    const pastBtn = screen.getByRole('button', { name: /Past Events/i });
     fireEvent.click(pastBtn);
 
     await waitFor(() => {
@@ -380,6 +380,38 @@ describe('MyEventsPage Component', () => {
           timeframe: 'all',
         })
       );
+    });
+  });
+
+  it('displays timeframe counts (all, upcoming, past) on filter bar timeframe tabs', async () => {
+    vi.mocked(eventsApi.getEvents).mockImplementation(async (params: any) => {
+      if (params.timeframe === 'upcoming') {
+        return {
+          success: true,
+          data: [mockEventItem],
+          meta: { page: 1, limit: 1, total: 10, totalPages: 10, hasNextPage: true, hasPrevPage: false },
+        };
+      }
+      if (params.timeframe === 'past') {
+        return {
+          success: true,
+          data: [],
+          meta: { page: 1, limit: 1, total: 5, totalPages: 5, hasNextPage: true, hasPrevPage: false },
+        };
+      }
+      return {
+        success: true,
+        data: [mockEventItem],
+        meta: { page: 1, limit: 6, total: 15, totalPages: 3, hasNextPage: true, hasPrevPage: false },
+      };
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /All Events 15/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Upcoming Events 10/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Past Events 5/i })).toBeInTheDocument();
     });
   });
 });
