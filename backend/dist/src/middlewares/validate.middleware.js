@@ -12,8 +12,9 @@ function validate(schema, source = 'body') {
         }
         catch (error) {
             if (error instanceof zod_1.ZodError) {
-                const formattedErrors = error.errors.map((err) => ({
-                    field: err.path.join('.'),
+                const issues = error.issues || error.errors || [];
+                const formattedErrors = issues.map((err) => ({
+                    field: err.path && err.path.length > 0 ? err.path.join('.') : source,
                     message: err.message,
                 }));
                 return (0, response_utils_1.sendError)(res, 'Validation failed', 400, formattedErrors, 'VALIDATION_ERROR');

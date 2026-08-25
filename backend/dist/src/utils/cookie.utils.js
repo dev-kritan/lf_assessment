@@ -4,11 +4,11 @@ exports.REFRESH_TOKEN_COOKIE = exports.ACCESS_TOKEN_COOKIE = void 0;
 exports.setAuthCookies = setAuthCookies;
 exports.clearAuthCookies = clearAuthCookies;
 const env_1 = require("../config/env");
-// 15 minutes for access token, 7 days for refresh token
-const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000;
-const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
-exports.ACCESS_TOKEN_COOKIE = 'accessToken';
-exports.REFRESH_TOKEN_COOKIE = 'refreshToken';
+const constants_1 = require("../constants");
+const ACCESS_TOKEN_MAX_AGE = constants_1.TOKEN_DURATIONS.ACCESS_TOKEN_MS;
+const REFRESH_TOKEN_MAX_AGE = constants_1.TOKEN_DURATIONS.REFRESH_TOKEN_MS;
+exports.ACCESS_TOKEN_COOKIE = constants_1.AUTH_COOKIES.ACCESS_TOKEN;
+exports.REFRESH_TOKEN_COOKIE = constants_1.AUTH_COOKIES.REFRESH_TOKEN;
 const baseCookieOptions = {
     httpOnly: true,
     secure: env_1.config.isProd,

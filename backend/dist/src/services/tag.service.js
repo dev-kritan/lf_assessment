@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TagService = void 0;
 const knex_1 = __importDefault(require("../config/knex"));
+const constants_1 = require("../constants");
 class TagService {
     /**
      * Generates a random 24-bit RGB hex color (#000000 to #ffffff).
@@ -17,7 +18,7 @@ class TagService {
      * Generates a randomized hex color that is not currently used by any existing tag.
      */
     static async getUniqueRandomColor() {
-        const existingTags = await (0, knex_1.default)('tags').select('color_hex');
+        const existingTags = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).select('color_hex');
         const usedColors = new Set(existingTags.map((t) => (t.color_hex || '').toLowerCase()));
         let color = this.generateRandomHexColor();
         let attempts = 0;
@@ -28,8 +29,8 @@ class TagService {
         return color;
     }
     static async getAllTags(params = {}, currentUserId) {
-        const eventsSubquery = (0, knex_1.default)('event_tags')
-            .join('events', 'event_tags.event_id', 'events.id')
+        const eventsSubquery = (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS)
+            .join(constants_1.DB_TABLES.EVENTS, 'event_tags.event_id', 'events.id')
             .select('event_tags.tag_id', 'events.id as event_id');
         // If not authenticated, true private events are excluded from tag counts
         if (!currentUserId) {
@@ -60,7 +61,7 @@ class TagService {
                     .orWhere('events.location', 'like', term);
             });
         }
-        const tags = await (0, knex_1.default)('tags')
+        const tags = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS)
             .leftJoin(eventsSubquery.as('filtered_events'), 'tags.id', 'filtered_events.tag_id')
             .select('tags.id', 'tags.name', 'tags.color_hex')
             .count('filtered_events.event_id as event_count')
@@ -75,7 +76,7 @@ class TagService {
     }
     static async createTag(name, colorHex) {
         const trimmedName = name.trim();
-        const existing = await (0, knex_1.default)('tags').whereRaw('LOWER(name) = ?', [trimmedName.toLowerCase()]).first();
+        const existing = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).whereRaw('LOWER(name) = ?', [trimmedName.toLowerCase()]).first();
         if (existing) {
             return {
                 id: Number(existing.id),
@@ -83,15 +84,15 @@ class TagService {
                 colorHex: existing.color_hex,
             };
         }
-        const assignedColor = colorHex && colorHex !== '#6366f1'
+        const assignedColor = colorHex && colorHex !== constants_1.DEFAULT_TAG_COLOR
             ? colorHex
             : await TagService.getUniqueRandomColor();
-        const [insertedIdRaw] = await (0, knex_1.default)('tags').insert({
+        const [insertedIdRaw] = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).insert({
             name: trimmedName,
             color_hex: assignedColor,
         });
         const id = typeof insertedIdRaw === 'object' ? insertedIdRaw.id || 1 : insertedIdRaw;
-        const newTag = await (0, knex_1.default)('tags').where({ id }).first();
+        const newTag = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id }).first();
         return {
             id: Number(newTag.id),
             name: newTag.name,
@@ -99,14 +100,14 @@ class TagService {
         };
     }
     static async getTagUsage(tagId, currentUserId) {
-        const tag = await (0, knex_1.default)('tags').where({ id: tagId }).first();
+        const tag = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).first();
         if (!tag) {
             const error = new Error('Tag not found');
             error.statusCode = 404;
             throw error;
         }
-        const query = (0, knex_1.default)('event_tags')
-            .join('events', 'event_tags.event_id', 'events.id')
+        const query = (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS)
+            .join(constants_1.DB_TABLES.EVENTS, 'event_tags.event_id', 'events.id')
             .where('event_tags.tag_id', tagId)
             .select('events.id', 'events.title', 'events.event_type', 'events.is_true_private', 'events.start_time', 'events.location')
             .orderBy('events.start_time', 'asc');
@@ -118,7 +119,7 @@ class TagService {
             });
         }
         const associatedEvents = await query;
-        const countResult = await (0, knex_1.default)('event_tags').where({ tag_id: tagId }).count('id as count').first();
+        const countResult = await (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS).where({ tag_id: tagId }).count('id as count').first();
         const eventCount = Number(countResult?.count || 0);
         return {
             tag: {
@@ -138,7 +139,7 @@ class TagService {
         };
     }
     static async updateTag(tagId, data) {
-        const tag = await (0, knex_1.default)('tags').where({ id: tagId }).first();
+        const tag = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).first();
         if (!tag) {
             const error = new Error('Tag not found');
             error.statusCode = 404;
@@ -147,13 +148,13 @@ class TagService {
         const updates = {};
         if (data.name !== undefined) {
             const trimmedName = data.name.trim();
-            if (!trimmedName || trimmedName.length < 2 || trimmedName.length > 50) {
-                const error = new Error('Tag name must be between 2 and 50 characters');
+            if (!trimmedName || trimmedName.length < constants_1.VALIDATION_LIMITS.TAG_NAME_MIN || trimmedName.length > constants_1.VALIDATION_LIMITS.TAG_NAME_MAX) {
+                const error = new Error(`Tag name must be between ${constants_1.VALIDATION_LIMITS.TAG_NAME_MIN} and ${constants_1.VALIDATION_LIMITS.TAG_NAME_MAX} characters`);
                 error.statusCode = 400;
                 throw error;
             }
             // Check case-insensitive duplicate excluding current tag
-            const duplicate = await (0, knex_1.default)('tags')
+            const duplicate = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS)
                 .whereRaw('LOWER(name) = ? AND id != ?', [trimmedName.toLowerCase(), tagId])
                 .first();
             if (duplicate) {
@@ -165,19 +166,18 @@ class TagService {
         }
         if (data.colorHex !== undefined) {
             const trimmedColor = data.colorHex.trim();
-            const hexRegex = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
-            if (!hexRegex.test(trimmedColor)) {
-                const error = new Error('Invalid color hex code. Must be a valid hex color (e.g. #6366f1)');
+            if (!constants_1.REGEX_PATTERNS.HEX_COLOR.test(trimmedColor)) {
+                const error = new Error(`Invalid color hex code. Must be a valid hex color (e.g. ${constants_1.DEFAULT_TAG_COLOR})`);
                 error.statusCode = 400;
                 throw error;
             }
             updates.color_hex = trimmedColor;
         }
         if (Object.keys(updates).length > 0) {
-            await (0, knex_1.default)('tags').where({ id: tagId }).update(updates);
+            await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).update(updates);
         }
-        const updated = await (0, knex_1.default)('tags').where({ id: tagId }).first();
-        const countResult = await (0, knex_1.default)('event_tags').where({ tag_id: tagId }).count('id as count').first();
+        const updated = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).first();
+        const countResult = await (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS).where({ tag_id: tagId }).count('id as count').first();
         return {
             id: Number(updated.id),
             name: updated.name,
@@ -186,16 +186,16 @@ class TagService {
         };
     }
     static async deleteTag(tagId) {
-        const tag = await (0, knex_1.default)('tags').where({ id: tagId }).first();
+        const tag = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).first();
         if (!tag) {
             const error = new Error('Tag not found');
             error.statusCode = 404;
             throw error;
         }
-        const countResult = await (0, knex_1.default)('event_tags').where({ tag_id: tagId }).count('id as count').first();
+        const countResult = await (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS).where({ tag_id: tagId }).count('id as count').first();
         const affectedEventsCount = Number(countResult?.count || 0);
         // Cascades on event_tags automatically
-        await (0, knex_1.default)('tags').where({ id: tagId }).delete();
+        await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).delete();
         return {
             deletedTag: {
                 id: Number(tag.id),

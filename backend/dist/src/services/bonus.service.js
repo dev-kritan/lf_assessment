@@ -5,10 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BonusService = void 0;
 const knex_1 = __importDefault(require("../config/knex"));
+const constants_1 = require("../constants");
 class BonusService {
     static async getRawTables() {
-        const designations = await (0, knex_1.default)('emp_designation_log').orderBy('txn_id', 'asc');
-        const allocations = await (0, knex_1.default)('emp_allocation_log').orderBy('allocation_id', 'asc');
+        const designations = await (0, knex_1.default)(constants_1.DB_TABLES.EMP_DESIGNATION_LOG).orderBy('txn_id', 'asc');
+        const allocations = await (0, knex_1.default)(constants_1.DB_TABLES.EMP_ALLOCATION_LOG).orderBy('allocation_id', 'asc');
         return {
             empDesignationLog: designations,
             empAllocationLog: allocations,

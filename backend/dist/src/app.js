@@ -13,6 +13,7 @@ const requestLogger_middleware_1 = require("./middlewares/requestLogger.middlewa
 const error_middleware_1 = require("./middlewares/error.middleware");
 const swagger_1 = require("./config/swagger");
 const routes_1 = __importDefault(require("./routes"));
+const constants_1 = require("./constants");
 function createApp() {
     const app = (0, express_1.default)();
     // Security & standard middlewares
@@ -25,8 +26,8 @@ function createApp() {
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     }));
-    app.use(express_1.default.json({ limit: '10mb' }));
-    app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+    app.use(express_1.default.json({ limit: constants_1.VALIDATION_LIMITS.MAX_BODY_LIMIT }));
+    app.use(express_1.default.urlencoded({ extended: true, limit: constants_1.VALIDATION_LIMITS.MAX_BODY_LIMIT }));
     app.use((0, cookie_parser_1.default)(env_1.config.cookieSecret));
     // Request logger (Morgan + Winston)
     if (env_1.config.nodeEnv !== 'test') {
@@ -42,7 +43,7 @@ function createApp() {
             success: false,
             error: {
                 message: `Endpoint ${req.method} ${req.originalUrl} not found. Refer to /api-docs for documentation.`,
-                code: 'ROUTE_NOT_FOUND',
+                code: constants_1.ERROR_CODES.ROUTE_NOT_FOUND,
             },
         });
     });

@@ -9,6 +9,8 @@ import {
   Flame,
   Loader2,
   CalendarX2,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { EventItem, Tag, PaginationMeta } from "../types";
 import { eventsApi } from "../api/events.api";
@@ -88,6 +90,7 @@ export const EventListPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<EventItem | null>(null);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
@@ -232,6 +235,7 @@ export const EventListPage: React.FC = () => {
   const fetchEvents = useCallback(async () => {
     try {
       setIsLoading(true);
+      setFetchError(null);
       const res = await eventsApi.getEvents({
         page: pagination.page,
         limit: pagination.limit,
@@ -249,7 +253,9 @@ export const EventListPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      error("Failed to load events. Please try again.");
+      const msg = err.response?.data?.error?.message || "Failed to load events. Please try again.";
+      setFetchError(msg);
+      error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -503,6 +509,29 @@ export const EventListPage: React.FC = () => {
             <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
               Loading events...
             </p>
+          </div>
+        ) : fetchError && events.length === 0 ? (
+          /* In-Page Error State */
+          <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto my-8 animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Unable to Load Events
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6 leading-relaxed">
+              {fetchError}
+            </p>
+            <button
+              onClick={() => {
+                fetchEvents();
+                fetchTagsAndMetrics();
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry Loading
+            </button>
           </div>
         ) : events.length === 0 ? (
           /* Empty State */

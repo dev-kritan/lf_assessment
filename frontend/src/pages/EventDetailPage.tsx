@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   Loader2,
   Clock,
-  LogIn
+  LogIn,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { EventItem } from '../types';
 import { eventsApi } from '../api/events.api';
@@ -32,6 +34,7 @@ export const EventDetailPage: React.FC = () => {
   const [event, setEvent] = useState<EventItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isForbidden, setIsForbidden] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,6 +49,7 @@ export const EventDetailPage: React.FC = () => {
     try {
       setIsLoading(true);
       setIsForbidden(false);
+      setFetchError(null);
       const res = await eventsApi.getEventById(Number(id));
       if (res.success) {
         setEvent(res.data);
@@ -53,8 +57,12 @@ export const EventDetailPage: React.FC = () => {
     } catch (err: any) {
       if (err.response?.status === 403 || err.response?.data?.error?.code === 'PRIVATE_EVENT_FORBIDDEN') {
         setIsForbidden(true);
+      } else if (err.response?.status === 404) {
+        setEvent(null);
       } else {
-        error(err.response?.data?.error?.message || 'Failed to load event details');
+        const msg = err.response?.data?.error?.message || 'Failed to load event details. Please check your connection.';
+        setFetchError(msg);
+        error(msg);
       }
     } finally {
       setIsLoading(false);
@@ -86,6 +94,36 @@ export const EventDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-24 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
         <p className="text-sm font-semibold text-slate-500">Loading event details...</p>
+      </div>
+    );
+  }
+
+  if (fetchError && !event) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 text-center animate-fade-in">
+        <div className="w-16 h-16 rounded-3xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 shadow-inner ring-4 ring-rose-500/10">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Unable to Load Event</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 mb-8 leading-relaxed">
+          {fetchError}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={fetchEvent}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+          <Link
+            to={APP_ROUTES.HOME}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
+          >
+            Return to Events
+          </Link>
+        </div>
       </div>
     );
   }

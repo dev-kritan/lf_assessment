@@ -6,13 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventService = void 0;
 const knex_1 = __importDefault(require("../config/knex"));
 const tag_service_1 = require("./tag.service");
+const constants_1 = require("../constants");
 class EventService {
     static async getEvents(params, currentUserId) {
-        const page = Math.max(1, Number(params.page || 1));
-        const limit = Math.min(100, Math.max(1, Number(params.limit || 9)));
+        const page = Math.max(1, Number(params.page || constants_1.PAGINATION_DEFAULTS.PAGE));
+        const limit = Math.min(constants_1.PAGINATION_DEFAULTS.MAX_LIMIT, Math.max(1, Number(params.limit || constants_1.PAGINATION_DEFAULTS.LIMIT)));
         const offset = (page - 1) * limit;
-        const baseQuery = (0, knex_1.default)('events')
-            .leftJoin('users', 'events.creator_id', 'users.id')
+        const baseQuery = (0, knex_1.default)(constants_1.DB_TABLES.EVENTS)
+            .leftJoin(constants_1.DB_TABLES.USERS, 'events.creator_id', 'users.id')
             .select('events.id', 'events.title', 'events.description', 'events.location', 'events.event_type', 'events.is_true_private', 'events.start_time', 'events.end_time', 'events.capacity', 'events.banner_url', 'events.created_at', 'events.updated_at', 'users.id as creator_id', 'users.name as creator_name', 'users.email as creator_email', 'users.avatar_url as creator_avatar');
         // True Private events policy:
         // If not authenticated, true private events cannot be viewed in the event list.
@@ -54,7 +55,7 @@ class EventService {
         if (params.tag_id) {
             baseQuery.whereExists(function () {
                 this.select('*')
-                    .from('event_tags')
+                    .from(constants_1.DB_TABLES.EVENT_TAGS)
                     .whereRaw('event_tags.event_id = events.id')
                     .where('event_tags.tag_id', params.tag_id);
             });
@@ -62,8 +63,8 @@ class EventService {
         else if (params.tag && params.tag.trim()) {
             baseQuery.whereExists(function () {
                 this.select('*')
-                    .from('event_tags')
-                    .join('tags', 'event_tags.tag_id', 'tags.id')
+                    .from(constants_1.DB_TABLES.EVENT_TAGS)
+                    .join(constants_1.DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
                     .whereRaw('event_tags.event_id = events.id')
                     .whereRaw('LOWER(tags.name) = ?', [params.tag.trim().toLowerCase()]);
             });
@@ -72,7 +73,7 @@ class EventService {
         if (params.my_rsvps && currentUserId) {
             baseQuery.whereExists(function () {
                 const sub = this.select('*')
-                    .from('rsvps')
+                    .from(constants_1.DB_TABLES.RSVPS)
                     .whereRaw('rsvps.event_id = events.id')
                     .where('rsvps.user_id', currentUserId);
                 if (params.my_rsvps !== 'all') {
@@ -81,7 +82,7 @@ class EventService {
             });
         }
         // Count total before pagination
-        const countQuery = (0, knex_1.default)('events')
+        const countQuery = (0, knex_1.default)(constants_1.DB_TABLES.EVENTS)
             .modify((qb) => {
             // Clone where conditions
             baseQuery._statements.forEach((st) => {
@@ -118,8 +119,8 @@ class EventService {
         let userRsvpMap = {};
         if (eventIds.length > 0) {
             // Fetch tags
-            const tags = await (0, knex_1.default)('event_tags')
-                .join('tags', 'event_tags.tag_id', 'tags.id')
+            const tags = await (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS)
+                .join(constants_1.DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
                 .whereIn('event_tags.event_id', eventIds)
                 .select('event_tags.event_id', 'tags.id', 'tags.name', 'tags.color_hex');
             tags.forEach((t) => {
@@ -133,7 +134,7 @@ class EventService {
                 });
             });
             // Fetch RSVP counts
-            const rsvpCounts = await (0, knex_1.default)('rsvps')
+            const rsvpCounts = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
                 .whereIn('event_id', eventIds)
                 .select('event_id', 'status')
                 .count('* as count')
@@ -154,7 +155,7 @@ class EventService {
             });
             // Fetch current user's RSVP status if logged in
             if (currentUserId) {
-                const userRsvps = await (0, knex_1.default)('rsvps')
+                const userRsvps = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
                     .whereIn('event_id', eventIds)
                     .where('user_id', currentUserId)
                     .select('event_id', 'status');
@@ -209,35 +210,35 @@ class EventService {
         };
     }
     static async getEventById(id, currentUserId) {
-        const event = await (0, knex_1.default)('events')
-            .leftJoin('users', 'events.creator_id', 'users.id')
+        const event = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS)
+            .leftJoin(constants_1.DB_TABLES.USERS, 'events.creator_id', 'users.id')
             .where('events.id', id)
             .select('events.id', 'events.title', 'events.description', 'events.location', 'events.event_type', 'events.is_true_private', 'events.start_time', 'events.end_time', 'events.capacity', 'events.banner_url', 'events.created_at', 'events.updated_at', 'users.id as creator_id', 'users.name as creator_name', 'users.email as creator_email', 'users.avatar_url as creator_avatar')
             .first();
         if (!event) {
             const error = new Error('Event not found.');
             error.statusCode = 404;
-            error.code = 'EVENT_NOT_FOUND';
+            error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
             throw error;
         }
         // Logic 2: True Private event is strictly forbidden for unauthenticated visitors
         if (Boolean(event.is_true_private) && !currentUserId) {
             const error = new Error('This event is strictly private. Please sign in to view details.');
             error.statusCode = 403;
-            error.code = 'PRIVATE_EVENT_FORBIDDEN';
+            error.code = constants_1.ERROR_CODES.PRIVATE_EVENT_FORBIDDEN;
             throw error;
         }
         // Logic 1: Standard Private event allows preview to guests with restricted RSVP and masked attendees
         const isStandardPrivateGuest = event.event_type === 'private' && !currentUserId;
         // Fetch tags
-        const tags = await (0, knex_1.default)('event_tags')
-            .join('tags', 'event_tags.tag_id', 'tags.id')
+        const tags = await (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS)
+            .join(constants_1.DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
             .where('event_tags.event_id', id)
             .select('tags.id', 'tags.name', 'tags.color_hex');
         // Fetch RSVP stats (only if not a standard private guest)
         const rsvpStats = { yes: 0, maybe: 0, no: 0, total: 0 };
         if (!isStandardPrivateGuest) {
-            const rsvpCounts = await (0, knex_1.default)('rsvps')
+            const rsvpCounts = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
                 .where('event_id', id)
                 .select('status')
                 .count('* as count')
@@ -256,17 +257,17 @@ class EventService {
         // Fetch attendees list (users who RSVP'd yes/maybe) - only if not standard private guest
         let attendees = [];
         if (!isStandardPrivateGuest) {
-            attendees = await (0, knex_1.default)('rsvps')
-                .join('users', 'rsvps.user_id', 'users.id')
+            attendees = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
+                .join(constants_1.DB_TABLES.USERS, 'rsvps.user_id', 'users.id')
                 .where('rsvps.event_id', id)
                 .select('users.id', 'users.name', 'users.avatar_url', 'rsvps.status', 'rsvps.updated_at')
                 .orderBy('rsvps.updated_at', 'desc')
-                .limit(50);
+                .limit(constants_1.PAGINATION_DEFAULTS.ATTENDEES_LIMIT);
         }
         // Current user's RSVP status
         let userRsvp = null;
         if (currentUserId) {
-            const rsvpRecord = await (0, knex_1.default)('rsvps')
+            const rsvpRecord = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
                 .where({ event_id: id, user_id: currentUserId })
                 .first();
             if (rsvpRecord) {
@@ -322,7 +323,7 @@ class EventService {
         }
         const isTruePrivate = data.event_type === 'private' ? Boolean(data.is_true_private) : false;
         return await knex_1.default.transaction(async (trx) => {
-            const [eventIdRaw] = await trx('events').insert({
+            const [eventIdRaw] = await trx(constants_1.DB_TABLES.EVENTS).insert({
                 creator_id: creatorId,
                 title: data.title.trim(),
                 description: data.description.trim(),
@@ -340,10 +341,10 @@ class EventService {
                     event_id: eventId,
                     tag_id: tagId,
                 }));
-                await trx('event_tags').insert(tagRows);
+                await trx(constants_1.DB_TABLES.EVENT_TAGS).insert(tagRows);
             }
             // Creator automatically has RSVP 'yes'
-            await trx('rsvps').insert({
+            await trx(constants_1.DB_TABLES.RSVPS).insert({
                 event_id: eventId,
                 user_id: creatorId,
                 status: 'yes',
@@ -352,16 +353,17 @@ class EventService {
         });
     }
     static async updateEvent(id, data, currentUserId) {
-        const existing = await (0, knex_1.default)('events').where({ id }).first();
+        const existing = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where({ id }).first();
         if (!existing) {
             const error = new Error('Event not found.');
             error.statusCode = 404;
+            error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
             throw error;
         }
         if (Number(existing.creator_id) !== Number(currentUserId)) {
             const error = new Error('Forbidden: Only the event creator can edit this event.');
             error.statusCode = 403;
-            error.code = 'FORBIDDEN';
+            error.code = constants_1.ERROR_CODES.FORBIDDEN;
             throw error;
         }
         const updateFields = {};
@@ -392,7 +394,7 @@ class EventService {
         updateFields.updated_at = new Date();
         await knex_1.default.transaction(async (trx) => {
             if (Object.keys(updateFields).length > 0) {
-                await trx('events').where({ id }).update(updateFields);
+                await trx(constants_1.DB_TABLES.EVENTS).where({ id }).update(updateFields);
             }
             // If tag_ids or new_tags provided, update junction table
             if (data.tag_ids !== undefined || data.new_tags !== undefined) {
@@ -405,41 +407,42 @@ class EventService {
                         }
                     }
                 }
-                await trx('event_tags').where({ event_id: id }).del();
+                await trx(constants_1.DB_TABLES.EVENT_TAGS).where({ event_id: id }).del();
                 if (finalTagIds.length > 0) {
                     const tagRows = finalTagIds.map((tagId) => ({
                         event_id: id,
                         tag_id: tagId,
                     }));
-                    await trx('event_tags').insert(tagRows);
+                    await trx(constants_1.DB_TABLES.EVENT_TAGS).insert(tagRows);
                 }
             }
         });
         return await this.getEventById(id, currentUserId);
     }
     static async deleteEvent(id, currentUserId) {
-        const existing = await (0, knex_1.default)('events').where({ id }).first();
+        const existing = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where({ id }).first();
         if (!existing) {
             const error = new Error('Event not found.');
             error.statusCode = 404;
+            error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
             throw error;
         }
         if (Number(existing.creator_id) !== Number(currentUserId)) {
             const error = new Error('Forbidden: Only the event creator can delete this event.');
             error.statusCode = 403;
-            error.code = 'FORBIDDEN';
+            error.code = constants_1.ERROR_CODES.FORBIDDEN;
             throw error;
         }
-        await (0, knex_1.default)('events').where({ id }).del();
+        await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where({ id }).del();
         return { message: 'Event successfully deleted.' };
     }
     static async getEventMetrics() {
         const now = new Date();
-        const [totalEvents] = await (0, knex_1.default)('events').count('* as count');
-        const [upcomingEvents] = await (0, knex_1.default)('events').where('start_time', '>=', now).count('* as count');
-        const [pastEvents] = await (0, knex_1.default)('events').where('start_time', '<', now).count('* as count');
-        const [totalRsvps] = await (0, knex_1.default)('rsvps').where('status', 'yes').count('* as count');
-        const [totalTags] = await (0, knex_1.default)('tags').count('* as count');
+        const [totalEvents] = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).count('* as count');
+        const [upcomingEvents] = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where('start_time', '>=', now).count('* as count');
+        const [pastEvents] = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where('start_time', '<', now).count('* as count');
+        const [totalRsvps] = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS).where('status', 'yes').count('* as count');
+        const [totalTags] = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).count('* as count');
         return {
             totalEvents: Number(totalEvents?.count || 0),
             upcomingEvents: Number(upcomingEvents?.count || 0),

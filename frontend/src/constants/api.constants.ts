@@ -11,14 +11,16 @@ export const API_ENDPOINTS = {
     REFRESH_TOKEN: '/auth/refresh-token',
   },
   TWO_FACTOR: {
-    SETUP: '/2fa/setup',
-    ENABLE: '/2fa/enable',
-    DISABLE: '/2fa/disable',
+    SETUP: '/auth/2fa/setup',
+    ENABLE: '/auth/2fa/enable',
+    DISABLE: '/auth/2fa/disable',
   },
   EVENTS: {
     BASE: '/events',
     DETAIL: (id: number | string) => `/events/${id}`,
     METRICS: '/events/metrics',
+    ATTENDEES: (id: number | string) => `/events/${id}/attendees`,
+    RSVPS: (id: number | string) => `/events/${id}/rsvps`,
   },
   TAGS: {
     BASE: '/tags',
@@ -27,9 +29,9 @@ export const API_ENDPOINTS = {
   },
   RSVPS: {
     BASE: '/rsvps',
-    SET: (eventId: number | string) => `/rsvps/events/${eventId}`,
-    ATTENDEES: (eventId: number | string) => `/rsvps/events/${eventId}/attendees`,
-    MY_RSVPS: '/rsvps/my-rsvps',
+    SET: (eventId: number | string) => `/events/${eventId}/rsvps`,
+    ATTENDEES: (eventId: number | string) => `/events/${eventId}/attendees`,
+    MY_RSVPS: '/rsvps/me',
   },
   BONUS: {
     DATA: '/bonus/data',

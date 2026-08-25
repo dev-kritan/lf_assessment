@@ -10,7 +10,9 @@ import {
   Check, 
   Loader2, 
   Sparkles,
-  Layers
+  Layers,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { bonusApi } from '../api/bonus.api';
 import { BonusTableData, BonusQueryResult } from '../types';
@@ -24,6 +26,7 @@ export const BonusChallengePage: React.FC = () => {
   const [q4Result, setQ4Result] = useState<BonusQueryResult | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [copiedQuery, setCopiedQuery] = useState('');
 
@@ -36,6 +39,7 @@ export const BonusChallengePage: React.FC = () => {
   const fetchInitialData = async () => {
     try {
       setIsLoading(true);
+      setFetchError(null);
       const [rawRes, q1Res, q2Res, q4Res] = await Promise.all([
         bonusApi.getBonusData(),
         bonusApi.runQ1(),
@@ -47,8 +51,10 @@ export const BonusChallengePage: React.FC = () => {
       if (q1Res.success) setQ1Result(q1Res.data);
       if (q2Res.success) setQ2Result(q2Res.data);
       if (q4Res.success) setQ4Result(q4Res.data);
-    } catch {
-      error('Failed to load bonus challenge data');
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || 'Failed to load bonus challenge data. Please check your connection.';
+      setFetchError(msg);
+      error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +155,23 @@ export const BonusChallengePage: React.FC = () => {
         <div className="py-24 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
           <p className="text-sm font-semibold text-slate-500">Executing database analytics...</p>
+        </div>
+      ) : fetchError && !rawData ? (
+        <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
+          <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unable to Load Bonus Analytics</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+            {fetchError}
+          </p>
+          <button
+            onClick={() => fetchInitialData()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry Analytics
+          </button>
         </div>
       ) : (
         <>

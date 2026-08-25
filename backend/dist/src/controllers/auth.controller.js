@@ -4,10 +4,15 @@ exports.AuthController = void 0;
 const auth_service_1 = require("../services/auth.service");
 const response_utils_1 = require("../utils/response.utils");
 const cookie_utils_1 = require("../utils/cookie.utils");
+const dto_1 = require("../dto");
 class AuthController {
     static async register(req, res, next) {
         try {
-            const result = await auth_service_1.AuthService.register(req.body);
+            const validation = (0, dto_1.validateDto)(dto_1.registerSchema, req.body);
+            if (!validation.success) {
+                return (0, response_utils_1.sendError)(res, validation.message, validation.statusCode, validation.errors, validation.code);
+            }
+            const result = await auth_service_1.AuthService.register(validation.data);
             if (result.accessToken) {
                 (0, cookie_utils_1.setAuthCookies)(res, result.accessToken, result.refreshToken);
             }
@@ -19,7 +24,11 @@ class AuthController {
     }
     static async login(req, res, next) {
         try {
-            const result = await auth_service_1.AuthService.login(req.body);
+            const validation = (0, dto_1.validateDto)(dto_1.loginSchema, req.body);
+            if (!validation.success) {
+                return (0, response_utils_1.sendError)(res, validation.message, validation.statusCode, validation.errors, validation.code);
+            }
+            const result = await auth_service_1.AuthService.login(validation.data);
             if (result.accessToken) {
                 (0, cookie_utils_1.setAuthCookies)(res, result.accessToken, result.refreshToken);
             }
@@ -34,6 +43,10 @@ class AuthController {
             const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
             if (!refreshToken) {
                 return (0, response_utils_1.sendError)(res, 'Refresh token is required.', 401, null, 'REFRESH_TOKEN_REQUIRED');
+            }
+            const validation = (0, dto_1.validateDto)(dto_1.refreshTokenSchema, { refreshToken });
+            if (!validation.success) {
+                return (0, response_utils_1.sendError)(res, validation.message, validation.statusCode, validation.errors, validation.code);
             }
             const result = await auth_service_1.AuthService.refreshAccessToken(refreshToken);
             if (result.accessToken) {
@@ -68,8 +81,11 @@ class AuthController {
     }
     static async verifyEmail(req, res, next) {
         try {
-            const { token } = req.body;
-            const result = await auth_service_1.AuthService.verifyEmail(token);
+            const validation = (0, dto_1.validateDto)(dto_1.emailVerifySchema, req.body);
+            if (!validation.success) {
+                return (0, response_utils_1.sendError)(res, validation.message, validation.statusCode, validation.errors, validation.code);
+            }
+            const result = await auth_service_1.AuthService.verifyEmail(validation.data.token);
             return (0, response_utils_1.sendSuccess)(res, result, 'Email verified successfully');
         }
         catch (error) {

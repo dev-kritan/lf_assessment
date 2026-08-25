@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookmarkCheck, Calendar, Users, PlusCircle, Loader2, ListFilter, CheckCircle2, HelpCircle, XCircle } from 'lucide-react';
+import { BookmarkCheck, Calendar, Users, PlusCircle, Loader2, ListFilter, CheckCircle2, HelpCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { EventItem, Tag, PaginationMeta } from '../types';
 import { eventsApi } from '../api/events.api';
 import { rsvpApi } from '../api/rsvp.api';
@@ -17,6 +17,7 @@ export const MyEventsPage: React.FC = () => {
   
   // Created events pagination state
   const [createdEvents, setCreatedEvents] = useState<EventItem[]>([]);
+  const [createdError, setCreatedError] = useState<string | null>(null);
   const [createdMeta, setCreatedMeta] = useState<PaginationMeta>({
     page: 1,
     limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
@@ -29,6 +30,7 @@ export const MyEventsPage: React.FC = () => {
 
   // RSVP events pagination state
   const [rsvpEvents, setRsvpEvents] = useState<EventItem[]>([]);
+  const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [rsvpMeta, setRsvpMeta] = useState<PaginationMeta>({
     page: 1,
     limit: PAGINATION_LIMITS.MY_EVENTS_DEFAULT,
@@ -77,6 +79,7 @@ export const MyEventsPage: React.FC = () => {
     if (!user) return;
     try {
       setIsCreatedLoading(true);
+      setCreatedError(null);
       const res = await eventsApi.getEvents({
         creator_id: user.id,
         page,
@@ -91,8 +94,10 @@ export const MyEventsPage: React.FC = () => {
           setCreatedMeta(res.meta);
         }
       }
-    } catch {
-      error('Failed to load your created events');
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || 'Failed to load your created events';
+      setCreatedError(msg);
+      error(msg);
     } finally {
       setIsCreatedLoading(false);
     }
@@ -107,6 +112,7 @@ export const MyEventsPage: React.FC = () => {
     if (!user) return;
     try {
       setIsRsvpLoading(true);
+      setRsvpError(null);
       const res = await eventsApi.getEvents({
         my_rsvps: status,
         page,
@@ -121,8 +127,10 @@ export const MyEventsPage: React.FC = () => {
           setRsvpMeta(res.meta);
         }
       }
-    } catch {
-      error('Failed to load your RSVP events');
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || 'Failed to load your RSVP events';
+      setRsvpError(msg);
+      error(msg);
     } finally {
       setIsRsvpLoading(false);
     }
@@ -265,6 +273,23 @@ export const MyEventsPage: React.FC = () => {
               <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
               <p className="text-sm font-semibold text-slate-500">Loading your created events...</p>
             </div>
+          ) : createdError && createdEvents.length === 0 ? (
+            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unable to Load Created Events</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+                {createdError}
+              </p>
+              <button
+                onClick={() => fetchCreatedEvents()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry
+              </button>
+            </div>
           ) : createdEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-3" />
@@ -349,6 +374,23 @@ export const MyEventsPage: React.FC = () => {
             <div className="py-24 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
               <p className="text-sm font-semibold text-slate-500">Loading your RSVP'd events...</p>
+            </div>
+          ) : rsvpError && rsvpEvents.length === 0 ? (
+            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unable to Load RSVPs</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+                {rsvpError}
+              </p>
+              <button
+                onClick={() => fetchRsvpEvents()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry
+              </button>
             </div>
           ) : rsvpEvents.length === 0 ? (
             <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">

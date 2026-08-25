@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/Navbar';
 import { EventListPage } from './pages/EventListPage';
 import { EventDetailPage } from './pages/EventDetailPage';
@@ -16,7 +17,7 @@ import { BonusChallengePage } from './pages/BonusChallengePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { EventFormModal } from './components/EventFormModal';
 import { eventsApi } from './api/events.api';
-import { Heart, Calendar, Github, ShieldCheck, Database, Layers } from 'lucide-react';
+import { Calendar, ShieldCheck, Database, Layers } from 'lucide-react';
 
 import { APP_ROUTES } from './constants';
 
@@ -38,20 +39,22 @@ export const AppContent: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <Navbar onOpenCreateModal={handleOpenGlobalCreateModal} />
 
-      <div className="flex-1">
-        <Routes>
-          <Route path={APP_ROUTES.HOME} element={<EventListPage />} />
-          <Route path={APP_ROUTES.EVENT_DETAIL_PATTERN} element={<EventDetailPage />} />
-          <Route path={APP_ROUTES.CREATE_EVENT} element={<CreateEventPage />} />
-          <Route path={APP_ROUTES.MY_EVENTS} element={<MyEventsPage />} />
-          <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
-          <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
-          <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
-          <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
-          <Route path={APP_ROUTES.BONUS_CHALLENGE} element={<BonusChallengePage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </div>
+      <main className="flex-1">
+        <ErrorBoundary>
+          <Routes>
+            <Route path={APP_ROUTES.HOME} element={<EventListPage />} />
+            <Route path={APP_ROUTES.EVENT_DETAIL_PATTERN} element={<EventDetailPage />} />
+            <Route path={APP_ROUTES.CREATE_EVENT} element={<CreateEventPage />} />
+            <Route path={APP_ROUTES.MY_EVENTS} element={<MyEventsPage />} />
+            <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+            <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
+            <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
+            <Route path={APP_ROUTES.BONUS_CHALLENGE} element={<BonusChallengePage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </ErrorBoundary>
+      </main>
 
       {/* Global Event Creation Modal from Navbar */}
       <EventFormModal
@@ -102,15 +105,17 @@ export const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 

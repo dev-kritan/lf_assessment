@@ -1,8 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { RsvpButtonGroup } from '../components/RsvpButtonGroup';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthContext } from '../contexts/AuthContext';
 import { ToastProvider } from '../contexts/ToastContext';
 
 // Mock canvas-confetti
@@ -17,11 +17,22 @@ const mockStats = {
   total: 18,
 };
 
+const mockAuthValue = {
+  user: { id: 1, name: 'Alice', email: 'alice@example.com', isEmailVerified: true, twoFactorEnabled: false },
+  isAuthenticated: true,
+  isLoading: false,
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  refreshProfile: vi.fn(),
+  setUser: vi.fn(),
+};
+
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <BrowserRouter>
       <ToastProvider>
-        <AuthProvider>{ui}</AuthProvider>
+        <AuthContext.Provider value={mockAuthValue}>{ui}</AuthContext.Provider>
       </ToastProvider>
     </BrowserRouter>
   );

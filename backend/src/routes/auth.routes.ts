@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate.middleware';
 import { authenticate } from '../middlewares/auth.middleware';
+import twoFactorRoutes from './twoFactor.routes';
 import {
   registerSchema,
   loginSchema,
@@ -18,5 +19,8 @@ router.post('/logout', AuthController.logout);
 router.get('/profile', authenticate, AuthController.getProfile);
 router.post('/verify-email', validate(emailVerifySchema), AuthController.verifyEmail);
 router.post('/request-verification', authenticate, AuthController.requestEmailVerification);
+
+// Nested 2FA routes under /auth/2fa
+router.use('/2fa', twoFactorRoutes);
 
 export default router;
