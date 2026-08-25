@@ -297,50 +297,59 @@ export const MyEventsPage: React.FC = () => {
   }, [debouncedSearch]);
 
   // Fetch paginated Created Events from Server
-  const fetchCreatedEvents = useCallback(async () => {
-    if (!user) return;
-    try {
-      setIsCreatedLoading(true);
-      setCreatedError(null);
-      const res = await eventsApi.getEvents({
-        creator_id: user.id,
-        page: createdMeta.page,
-        limit: createdMeta.limit,
-        search: debouncedSearch.trim() || undefined,
-        timeframe,
-        event_type: eventType,
-        tag: selectedTag.trim() || undefined,
-        sort_by: sortBy,
-        sort_order:
-          sortBy === "date" ? (timeframe === "past" ? "desc" : "asc") : "desc",
-      });
-
-      if (res.success && res.data) {
-        setCreatedEvents(res.data);
-        if (res.meta) {
-          setCreatedMeta(res.meta);
+  const fetchCreatedEvents = useCallback(
+    async (isSilent = false) => {
+      if (!user) return;
+      try {
+        if (!isSilent) {
+          setIsCreatedLoading(true);
         }
+        setCreatedError(null);
+        const res = await eventsApi.getEvents({
+          creator_id: user.id,
+          page: createdMeta.page,
+          limit: createdMeta.limit,
+          search: debouncedSearch.trim() || undefined,
+          timeframe,
+          event_type: eventType,
+          tag: selectedTag.trim() || undefined,
+          sort_by: sortBy,
+          sort_order:
+            sortBy === "date"
+              ? timeframe === "past"
+                ? "desc"
+                : "asc"
+              : "desc",
+        });
+
+        if (res.success && res.data) {
+          setCreatedEvents(res.data);
+          if (res.meta) {
+            setCreatedMeta(res.meta);
+          }
+        }
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.error?.message ||
+          "Failed to load your created events";
+        setCreatedError(msg);
+        error(msg);
+      } finally {
+        setIsCreatedLoading(false);
       }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.error?.message ||
-        "Failed to load your created events";
-      setCreatedError(msg);
-      error(msg);
-    } finally {
-      setIsCreatedLoading(false);
-    }
-  }, [
-    user,
-    createdMeta.page,
-    createdMeta.limit,
-    debouncedSearch,
-    timeframe,
-    eventType,
-    selectedTag,
-    sortBy,
-    error,
-  ]);
+    },
+    [
+      user,
+      createdMeta.page,
+      createdMeta.limit,
+      debouncedSearch,
+      timeframe,
+      eventType,
+      selectedTag,
+      sortBy,
+      error,
+    ],
+  );
 
   // Fetch paginated RSVP Events from Server
   const fetchRsvpEvents = useCallback(async () => {
@@ -610,6 +619,58 @@ export const MyEventsPage: React.FC = () => {
     fetchRsvpCounts();
   };
 
+  // Smoothly attach new/updated event without UI flash
+  const handleEventSaved = useCallback(
+    (savedEvent: EventItem) => {
+      if (eventToEdit) {
+        setCreatedEvents((prev) =>
+          prev.map((item) => (item.id === savedEvent.id ? savedEvent : item)),
+        );
+      } else {
+        setCreatedEvents((prev) => [
+          savedEvent,
+          ...prev.filter((item) => item.id !== savedEvent.id),
+        ]);
+        setCreatedMeta((prev) => ({
+          ...prev,
+          total: (prev.total || 0) + 1,
+        }));
+        setCreatedTimeframeCounts((prev) => {
+          const isUpcoming = new Date(savedEvent.startTime) >= new Date();
+          return {
+            ...prev,
+            all: prev.all + 1,
+            upcoming: isUpcoming ? prev.upcoming + 1 : prev.upcoming,
+            past: !isUpcoming ? prev.past + 1 : prev.past,
+          };
+        });
+      }
+      fetchCreatedEvents(true);
+      fetchCreatedCounts();
+      fetchRsvpCounts();
+    },
+    [eventToEdit, fetchCreatedEvents, fetchCreatedCounts, fetchRsvpCounts],
+  );
+
+  // Listen for globally created events
+  useEffect(() => {
+    const handleGlobalEventCreated = (e: Event) => {
+      const customEvent = e as CustomEvent<EventItem>;
+      if (customEvent.detail && customEvent.detail.creator?.id === user?.id) {
+        handleEventSaved(customEvent.detail);
+      } else {
+        fetchCreatedEvents(true);
+        fetchCreatedCounts();
+        fetchRsvpCounts();
+      }
+    };
+
+    window.addEventListener("event-created", handleGlobalEventCreated);
+    return () => {
+      window.removeEventListener("event-created", handleGlobalEventCreated);
+    };
+  }, [handleEventSaved, fetchCreatedEvents, fetchCreatedCounts, fetchRsvpCounts, user?.id]);
+
   // Event Deletion
   const handleDelete = async () => {
     if (!eventToDelete || isDeleting) return;
@@ -837,15 +898,19 @@ export const MyEventsPage: React.FC = () => {
                 }
               >
                 {createdEvents.map((event) => (
-                  <EventCard
+                  <div
                     key={event.id}
-                    event={event}
-                    onEdit={(evt) => {
-                      setEventToEdit(evt);
-                      setIsCreateModalOpen(true);
-                    }}
-                    onDelete={(evt) => setEventToDelete(evt)}
-                  />
+                    className="animate-slide-up transition-all duration-300 h-full"
+                  >
+                    <EventCard
+                      event={event}
+                      onEdit={(evt) => {
+                        setEventToEdit(evt);
+                        setIsCreateModalOpen(true);
+                      }}
+                      onDelete={(evt) => setEventToDelete(evt)}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -955,7 +1020,7 @@ export const MyEventsPage: React.FC = () => {
           setEventToEdit(null);
         }}
         eventToEdit={eventToEdit}
-        onSuccess={refreshAll}
+        onSuccess={handleEventSaved}
         allTags={allTags}
         onTagCreated={(newTag) => setAllTags((prev) => [...prev, newTag])}
       />

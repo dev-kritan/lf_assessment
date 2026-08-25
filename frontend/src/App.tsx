@@ -60,8 +60,10 @@ export const AppContent: React.FC = () => {
       <EventFormModal
         isOpen={isGlobalCreateModalOpen}
         onClose={() => setIsGlobalCreateModalOpen(false)}
-        onSuccess={() => {
-          window.location.reload();
+        onSuccess={(savedEvent) => {
+          window.dispatchEvent(
+            new CustomEvent('event-created', { detail: savedEvent })
+          );
         }}
         allTags={tags}
         onTagCreated={(newTag) => setTags((prev) => [...prev, newTag])}

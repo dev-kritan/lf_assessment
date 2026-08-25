@@ -232,46 +232,100 @@ export const EventListPage: React.FC = () => {
   }, [fetchTagsAndMetrics]);
 
   // Fetch Events from Server with Pagination & Filter parameters
-  const fetchEvents = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setFetchError(null);
-      const res = await eventsApi.getEvents({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: debouncedSearch || undefined,
-        timeframe,
-        event_type: eventType,
-        tag: selectedTag || undefined,
-        sort_by: sortBy,
-      });
-
-      if (res.success) {
-        setEvents(res.data);
-        if (res.meta) {
-          setPagination(res.meta);
+  const fetchEvents = useCallback(
+    async (options?: { isSilent?: boolean }) => {
+      const isSilent = options?.isSilent ?? false;
+      try {
+        if (!isSilent) {
+          setIsLoading(true);
         }
+        setFetchError(null);
+        const res = await eventsApi.getEvents({
+          page: pagination.page,
+          limit: pagination.limit,
+          search: debouncedSearch || undefined,
+          timeframe,
+          event_type: eventType,
+          tag: selectedTag || undefined,
+          sort_by: sortBy,
+        });
+
+        if (res.success) {
+          setEvents(res.data);
+          if (res.meta) {
+            setPagination(res.meta);
+          }
+        }
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.error?.message ||
+          "Failed to load events. Please try again.";
+        setFetchError(msg);
+        error(msg);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.error?.message || "Failed to load events. Please try again.";
-      setFetchError(msg);
-      error(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    pagination.page,
-    pagination.limit,
-    debouncedSearch,
-    timeframe,
-    eventType,
-    selectedTag,
-    sortBy,
-  ]);
+    },
+    [
+      pagination.page,
+      pagination.limit,
+      debouncedSearch,
+      timeframe,
+      eventType,
+      selectedTag,
+      sortBy,
+      error,
+    ],
+  );
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  // Smoothly attach new/updated event without UI flash or layout shift
+  const handleEventSaved = useCallback(
+    (savedEvent: EventItem) => {
+      clearDrawerEventsCache();
+      if (eventToEdit) {
+        // In-place update for edited event
+        setEvents((prev) =>
+          prev.map((item) => (item.id === savedEvent.id ? savedEvent : item)),
+        );
+      } else {
+        // Smoothly prepend newly created event to top of current list
+        setEvents((prev) => [
+          savedEvent,
+          ...prev.filter((item) => item.id !== savedEvent.id),
+        ]);
+        setPagination((prev) => ({
+          ...prev,
+          total: (prev.total || 0) + 1,
+        }));
+      }
+      // Background sync without unmounting UI or flashing loading spinner
+      fetchEvents({ isSilent: true });
+      fetchTagsAndMetrics();
+    },
+    [eventToEdit, fetchEvents, fetchTagsAndMetrics],
+  );
+
+  // Listen for globally created events (e.g. from navbar modal)
+  useEffect(() => {
+    const handleGlobalEventCreated = (e: Event) => {
+      const customEvent = e as CustomEvent<EventItem>;
+      if (customEvent.detail) {
+        handleEventSaved(customEvent.detail);
+      } else {
+        fetchEvents({ isSilent: true });
+        fetchTagsAndMetrics();
+      }
+    };
+
+    window.addEventListener("event-created", handleGlobalEventCreated);
+    return () => {
+      window.removeEventListener("event-created", handleGlobalEventCreated);
+    };
+  }, [handleEventSaved, fetchEvents, fetchTagsAndMetrics]);
 
   // Pagination Change Handlers
   const handlePageChange = (newPage: number) => {
@@ -583,17 +637,21 @@ export const EventListPage: React.FC = () => {
             }
           >
             {events.map((event) => (
-              <EventCard
+              <div
                 key={event.id}
-                event={event}
-                onEdit={(evt) => {
-                  setEventToEdit(evt);
-                  setIsModalOpen(true);
-                }}
-                onDelete={(evt) => {
-                  setEventToDelete(evt);
-                }}
-              />
+                className="animate-slide-up transition-all duration-300 h-full"
+              >
+                <EventCard
+                  event={event}
+                  onEdit={(evt) => {
+                    setEventToEdit(evt);
+                    setIsModalOpen(true);
+                  }}
+                  onDelete={(evt) => {
+                    setEventToDelete(evt);
+                  }}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -616,11 +674,7 @@ export const EventListPage: React.FC = () => {
           setEventToEdit(null);
         }}
         eventToEdit={eventToEdit}
-        onSuccess={() => {
-          clearDrawerEventsCache();
-          fetchEvents();
-          fetchTagsAndMetrics();
-        }}
+        onSuccess={handleEventSaved}
         allTags={tags}
         onTagCreated={(newTag) => setTags((prev) => [...prev, newTag])}
       />
