@@ -1,12 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { EventService } from '../services/event.service';
-import { sendSuccess, sendCreated } from '../utils/response.utils';
+import { sendSuccess, sendCreated, sendError } from '../utils/response.utils';
+import {
+  validateDto,
+  createEventSchema,
+  updateEventSchema,
+  queryEventsSchema,
+  eventIdParamSchema,
+} from '../dto';
 
 export class EventController {
   static async getEvents(req: Request, res: Response, next: NextFunction) {
     try {
+      const queryValidation = validateDto(queryEventsSchema, req.query);
+      if (!queryValidation.success) {
+        return sendError(res, queryValidation.message, queryValidation.statusCode, queryValidation.errors, queryValidation.code);
+      }
+
       const currentUserId = req.user?.userId;
-      const result = await EventService.getEvents(req.query as any, currentUserId);
+      const result = await EventService.getEvents(queryValidation.data, currentUserId);
       return sendSuccess(res, result.events, 'Events retrieved successfully', 200, result.pagination);
     } catch (error) {
       next(error);
@@ -15,7 +27,12 @@ export class EventController {
 
   static async getEventById(req: Request, res: Response, next: NextFunction) {
     try {
-      const id = parseInt(req.params.id, 10);
+      const paramValidation = validateDto(eventIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
+      }
+
+      const id = paramValidation.data.id;
       const currentUserId = req.user?.userId;
       const event = await EventService.getEventById(id, currentUserId);
       return sendSuccess(res, event, 'Event details retrieved successfully');
@@ -26,8 +43,13 @@ export class EventController {
 
   static async createEvent(req: Request, res: Response, next: NextFunction) {
     try {
+      const bodyValidation = validateDto(createEventSchema, req.body);
+      if (!bodyValidation.success) {
+        return sendError(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+      }
+
       const creatorId = req.user!.userId;
-      const eventId = await EventService.createEvent(req.body, creatorId);
+      const eventId = await EventService.createEvent(bodyValidation.data, creatorId);
       const event = await EventService.getEventById(eventId, creatorId);
       return sendCreated(res, event, 'Event created successfully');
     } catch (error) {
@@ -37,9 +59,19 @@ export class EventController {
 
   static async updateEvent(req: Request, res: Response, next: NextFunction) {
     try {
-      const id = parseInt(req.params.id, 10);
+      const paramValidation = validateDto(eventIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
+      }
+
+      const bodyValidation = validateDto(updateEventSchema, req.body);
+      if (!bodyValidation.success) {
+        return sendError(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+      }
+
+      const id = paramValidation.data.id;
       const currentUserId = req.user!.userId;
-      const event = await EventService.updateEvent(id, req.body, currentUserId);
+      const event = await EventService.updateEvent(id, bodyValidation.data, currentUserId);
       return sendSuccess(res, event, 'Event updated successfully');
     } catch (error) {
       next(error);
@@ -48,7 +80,12 @@ export class EventController {
 
   static async deleteEvent(req: Request, res: Response, next: NextFunction) {
     try {
-      const id = parseInt(req.params.id, 10);
+      const paramValidation = validateDto(eventIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
+      }
+
+      const id = paramValidation.data.id;
       const currentUserId = req.user!.userId;
       const result = await EventService.deleteEvent(id, currentUserId);
       return sendSuccess(res, result, 'Event deleted successfully');

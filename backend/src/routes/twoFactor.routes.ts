@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { TwoFactorController } from '../controllers/twoFactor.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import { twoFactorVerifySchema } from '../validators/auth.validator';
+import { twoFactorVerifySchema } from '../dto';
 
 const router = Router();
 

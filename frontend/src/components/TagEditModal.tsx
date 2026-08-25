@@ -17,9 +17,8 @@ import { format } from "date-fns";
 import {
   PRESET_TAG_COLORS,
   DEFAULT_TAG_COLOR,
-  VALIDATION_RULES,
-  REGEX_PATTERNS,
 } from "../constants";
+import { tagFormSchema, validateForm as validateWithZod, mapApiErrors } from "../dto";
 
 interface TagEditModalProps {
   isOpen: boolean;
@@ -80,22 +79,15 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (
-      !trimmed ||
-      trimmed.length < VALIDATION_RULES.MIN_TAG_LENGTH ||
-      trimmed.length > VALIDATION_RULES.MAX_TAG_LENGTH
-    ) {
-      setFieldError(
-        `Tag name must be between ${VALIDATION_RULES.MIN_TAG_LENGTH} and ${VALIDATION_RULES.MAX_TAG_LENGTH} characters`,
-      );
-      return;
-    }
+    setFieldError(null);
 
-    if (!REGEX_PATTERNS.HEX_COLOR.test(colorHex.trim())) {
-      setFieldError(
-        `Please select or enter a valid hex color code (e.g. ${DEFAULT_TAG_COLOR})`,
-      );
+    const validation = validateWithZod(tagFormSchema, {
+      name: name.trim(),
+      colorHex: colorHex.trim(),
+    });
+
+    if (!validation.isValid) {
+      setFieldError(validation.firstError || "Please enter a valid tag name and hex color.");
       return;
     }
 
@@ -104,8 +96,8 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
       setFieldError(null);
 
       const res = await eventsApi.updateTag(tag.id, {
-        name: trimmed,
-        colorHex: colorHex.trim(),
+        name: validation.data?.name || name.trim(),
+        colorHex: validation.data?.colorHex || colorHex.trim(),
       });
 
       if (res.success) {
@@ -114,7 +106,8 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({
         onClose();
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error?.message || "Failed to update tag";
+      const apiError = err.response?.data?.error;
+      const msg = apiError?.message || "Failed to update tag";
       setFieldError(msg);
       error(msg);
     } finally {

@@ -7,7 +7,7 @@ import {
   loginSchema,
   refreshTokenSchema,
   emailVerifySchema,
-} from '../validators/auth.validator';
+} from '../dto';
 
 const router = Router();
 

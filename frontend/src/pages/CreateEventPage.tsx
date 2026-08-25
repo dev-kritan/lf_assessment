@@ -18,7 +18,8 @@ import { eventsApi } from '../api/events.api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { format } from 'date-fns';
-import { APP_ROUTES, DEFAULT_ASSETS, VALIDATION_RULES, UI_TIMINGS } from '../constants';
+import { APP_ROUTES, DEFAULT_ASSETS, UI_TIMINGS } from '../constants';
+import { eventFormSchema, validateForm as validateWithZod, mapApiErrors } from '../dto';
 
 export const CreateEventPage: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -113,32 +114,6 @@ export const CreateEventPage: React.FC = () => {
     }
   };
 
-  const validateForm = (): Record<string, string> => {
-    const errors: Record<string, string> = {};
-    if (!title.trim() || title.length < VALIDATION_RULES.MIN_TITLE_LENGTH) {
-      errors.title = `Title must be at least ${VALIDATION_RULES.MIN_TITLE_LENGTH} characters long.`;
-    }
-    if (!description.trim() || description.length < VALIDATION_RULES.MIN_DESCRIPTION_LENGTH) {
-      errors.description = `Description must be at least ${VALIDATION_RULES.MIN_DESCRIPTION_LENGTH} characters long.`;
-    }
-    if (!location.trim()) {
-      errors.location = 'Location is required.';
-    }
-    if (!startTime) {
-      errors.startTime = 'Start time is required.';
-    }
-    if (startTime && endTime) {
-      if (new Date(endTime) < new Date(startTime)) {
-        errors.endTime = 'End time must be after start time.';
-      }
-    }
-    if (capacity && (isNaN(Number(capacity)) || Number(capacity) <= 0)) {
-      errors.capacity = 'Capacity must be a positive number.';
-    }
-    setFormErrors(errors);
-    return errors;
-  };
-
   const scrollToFirstError = (errors: Record<string, string>) => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length === 0) return;
@@ -165,9 +140,25 @@ export const CreateEventPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      scrollToFirstError(errors);
+    setFormErrors({});
+
+    const validation = validateWithZod(eventFormSchema, {
+      title,
+      description,
+      location,
+      eventType,
+      isTruePrivate,
+      startTime,
+      endTime: endTime || undefined,
+      capacity: capacity ? Number(capacity) : undefined,
+      bannerUrl: bannerUrl ? bannerUrl.trim() : undefined,
+      tagIds: selectedTagIds,
+    });
+
+    if (!validation.isValid) {
+      setFormErrors(validation.errors);
+      error(validation.firstError || 'Please fix the errors before submitting.');
+      scrollToFirstError(validation.errors);
       return;
     }
 
@@ -192,7 +183,13 @@ export const CreateEventPage: React.FC = () => {
         navigate(APP_ROUTES.EVENT_DETAIL(res.data.id));
       }
     } catch (err: any) {
-      const message = err.response?.data?.error?.message || 'Failed to create event';
+      const apiError = err.response?.data?.error;
+      const message = apiError?.message || 'Failed to create event';
+      if (apiError?.details) {
+        const fieldErrors = mapApiErrors(apiError);
+        setFormErrors(fieldErrors);
+        scrollToFirstError(fieldErrors);
+      }
       error(message);
     } finally {
       setIsSubmitting(false);

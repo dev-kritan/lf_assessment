@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { RsvpController } from '../controllers/rsvp.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import { setRsvpSchema } from '../validators/rsvp.validator';
+import { setRsvpSchema } from '../dto';
 
 const router = Router();
 

@@ -1,17 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { TagService } from '../services/tag.service';
-import { sendSuccess, sendCreated } from '../utils/response.utils';
+import { sendSuccess, sendCreated, sendError } from '../utils/response.utils';
+import {
+  validateDto,
+  createTagSchema,
+  updateTagSchema,
+  tagQuerySchema,
+  tagIdParamSchema,
+} from '../dto';
 
 export class TagController {
   static async getAllTags(req: Request, res: Response, next: NextFunction) {
     try {
-      const { event_type, timeframe, search } = req.query as {
-        event_type?: 'all' | 'public' | 'private';
-        timeframe?: 'all' | 'upcoming' | 'past';
-        search?: string;
-      };
+      const queryValidation = validateDto(tagQuerySchema, req.query);
+      if (!queryValidation.success) {
+        return sendError(res, queryValidation.message, queryValidation.statusCode, queryValidation.errors, queryValidation.code);
+      }
+
       const currentUserId = req.user?.userId;
-      const tags = await TagService.getAllTags({ event_type, timeframe, search }, currentUserId);
+      const tags = await TagService.getAllTags(queryValidation.data, currentUserId);
       return sendSuccess(res, tags, 'Tags retrieved successfully');
     } catch (error) {
       next(error);
@@ -20,7 +27,12 @@ export class TagController {
 
   static async createTag(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, colorHex } = req.body;
+      const bodyValidation = validateDto(createTagSchema, req.body);
+      if (!bodyValidation.success) {
+        return sendError(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+      }
+
+      const { name, colorHex } = bodyValidation.data;
       const tag = await TagService.createTag(name, colorHex);
       return sendCreated(res, tag, 'Tag created successfully');
     } catch (error) {
@@ -30,10 +42,12 @@ export class TagController {
 
   static async getTagUsage(req: Request, res: Response, next: NextFunction) {
     try {
-      const tagId = Number(req.params.id);
-      if (isNaN(tagId) || tagId <= 0) {
-        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      const paramValidation = validateDto(tagIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
       }
+
+      const tagId = paramValidation.data.id;
       const currentUserId = req.user?.userId;
       const usage = await TagService.getTagUsage(tagId, currentUserId);
       return sendSuccess(res, usage, 'Tag usage retrieved successfully');
@@ -44,12 +58,18 @@ export class TagController {
 
   static async updateTag(req: Request, res: Response, next: NextFunction) {
     try {
-      const tagId = Number(req.params.id);
-      if (isNaN(tagId) || tagId <= 0) {
-        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      const paramValidation = validateDto(tagIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
       }
-      const { name, colorHex } = req.body;
-      const updatedTag = await TagService.updateTag(tagId, { name, colorHex });
+
+      const bodyValidation = validateDto(updateTagSchema, req.body);
+      if (!bodyValidation.success) {
+        return sendError(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+      }
+
+      const tagId = paramValidation.data.id;
+      const updatedTag = await TagService.updateTag(tagId, bodyValidation.data);
       return sendSuccess(res, updatedTag, 'Tag updated successfully');
     } catch (error) {
       next(error);
@@ -58,10 +78,12 @@ export class TagController {
 
   static async deleteTag(req: Request, res: Response, next: NextFunction) {
     try {
-      const tagId = Number(req.params.id);
-      if (isNaN(tagId) || tagId <= 0) {
-        return res.status(400).json({ success: false, error: { message: 'Invalid tag ID' } });
+      const paramValidation = validateDto(tagIdParamSchema, req.params);
+      if (!paramValidation.success) {
+        return sendError(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
       }
+
+      const tagId = paramValidation.data.id;
       const result = await TagService.deleteTag(tagId);
       return sendSuccess(res, result, 'Tag deleted successfully');
     } catch (error) {

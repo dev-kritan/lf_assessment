@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { APP_ROUTES, UI_TIMINGS } from "../constants";
+import { loginSchema, validateForm, mapApiErrors } from "../dto";
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ export const LoginPage: React.FC = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const errorRef = useRef<HTMLParagraphElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +47,7 @@ export const LoginPage: React.FC = () => {
   }, [requires2FA]);
 
   useEffect(() => {
-    if (formError && errorRef.current) {
+    if (formError && errorRef.current?.scrollIntoView) {
       errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [formError]);
@@ -54,17 +56,17 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     if (isLoading) return;
     setFormError("");
+    setFieldErrors({});
 
-    if (!email.trim() || !password.trim()) {
-      setFormError("Please enter your email and password.");
-      return;
-    }
+    const validation = validateForm(loginSchema, {
+      email,
+      password,
+      twoFactorCode: requires2FA ? twoFactorCode : undefined,
+    });
 
-    if (
-      requires2FA &&
-      (!twoFactorCode.trim() || twoFactorCode.trim().length !== 6)
-    ) {
-      setFormError("Please enter the 6-digit 2FA code.");
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      setFormError(validation.firstError || "Please correct the form errors.");
       return;
     }
 
@@ -84,10 +86,12 @@ export const LoginPage: React.FC = () => {
         navigate(from, { replace: true });
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error?.message ||
-        "Login failed. Please check your credentials.";
+      const apiError = err.response?.data?.error;
+      const msg = apiError?.message || "Login failed. Please check your credentials.";
       setFormError(msg);
+      if (apiError?.details) {
+        setFieldErrors(mapApiErrors(apiError));
+      }
       error(msg);
     } finally {
       setIsLoading(false);
@@ -173,13 +177,23 @@ export const LoginPage: React.FC = () => {
                     ref={emailInputRef}
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+                    }}
                     placeholder="you@example.com"
                     autoFocus
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                      fieldErrors.email
+                        ? "border-rose-500 ring-1 ring-rose-500"
+                        : "border-slate-200 dark:border-slate-800"
+                    } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -191,12 +205,22 @@ export const LoginPage: React.FC = () => {
                   <input
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: "" }));
+                    }}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                      fieldErrors.password
+                        ? "border-rose-500 ring-1 ring-rose-500"
+                        : "border-slate-200 dark:border-slate-800"
+                    } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
                   />
                 </div>
+                {fieldErrors.password && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.password}</p>
+                )}
               </div>
             </>
           ) : (
@@ -211,15 +235,27 @@ export const LoginPage: React.FC = () => {
                   type="text"
                   maxLength={6}
                   value={twoFactorCode}
-                  onChange={(e) =>
-                    setTwoFactorCode(e.target.value.replace(/\D/g, ""))
-                  }
+                  onChange={(e) => {
+                    setTwoFactorCode(e.target.value.replace(/\D/g, ""));
+                    if (fieldErrors.twoFactorCode || fieldErrors.token) {
+                      setFieldErrors((prev) => ({ ...prev, twoFactorCode: "", token: "" }));
+                    }
+                  }}
                   placeholder="000000"
                   autoFocus
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-base font-mono font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                    fieldErrors.twoFactorCode || fieldErrors.token
+                      ? "border-rose-500 ring-1 ring-rose-500"
+                      : "border-slate-200 dark:border-slate-800"
+                  } bg-white dark:bg-slate-950 text-base font-mono font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
                 />
               </div>
+              {(fieldErrors.twoFactorCode || fieldErrors.token) && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {fieldErrors.twoFactorCode || fieldErrors.token}
+                </p>
+              )}
             </div>
           )}
 

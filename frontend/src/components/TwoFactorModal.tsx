@@ -3,6 +3,7 @@ import { X, ShieldCheck, Copy, Check, Loader2, AlertCircle } from 'lucide-react'
 import { authApi } from '../api/auth.api';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { twoFactorVerifySchema, validateForm as validateWithZod, mapApiErrors } from '../dto';
 
 interface TwoFactorModalProps {
   isOpen: boolean;
@@ -58,15 +59,18 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
   const handleVerifyAndEnable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isVerifying) return;
-    if (!token.trim() || token.trim().length !== 6) {
-      setErrorMessage('Please enter the 6-digit authentication code.');
+    setErrorMessage('');
+
+    const validation = validateWithZod(twoFactorVerifySchema, { token: token.trim() });
+    if (!validation.isValid) {
+      setErrorMessage(validation.firstError || 'Please enter the 6-digit authentication code.');
       return;
     }
 
     try {
       setIsVerifying(true);
       setErrorMessage('');
-      const res = await authApi.enable2FA(token.trim());
+      const res = await authApi.enable2FA(validation.data?.token || token.trim());
       if (res.success) {
         success('Two-Factor Authentication is now enabled!');
         await refreshProfile();
@@ -74,7 +78,8 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         onClose();
       }
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.error?.message || 'Invalid 2FA code. Please try again.');
+      const apiError = err.response?.data?.error;
+      setErrorMessage(apiError?.message || 'Invalid 2FA code. Please try again.');
     } finally {
       setIsVerifying(false);
     }

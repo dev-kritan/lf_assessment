@@ -3,7 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus, User, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { APP_ROUTES, VALIDATION_RULES, UI_TIMINGS } from '../constants';
+import { APP_ROUTES, UI_TIMINGS } from '../constants';
+import { registerSchema, validateForm, mapApiErrors } from '../dto';
 
 export const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -12,6 +13,7 @@ export const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const errorRef = useRef<HTMLParagraphElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +35,7 @@ export const RegisterPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (formError && errorRef.current) {
+    if (formError && errorRef.current?.scrollIntoView) {
       errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [formError]);
@@ -42,21 +44,18 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     if (isLoading) return;
     setFormError('');
+    setFieldErrors({});
 
-    if (!name.trim() || name.trim().length < VALIDATION_RULES.MIN_NAME_LENGTH) {
-      setFormError(`Name must be at least ${VALIDATION_RULES.MIN_NAME_LENGTH} characters long.`);
-      return;
-    }
-    if (!email.trim()) {
-      setFormError('Please enter a valid email address.');
-      return;
-    }
-    if (password.length < VALIDATION_RULES.MIN_PASSWORD_LENGTH) {
-      setFormError(`Password must be at least ${VALIDATION_RULES.MIN_PASSWORD_LENGTH} characters long.`);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setFormError('Passwords do not match.');
+    const validation = validateForm(registerSchema, {
+      name,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      setFormError(validation.firstError || 'Please correct the form errors.');
       return;
     }
 
@@ -66,8 +65,12 @@ export const RegisterPage: React.FC = () => {
       success('Account created successfully! Welcome to EventHub.');
       navigate(from, { replace: true });
     } catch (err: any) {
-      const msg = err.response?.data?.error?.message || 'Registration failed. Please try again.';
+      const apiError = err.response?.data?.error;
+      const msg = apiError?.message || 'Registration failed. Please try again.';
       setFormError(msg);
+      if (apiError?.details) {
+        setFieldErrors(mapApiErrors(apiError));
+      }
       error(msg);
     } finally {
       setIsLoading(false);
@@ -100,13 +103,19 @@ export const RegisterPage: React.FC = () => {
                 ref={nameInputRef}
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: '' }));
+                }}
                 placeholder="e.g. Alice Johnson"
                 autoFocus
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                  fieldErrors.name ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
+                } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
               />
             </div>
+            {fieldErrors.name && <p className="text-xs text-rose-500 mt-1">{fieldErrors.name}</p>}
           </div>
 
           <div>
@@ -118,12 +127,18 @@ export const RegisterPage: React.FC = () => {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                }}
                 placeholder="alice@example.com"
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                  fieldErrors.email ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
+                } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
               />
             </div>
+            {fieldErrors.email && <p className="text-xs text-rose-500 mt-1">{fieldErrors.email}</p>}
           </div>
 
           <div>
@@ -135,12 +150,18 @@ export const RegisterPage: React.FC = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                }}
                 placeholder="••••••••"
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                  fieldErrors.password ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
+                } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
               />
             </div>
+            {fieldErrors.password && <p className="text-xs text-rose-500 mt-1">{fieldErrors.password}</p>}
           </div>
 
           <div>
@@ -152,12 +173,20 @@ export const RegisterPage: React.FC = () => {
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                }}
                 placeholder="••••••••"
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                  fieldErrors.confirmPassword ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
+                } bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
               />
             </div>
+            {fieldErrors.confirmPassword && (
+              <p className="text-xs text-rose-500 mt-1">{fieldErrors.confirmPassword}</p>
+            )}
           </div>
 
           {formError && (

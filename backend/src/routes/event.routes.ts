@@ -6,7 +6,7 @@ import {
   createEventSchema,
   updateEventSchema,
   queryEventsSchema,
-} from '../validators/event.validator';
+} from '../dto';
 
 const router = Router();
 
