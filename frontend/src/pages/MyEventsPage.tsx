@@ -89,7 +89,8 @@ export const MyEventsPage: React.FC = () => {
     upcoming: number;
     past: number;
   }>({ all: 0, upcoming: 0, past: 0 });
-  const [isCreatedLoading, setIsCreatedLoading] = useState(true);
+  const [hasCreatedLoadedOnce, setHasCreatedLoadedOnce] = useState(false);
+  const [isCreatedFetching, setIsCreatedFetching] = useState(false);
 
   // RSVP events pagination & status filter state
   const [rsvpEvents, setRsvpEvents] = useState<EventItem[]>([]);
@@ -116,7 +117,8 @@ export const MyEventsPage: React.FC = () => {
     upcoming: number;
     past: number;
   }>({ all: 0, upcoming: 0, past: 0 });
-  const [isRsvpLoading, setIsRsvpLoading] = useState(true);
+  const [hasRsvpLoadedOnce, setHasRsvpLoadedOnce] = useState(false);
+  const [isRsvpFetching, setIsRsvpFetching] = useState(false);
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
 
@@ -129,25 +131,28 @@ export const MyEventsPage: React.FC = () => {
   // Redirect if unauthenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate(
-        `${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.MY_EVENTS)}`,
-      );
+      navigate("/login?redirect=/my-events", { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Load system tags for filter bar and create modal
+  // Fetch all tags once for edit modal
   useEffect(() => {
-    eventsApi
-      .getTags()
-      .then((res) => {
+    const fetchTags = async () => {
+      try {
+        const res = await tagsApi.getTags();
         if (res.success && res.data) {
           setAllTags(res.data);
         }
-      })
-      .catch(() => {});
-  }, []);
+      } catch {
+        // Non-blocking
+      }
+    };
+    if (isAuthenticated) {
+      fetchTags();
+    }
+  }, [isAuthenticated]);
 
-  // Helper to synchronize state with URL search params
+  // Helper to sync state changes with URL query parameters
   const updateUrlParams = useCallback(
     (paramsToUpdate: {
       tab?: "created" | "rsvps";
@@ -302,7 +307,7 @@ export const MyEventsPage: React.FC = () => {
       if (!user) return;
       try {
         if (!isSilent) {
-          setIsCreatedLoading(true);
+          setIsCreatedFetching(true);
         }
         setCreatedError(null);
         const res = await eventsApi.getEvents({
@@ -335,7 +340,8 @@ export const MyEventsPage: React.FC = () => {
         setCreatedError(msg);
         error(msg);
       } finally {
-        setIsCreatedLoading(false);
+        setIsCreatedFetching(false);
+        setHasCreatedLoadedOnce(true);
       }
     },
     [
@@ -352,50 +358,61 @@ export const MyEventsPage: React.FC = () => {
   );
 
   // Fetch paginated RSVP Events from Server
-  const fetchRsvpEvents = useCallback(async () => {
-    if (!user) return;
-    try {
-      setIsRsvpLoading(true);
-      setRsvpError(null);
-      const res = await eventsApi.getEvents({
-        my_rsvps: rsvpStatusFilter,
-        page: rsvpMeta.page,
-        limit: rsvpMeta.limit,
-        search: debouncedSearch.trim() || undefined,
-        timeframe,
-        event_type: eventType,
-        tag: selectedTag.trim() || undefined,
-        sort_by: sortBy,
-        sort_order:
-          sortBy === "date" ? (timeframe === "past" ? "desc" : "asc") : "desc",
-      });
-
-      if (res.success && res.data) {
-        setRsvpEvents(res.data);
-        if (res.meta) {
-          setRsvpMeta(res.meta);
+  const fetchRsvpEvents = useCallback(
+    async (isSilent = false) => {
+      if (!user) return;
+      try {
+        if (!isSilent) {
+          setIsRsvpFetching(true);
         }
+        setRsvpError(null);
+        const res = await eventsApi.getEvents({
+          my_rsvps: rsvpStatusFilter,
+          page: rsvpMeta.page,
+          limit: rsvpMeta.limit,
+          search: debouncedSearch.trim() || undefined,
+          timeframe,
+          event_type: eventType,
+          tag: selectedTag.trim() || undefined,
+          sort_by: sortBy,
+          sort_order:
+            sortBy === "date"
+              ? timeframe === "past"
+                ? "desc"
+                : "asc"
+              : "desc",
+        });
+
+        if (res.success && res.data) {
+          setRsvpEvents(res.data);
+          if (res.meta) {
+            setRsvpMeta(res.meta);
+          }
+        }
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.error?.message ||
+          "Failed to load your RSVP events";
+        setRsvpError(msg);
+        error(msg);
+      } finally {
+        setIsRsvpFetching(false);
+        setHasRsvpLoadedOnce(true);
       }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.error?.message || "Failed to load your RSVP events";
-      setRsvpError(msg);
-      error(msg);
-    } finally {
-      setIsRsvpLoading(false);
-    }
-  }, [
-    user,
-    rsvpMeta.page,
-    rsvpMeta.limit,
-    rsvpStatusFilter,
-    debouncedSearch,
-    timeframe,
-    eventType,
-    selectedTag,
-    sortBy,
-    error,
-  ]);
+    },
+    [
+      user,
+      rsvpMeta.page,
+      rsvpMeta.limit,
+      rsvpStatusFilter,
+      debouncedSearch,
+      timeframe,
+      eventType,
+      selectedTag,
+      sortBy,
+      error,
+    ],
+  );
 
   // Fetch RSVP total counts and timeframe breakdown for badge pills
   const fetchRsvpCounts = useCallback(async () => {
@@ -829,188 +846,189 @@ export const MyEventsPage: React.FC = () => {
       />
 
       {/* Tab 1: Created by Me */}
-      {activeTab === "created" && (
-        <div className="mt-8">
-          {isCreatedLoading ? (
-            <div className="py-24 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Loading your created events...
-              </p>
+      <div className={activeTab === "created" ? "mt-8 animate-fade-in block" : "hidden"}>
+        {!hasCreatedLoadedOnce && createdEvents.length === 0 ? (
+          <div className="py-24 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              Loading your created events...
+            </p>
+          </div>
+        ) : createdError && createdEvents.length === 0 ? (
+          <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+              <AlertTriangle className="w-7 h-7" />
             </div>
-          ) : createdError && createdEvents.length === 0 ? (
-            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
-                <AlertTriangle className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Unable to Load Created Events
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
-                {createdError}
-              </p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Unable to Load Created Events
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+              {createdError}
+            </p>
+            <button
+              onClick={() => fetchCreatedEvents()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry
+            </button>
+          </div>
+        ) : createdEvents.length === 0 ? (
+          <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
+              <CalendarX2 className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {hasActiveFilters
+                ? "No Matching Events Found"
+                : "You haven't created any events yet"}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+              {hasActiveFilters
+                ? "No created events match your current filter criteria. Try adjusting or resetting your filters."
+                : "Create an event to start inviting friends, colleagues, and community members."}
+            </p>
+            {hasActiveFilters ? (
               <button
-                onClick={() => fetchCreatedEvents()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+                onClick={handleResetFilters}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Retry
+                Clear All Filters
               </button>
-            </div>
-          ) : createdEvents.length === 0 ? (
-            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
-                <CalendarX2 className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                {hasActiveFilters
-                  ? "No Matching Events Found"
-                  : "You haven't created any events yet"}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
-                {hasActiveFilters
-                  ? "No created events match your current filter criteria. Try adjusting or resetting your filters."
-                  : "Create an event to start inviting friends, colleagues, and community members."}
-              </p>
-              {hasActiveFilters ? (
-                <button
-                  onClick={handleResetFilters}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
-                >
-                  Clear All Filters
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
-                >
-                  Host Your First Event
-                </button>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    : "space-y-4"
-                }
+            ) : (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
               >
-                {createdEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="animate-slide-up transition-all duration-300 h-full"
-                  >
-                    <EventCard
-                      event={event}
-                      onEdit={(evt) => {
-                        setEventToEdit(evt);
-                        setIsCreateModalOpen(true);
-                      }}
-                      onDelete={(evt) => setEventToDelete(evt)}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Server-Side Pagination for Created Events */}
-              <Pagination
-                meta={createdMeta}
-                onPageChange={handleCreatedPageChange}
-                onLimitChange={handleCreatedLimitChange}
-              />
+                Host Your First Event
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={`transition-opacity duration-200 ${isCreatedFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  : "space-y-4"
+              }
+            >
+              {createdEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="animate-slide-up transition-all duration-300 h-full"
+                >
+                  <EventCard
+                    event={event}
+                    onEdit={(evt) => {
+                      setEventToEdit(evt);
+                      setIsCreateModalOpen(true);
+                    }}
+                    onDelete={(evt) => setEventToDelete(evt)}
+                  />
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Server-Side Pagination for Created Events */}
+            <Pagination
+              meta={createdMeta}
+              onPageChange={handleCreatedPageChange}
+              onLimitChange={handleCreatedLimitChange}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Tab 2: My RSVPs */}
-      {activeTab === "rsvps" && (
-        <div className="mt-8">
-          {isRsvpLoading ? (
-            <div className="py-24 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Loading your RSVP'd events...
-              </p>
+      <div className={activeTab === "rsvps" ? "mt-8 animate-fade-in block" : "hidden"}>
+        {!hasRsvpLoadedOnce && rsvpEvents.length === 0 ? (
+          <div className="py-24 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              Loading your RSVP'd events...
+            </p>
+          </div>
+        ) : rsvpError && rsvpEvents.length === 0 ? (
+          <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
+              <AlertTriangle className="w-7 h-7" />
             </div>
-          ) : rsvpError && rsvpEvents.length === 0 ? (
-            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-rose-200 dark:border-rose-900/40 max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-4 ring-rose-500/10">
-                <AlertTriangle className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Unable to Load RSVPs
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
-                {rsvpError}
-              </p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Unable to Load RSVPs
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+              {rsvpError}
+            </p>
+            <button
+              onClick={() => fetchRsvpEvents()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry
+            </button>
+          </div>
+        ) : rsvpEvents.length === 0 ? (
+          <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
+              <Users className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {hasActiveFilters
+                ? "No Matching RSVPs Found"
+                : "No RSVPs found"}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+              {hasActiveFilters
+                ? "No RSVP events match your current filter criteria. Try adjusting or clearing filters."
+                : rsvpStatusFilter !== "all"
+                  ? `You haven't responded as "${rsvpStatusFilter === "yes" ? "Going" : rsvpStatusFilter === "maybe" ? "Interested" : "Declined"}" to any events yet.`
+                  : "Browse upcoming community events and RSVP to attend!"}
+            </p>
+            {hasActiveFilters ? (
               <button
-                onClick={() => fetchRsvpEvents()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-md shadow-indigo-500/25 active:scale-95"
+                onClick={handleResetFilters}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Retry
+                Clear All Filters
               </button>
-            </div>
-          ) : rsvpEvents.length === 0 ? (
-            <div className="py-16 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
-                <Users className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                {hasActiveFilters
-                  ? "No Matching RSVPs Found"
-                  : "No RSVPs found"}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
-                {hasActiveFilters
-                  ? "No RSVP events match your current filter criteria. Try adjusting or clearing filters."
-                  : rsvpStatusFilter !== "all"
-                    ? `You haven't responded as "${rsvpStatusFilter === "yes" ? "Going" : rsvpStatusFilter === "maybe" ? "Interested" : "Declined"}" to any events yet.`
-                    : "Browse upcoming community events and RSVP to attend!"}
-              </p>
-              {hasActiveFilters ? (
-                <button
-                  onClick={handleResetFilters}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
-                >
-                  Clear All Filters
-                </button>
-              ) : (
-                <Link
-                  to="/"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm inline-block"
-                >
-                  Browse Upcoming Events
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    : "space-y-4"
-                }
+            ) : (
+              <Link
+                to="/"
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm inline-block"
               >
-                {rsvpEvents.map((event) => (
+                Browse Upcoming Events
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className={`transition-opacity duration-200 ${isRsvpFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  : "space-y-4"
+              }
+            >
+              {rsvpEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="animate-slide-up transition-all duration-300 h-full"
+                >
                   <EventCard key={event.id} event={event} />
-                ))}
-              </div>
-
-              {/* Server-Side Pagination for RSVP Events */}
-              <Pagination
-                meta={rsvpMeta}
-                onPageChange={handleRsvpPageChange}
-                onLimitChange={handleRsvpLimitChange}
-              />
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Server-Side Pagination for RSVP Events */}
+            <Pagination
+              meta={rsvpMeta}
+              onPageChange={handleRsvpPageChange}
+              onLimitChange={handleRsvpLimitChange}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Create / Edit Modal */}
       <EventFormModal

@@ -89,7 +89,8 @@ export const EventListPage: React.FC = () => {
     useState<"date" | "popularity" | "created_at">(initialSort);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<EventItem | null>(null);
@@ -237,7 +238,7 @@ export const EventListPage: React.FC = () => {
       const isSilent = options?.isSilent ?? false;
       try {
         if (!isSilent) {
-          setIsLoading(true);
+          setIsFetching(true);
         }
         setFetchError(null);
         const res = await eventsApi.getEvents({
@@ -263,7 +264,8 @@ export const EventListPage: React.FC = () => {
         setFetchError(msg);
         error(msg);
       } finally {
-        setIsLoading(false);
+        setIsFetching(false);
+        setHasLoadedOnce(true);
       }
     },
     [
@@ -556,8 +558,8 @@ export const EventListPage: React.FC = () => {
           }
         />
 
-        {/* Loading Spinner */}
-        {isLoading ? (
+        {/* Loading Spinner only on initial load when events is empty */}
+        {!hasLoadedOnce && events.length === 0 ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
@@ -589,7 +591,7 @@ export const EventListPage: React.FC = () => {
           </div>
         ) : events.length === 0 ? (
           /* Empty State */
-          <div className="py-20 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800">
+          <div className="py-20 text-center glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 animate-fade-in">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4">
               <CalendarX2 className="w-8 h-8" />
             </div>
@@ -628,41 +630,45 @@ export const EventListPage: React.FC = () => {
             )}
           </div>
         ) : (
-          /* Events Grid / List */
+          /* Events Grid / List with smooth dimming during background fetch */
           <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-4"
-            }
+            className={`transition-opacity duration-200 ${
+              isFetching ? "opacity-60 pointer-events-none" : "opacity-100"
+            }`}
           >
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="animate-slide-up transition-all duration-300 h-full"
-              >
-                <EventCard
-                  event={event}
-                  onEdit={(evt) => {
-                    setEventToEdit(evt);
-                    setIsModalOpen(true);
-                  }}
-                  onDelete={(evt) => {
-                    setEventToDelete(evt);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  : "space-y-4"
+              }
+            >
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  className="animate-slide-up transition-all duration-300 h-full"
+                >
+                  <EventCard
+                    event={event}
+                    onEdit={(evt) => {
+                      setEventToEdit(evt);
+                      setIsModalOpen(true);
+                    }}
+                    onDelete={(evt) => {
+                      setEventToDelete(evt);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
 
-        {/* Server-Side Pagination */}
-        {!isLoading && (
-          <Pagination
-            meta={pagination}
-            onPageChange={handlePageChange}
-            onLimitChange={handleLimitChange}
-          />
+            {/* Server-Side Pagination */}
+            <Pagination
+              meta={pagination}
+              onPageChange={handlePageChange}
+              onLimitChange={handleLimitChange}
+            />
+          </div>
         )}
       </main>
 
