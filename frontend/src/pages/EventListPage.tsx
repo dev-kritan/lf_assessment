@@ -65,6 +65,12 @@ export const EventListPage: React.FC = () => {
     totalTags: number;
   } | null>(null);
 
+  const [timeframeCounts, setTimeframeCounts] = useState<{
+    all: number;
+    upcoming: number;
+    past: number;
+  }>({ all: 0, upcoming: 0, past: 0 });
+
   const [activeMetricDetail, setActiveMetricDetail] =
     useState<MetricType | null>(null);
 
@@ -228,9 +234,46 @@ export const EventListPage: React.FC = () => {
     }
   }, [eventType, timeframe, debouncedSearch, isAuthenticated, user]);
 
+  // Fetch dynamic timeframe breakdown (all, upcoming, past) respecting search, tag, and event type
+  const fetchTimeframeCounts = useCallback(async () => {
+    try {
+      const baseParams = {
+        search: debouncedSearch.trim() || undefined,
+        tag: selectedTag.trim() || undefined,
+        event_type: eventType !== "all" ? eventType : undefined,
+        limit: 1,
+      };
+
+      const [allRes, upcomingRes, pastRes] = await Promise.all([
+        eventsApi.getEvents({ ...baseParams, timeframe: "all" }),
+        eventsApi.getEvents({ ...baseParams, timeframe: "upcoming" }),
+        eventsApi.getEvents({ ...baseParams, timeframe: "past" }),
+      ]);
+
+      setTimeframeCounts({
+        all: allRes.meta?.total || 0,
+        upcoming: upcomingRes.meta?.total || 0,
+        past: pastRes.meta?.total || 0,
+      });
+    } catch {
+      // Non-blocking fallback to metrics if available
+      if (metrics) {
+        setTimeframeCounts({
+          all: metrics.totalEvents,
+          upcoming: metrics.upcomingEvents,
+          past: metrics.pastEvents,
+        });
+      }
+    }
+  }, [debouncedSearch, selectedTag, eventType, metrics]);
+
   useEffect(() => {
     fetchTagsAndMetrics();
   }, [fetchTagsAndMetrics]);
+
+  useEffect(() => {
+    fetchTimeframeCounts();
+  }, [fetchTimeframeCounts]);
 
   // Fetch Events from Server with Pagination & Filter parameters
   const fetchEvents = useCallback(
@@ -307,8 +350,9 @@ export const EventListPage: React.FC = () => {
       // Background sync without unmounting UI or flashing loading spinner
       fetchEvents({ isSilent: true });
       fetchTagsAndMetrics();
+      fetchTimeframeCounts();
     },
-    [eventToEdit, fetchEvents, fetchTagsAndMetrics],
+    [eventToEdit, fetchEvents, fetchTagsAndMetrics, fetchTimeframeCounts],
   );
 
   // Listen for globally created events (e.g. from navbar modal)
@@ -320,6 +364,7 @@ export const EventListPage: React.FC = () => {
       } else {
         fetchEvents({ isSilent: true });
         fetchTagsAndMetrics();
+        fetchTimeframeCounts();
       }
     };
 
@@ -327,7 +372,7 @@ export const EventListPage: React.FC = () => {
     return () => {
       window.removeEventListener("event-created", handleGlobalEventCreated);
     };
-  }, [handleEventSaved, fetchEvents, fetchTagsAndMetrics]);
+  }, [handleEventSaved, fetchEvents, fetchTagsAndMetrics, fetchTimeframeCounts]);
 
   // Pagination Change Handlers
   const handlePageChange = (newPage: number) => {
@@ -349,16 +394,8 @@ export const EventListPage: React.FC = () => {
     setSelectedTag("");
     setSortBy("date");
     setPagination((prev) => ({ ...prev, page: 1 }));
-    setSearchParams({}, { replace: true });
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
-
-  const hasActiveFilters = !!(
-    search ||
-    timeframe !== "all" ||
-    eventType !== "all" ||
-    selectedTag ||
-    sortBy !== "date"
-  );
 
   const handleDeleteConfirm = async () => {
     if (!eventToDelete || isDeleting) return;
@@ -371,6 +408,7 @@ export const EventListPage: React.FC = () => {
         setEventToDelete(null);
         fetchEvents();
         fetchTagsAndMetrics();
+        fetchTimeframeCounts();
       }
     } catch (err: any) {
       error(err.response?.data?.error?.message || "Failed to delete event");
@@ -380,18 +418,10 @@ export const EventListPage: React.FC = () => {
   };
 
   const handleEditTag = (tag: Tag) => {
-    if (!isAuthenticated) {
-      error("Please sign in to edit tags");
-      return;
-    }
     setTagToEdit(tag);
   };
 
   const handleDeleteTag = (tag: Tag) => {
-    if (!isAuthenticated) {
-      error("Please sign in to delete tags");
-      return;
-    }
     setTagToDelete(tag);
   };
 
@@ -401,7 +431,8 @@ export const EventListPage: React.FC = () => {
       updateUrlParams({ tag: updatedTag.name });
     }
     fetchTagsAndMetrics();
-    fetchEvents();
+    fetchTimeframeCounts();
+    fetchEvents({ isSilent: true });
   };
 
   const handleTagDeletedSuccess = (deletedTag: Tag) => {
@@ -411,90 +442,86 @@ export const EventListPage: React.FC = () => {
       updateUrlParams({ tag: "", page: 1 });
     }
     fetchTagsAndMetrics();
-    fetchEvents();
+    fetchTimeframeCounts();
+    fetchEvents({ isSilent: true });
   };
 
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+      timeframe !== "all" ||
+      eventType !== "all" ||
+      selectedTag ||
+      sortBy !== "date",
+  );
+
   return (
-    <div className="min-w-full pb-16">
-      {/* Hero Banner Section */}
-      <section className="relative overflow-hidden pt-12 pb-14 bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 dark:from-indigo-950/20 dark:via-slate-900/40 dark:to-slate-950 border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="max-w-2xl text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 shadow-sm mb-4">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Next-Gen Event Planning & Community Discovery</span>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
+      {/* Metric Detail Drawer */}
+      <MetricDetailDrawer
+        isOpen={Boolean(activeMetricDetail)}
+        onClose={() => setActiveMetricDetail(null)}
+        metricType={activeMetricDetail}
+        onFilterTimeframe={(tf) => {
+          setTimeframe(tf);
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          updateUrlParams({ timeframe: tf, page: 1 });
+        }}
+      />
+
+      {/* Hero / Header Section */}
+      <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-indigo-50/50 via-white to-transparent dark:from-indigo-950/20 dark:via-slate-950 dark:to-slate-950 border-b border-slate-200/60 dark:border-slate-800/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            {/* Title & Description */}
+            <div className="max-w-2xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                Community & Gatherings Platform
               </div>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                Plan, Discover & Attend{" "}
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                Discover, Organize & Join{" "}
+                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Unforgettable Events
                 </span>
               </h1>
-              <p className="mt-4 text-base text-slate-600 dark:text-slate-300 max-w-xl">
-                Explore upcoming workshops, tech summits, celebrations, and
-                meetups. Manage your gatherings with real-time RSVPs and
-                granular category filtering.
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
+                Explore hackathons, workshops, conferences, and meetups. Filter
+                by date, tags, popularity, or RSVP in real-time.
               </p>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                {isAuthenticated ? (
+              {isAuthenticated && (
+                <div className="pt-2">
                   <button
                     onClick={() => {
                       setEventToEdit(null);
                       setIsModalOpen(true);
                     }}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all cursor-pointer"
                   >
                     <PlusCircle className="w-4 h-4" />
-                    Host an Event
+                    Create Your Event
                   </button>
-                ) : (
-                  <Link
-                    to="/login?redirect=/create-event"
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    Host an Event
-                  </Link>
-                )}
-
-                <Link
-                  to="/bonus-challenge"
-                  className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 px-5 py-3 rounded-2xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
-                >
-                  <Layers className="w-4 h-4 text-emerald-500" />
-                  View Bonus SQL Solution
-                </Link>
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Quick Metrics Grid */}
+            {/* Quick Metrics Dashboard */}
             {metrics && (
-              <div className="grid grid-cols-2 gap-3 w-full lg:w-auto min-w-[320px]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 lg:max-w-md w-full">
                 <StatCard
-                  label="Upcoming Events"
-                  value={metrics.upcomingEvents}
+                  label="Total Events"
+                  value={metrics.totalEvents}
                   icon={<Calendar className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
-                  description="Active on schedule"
-                  onClick={() => setActiveMetricDetail("upcoming")}
+                  description="All gatherings"
+                  onClick={() => setActiveMetricDetail("total")}
                 />
                 <StatCard
-                  label="Total RSVPs"
-                  value={metrics.totalRsvps}
-                  icon={<Users className="w-5 h-5" />}
+                  label="Upcoming"
+                  value={metrics.upcomingEvents}
+                  icon={<Sparkles className="w-5 h-5" />}
                   colorClass="bg-gradient-to-tr from-emerald-600 to-emerald-500"
-                  description="Confirmed attendees"
-                  onClick={() => setActiveMetricDetail("rsvps")}
-                />
-                <StatCard
-                  label="Categories"
-                  value={metrics.totalTags}
-                  icon={<TagIcon className="w-5 h-5" />}
-                  colorClass="bg-gradient-to-tr from-amber-600 to-amber-500"
-                  description="Filterable tags"
-                  onClick={() => setActiveMetricDetail("categories")}
+                  description="Next 30 days"
+                  onClick={() => setActiveMetricDetail("upcoming")}
                 />
                 <StatCard
                   label="Past Events"
@@ -547,15 +574,7 @@ export const EventListPage: React.FC = () => {
           hasActiveFilters={hasActiveFilters}
           onEditTag={handleEditTag}
           onDeleteTag={handleDeleteTag}
-          timeframeCounts={
-            metrics
-              ? {
-                  all: metrics.totalEvents,
-                  upcoming: metrics.upcomingEvents,
-                  past: metrics.pastEvents,
-                }
-              : undefined
-          }
+          timeframeCounts={timeframeCounts}
         />
 
         {/* Loading Spinner only on initial load when events is empty */}

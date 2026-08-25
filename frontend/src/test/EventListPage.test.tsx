@@ -110,7 +110,6 @@ describe('EventListPage Server-Side Pagination', () => {
       expect(screen.getByText('Global Tech Summit 2026')).toBeInTheDocument();
       expect(screen.getByText(/Server Paginated/i)).toBeInTheDocument();
       expect(screen.getByText(/Showing page/i)).toBeInTheDocument();
-      expect(screen.getByText(/total events/i)).toBeInTheDocument();
     });
 
     expect(eventsApi.getEvents).toHaveBeenCalledWith(
@@ -169,6 +168,76 @@ describe('EventListPage Server-Side Pagination', () => {
         page: 2,
         limit: 6,
       })
+    );
+  });
+
+  it('updates timeframe counts dynamically according to debounced search keyword', async () => {
+    vi.mocked(eventsApi.getEvents).mockImplementation(async (params: any) => {
+      if (params.search === 'Summit') {
+        if (params.timeframe === 'upcoming') {
+          return {
+            success: true,
+            data: [mockEvent],
+            meta: { page: 1, limit: 1, total: 3, totalPages: 3, hasNextPage: true, hasPrevPage: false },
+          };
+        }
+        if (params.timeframe === 'past') {
+          return {
+            success: true,
+            data: [],
+            meta: { page: 1, limit: 1, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+          };
+        }
+        return {
+          success: true,
+          data: [mockEvent],
+          meta: { page: 1, limit: 6, total: 4, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        };
+      }
+      return {
+        success: true,
+        data: [mockEvent],
+        meta: { page: 1, limit: 6, total: 10, totalPages: 2, hasNextPage: true, hasPrevPage: false },
+      };
+    });
+
+    renderWithProviders(<EventListPage />);
+
+    // Type in search bar
+    const searchInput = screen.getByPlaceholderText(/Search events by title, description, or location/i);
+    fireEvent.change(searchInput, { target: { value: 'Summit' } });
+
+    await waitFor(
+      () => {
+        expect(eventsApi.getEvents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            search: 'Summit',
+            timeframe: 'all',
+          })
+        );
+        expect(eventsApi.getEvents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            search: 'Summit',
+            timeframe: 'upcoming',
+          })
+        );
+        expect(eventsApi.getEvents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            search: 'Summit',
+            timeframe: 'past',
+          })
+        );
+      },
+      { timeout: 1500 }
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /All Events 4/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Upcoming Events 3/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Past Events 1/i })).toBeInTheDocument();
+      },
+      { timeout: 1500 }
     );
   });
 });
