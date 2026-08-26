@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Calendar, 
-  PlusCircle, 
-  Sun, 
-  Moon, 
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Calendar,
+  PlusCircle,
+  Sun,
+  Moon,
   Monitor,
-  User as UserIcon, 
-  LogOut, 
-  ShieldCheck, 
-  Database, 
+  User as UserIcon,
+  LogOut,
+  ShieldCheck,
+  Database,
   BookmarkCheck,
   Menu,
   X,
-  CalendarCheck
-} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { useToast } from '../contexts/ToastContext';
-import { APP_ROUTES, getDicebearAvatarUrl } from '../constants';
+  CalendarCheck,
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useToast } from "../contexts/ToastContext";
+import { APP_ROUTES, getDicebearAvatarUrl } from "../constants";
 
 interface NavbarProps {
   onOpenCreateModal?: () => void;
@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const getThemeIcon = () => {
-    if (theme === 'system') {
+    if (theme === "system") {
       return (
         <span className="relative inline-flex items-center justify-center">
           <Monitor className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
@@ -43,25 +43,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
         </span>
       );
     }
-    if (theme === 'dark') {
+    if (theme === "dark") {
       return <Sun className="w-5 h-5 text-amber-400" />;
     }
     return <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />;
   };
 
   const getThemeTitle = () => {
-    if (theme === 'system') {
+    if (theme === "system") {
       return `Theme: Auto / System (${resolvedTheme}) — Click to toggle`;
     }
-    if (theme === 'dark') {
-      return 'Theme: Dark — Click to toggle';
+    if (theme === "dark") {
+      return "Theme: Dark — Click to toggle";
     }
-    return 'Theme: Light — Click to toggle';
+    return "Theme: Light — Click to toggle";
   };
 
   const handleLogout = async () => {
     await logout();
-    success('Logged out successfully');
+    success("Logged out successfully");
     navigate(APP_ROUTES.HOME);
     setProfileDropdownOpen(false);
   };
@@ -69,9 +69,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const isActive = (path: string) => location.pathname === path;
 
   const currentPathWithSearch = location.pathname + location.search;
-  const isAuthPage = location.pathname === APP_ROUTES.LOGIN || location.pathname === APP_ROUTES.REGISTER;
-  const loginUrl = isAuthPage ? APP_ROUTES.LOGIN : `${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(currentPathWithSearch)}`;
-  const registerUrl = isAuthPage ? APP_ROUTES.REGISTER : `${APP_ROUTES.REGISTER}?redirect=${encodeURIComponent(currentPathWithSearch)}`;
+  const isAuthPage =
+    location.pathname === APP_ROUTES.LOGIN ||
+    location.pathname === APP_ROUTES.REGISTER;
+  const loginUrl = isAuthPage
+    ? APP_ROUTES.LOGIN
+    : `${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(currentPathWithSearch)}`;
+  const registerUrl = isAuthPage
+    ? APP_ROUTES.REGISTER
+    : `${APP_ROUTES.REGISTER}?redirect=${encodeURIComponent(currentPathWithSearch)}`;
 
   return (
     <nav className="sticky top-0 z-40 w-full glass border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
@@ -79,7 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <Link to={APP_ROUTES.HOME} className="flex items-center gap-2.5 group">
+            <Link
+              to={APP_ROUTES.HOME}
+              className="flex items-center gap-2.5 group"
+            >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
                 <Calendar className="w-5 h-5" />
               </div>
@@ -94,8 +103,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 to={APP_ROUTES.HOME}
                 className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive(APP_ROUTES.HOME)
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
                 Browse Events
@@ -106,8 +115,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                   to={APP_ROUTES.MY_EVENTS}
                   className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                     isActive(APP_ROUTES.MY_EVENTS)
-                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                      ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                   }`}
                 >
                   <BookmarkCheck className="w-4 h-4" />
@@ -119,15 +128,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 to={APP_ROUTES.BONUS_CHALLENGE}
                 className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   isActive(APP_ROUTES.BONUS_CHALLENGE)
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
-                <Database className="w-4 h-4 text-emerald-500" />
-                <span>Bonus SQL Challenge</span>
-                <span className="text-[10px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-1.5 py-0.5 rounded-full">
-                  8 Marks
-                </span>
+                <span>SQL Challenge</span>
               </Link>
 
               <a
@@ -185,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                     className="w-8 h-8 rounded-lg object-cover ring-2 ring-indigo-500/30"
                   />
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200 hidden lg:block">
-                    {user.name.split(' ')[0]}
+                    {user.name.split(" ")[0]}
                   </span>
                 </button>
 
@@ -195,8 +200,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                     onMouseLeave={() => setProfileDropdownOpen(false)}
                   >
                     <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {user.email}
+                      </p>
                       <div className="mt-1.5 flex items-center gap-1.5">
                         {user.twoFactorEnabled ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">
@@ -279,7 +288,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
               aria-label="Open menu"
               className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>

@@ -1,10 +1,16 @@
-import db from '../config/knex';
-import { DB_TABLES } from '../constants';
+import db from "../config/knex";
+import { DB_TABLES } from "../constants";
 
 export class BonusService {
   static async getRawTables() {
-    const designations = await db(DB_TABLES.EMP_DESIGNATION_LOG).orderBy('txn_id', 'asc');
-    const allocations = await db(DB_TABLES.EMP_ALLOCATION_LOG).orderBy('allocation_id', 'asc');
+    const designations = await db(DB_TABLES.EMP_DESIGNATION_LOG).orderBy(
+      "txn_id",
+      "asc",
+    );
+    const allocations = await db(DB_TABLES.EMP_ALLOCATION_LOG).orderBy(
+      "allocation_id",
+      "asc",
+    );
     return {
       empDesignationLog: designations,
       empAllocationLog: allocations,
@@ -35,10 +41,13 @@ export class BonusService {
     `;
 
     const result = await db.raw(query);
-    const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
 
     return {
-      question: 'Q1: Current Designation of Every Employee',
+      question: "Q1: Current Designation of Every Employee",
       sql: query.trim(),
       rows,
       count: rows.length,
@@ -65,10 +74,13 @@ export class BonusService {
     `;
 
     const result = await db.raw(query);
-    const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
 
     return {
-      question: 'Q2: Designation Timeline (Previous, Current, Next)',
+      question: "Q2: Designation Timeline (Previous, Current, Next)",
       sql: query.trim(),
       rows,
       count: rows.length,
@@ -113,10 +125,13 @@ export class BonusService {
     `;
 
     const result = await db.raw(query);
-    const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
 
     return {
-      question: 'Q4: Active Designation at Allocation Start (8 marks)',
+      question: "Q4: Active Designation at Allocation Start",
       sql: query.trim(),
       rows,
       count: rows.length,

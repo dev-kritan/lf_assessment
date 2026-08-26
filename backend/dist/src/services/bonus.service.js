@@ -1,23 +1,29 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BonusService = void 0;
 const knex_1 = __importDefault(require("../config/knex"));
 const constants_1 = require("../constants");
 class BonusService {
-    static async getRawTables() {
-        const designations = await (0, knex_1.default)(constants_1.DB_TABLES.EMP_DESIGNATION_LOG).orderBy('txn_id', 'asc');
-        const allocations = await (0, knex_1.default)(constants_1.DB_TABLES.EMP_ALLOCATION_LOG).orderBy('allocation_id', 'asc');
-        return {
-            empDesignationLog: designations,
-            empAllocationLog: allocations,
-        };
-    }
-    static async runQ1() {
-        // Q1: Current designation of every employee based on most recent effective_date
-        const query = `
+  static async getRawTables() {
+    const designations = await (0, knex_1.default)(
+      constants_1.DB_TABLES.EMP_DESIGNATION_LOG,
+    ).orderBy("txn_id", "asc");
+    const allocations = await (0, knex_1.default)(
+      constants_1.DB_TABLES.EMP_ALLOCATION_LOG,
+    ).orderBy("allocation_id", "asc");
+    return {
+      empDesignationLog: designations,
+      empAllocationLog: allocations,
+    };
+  }
+  static async runQ1() {
+    // Q1: Current designation of every employee based on most recent effective_date
+    const query = `
       WITH RankedDesignations AS (
         SELECT
           emp_id,
@@ -37,18 +43,21 @@ class BonusService {
       WHERE rn = 1
       ORDER BY emp_id ASC;
     `;
-        const result = await knex_1.default.raw(query);
-        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
-        return {
-            question: 'Q1: Current Designation of Every Employee',
-            sql: query.trim(),
-            rows,
-            count: rows.length,
-        };
-    }
-    static async runQ2() {
-        // Q2: Designation timeline with previous, current, next designation
-        const query = `
+    const result = await knex_1.default.raw(query);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
+    return {
+      question: "Q1: Current Designation of Every Employee",
+      sql: query.trim(),
+      rows,
+      count: rows.length,
+    };
+  }
+  static async runQ2() {
+    // Q2: Designation timeline with previous, current, next designation
+    const query = `
       SELECT
         emp_id,
         effective_date,
@@ -64,18 +73,21 @@ class BonusService {
       FROM emp_designation_log
       ORDER BY emp_id ASC, effective_date ASC, txn_id ASC;
     `;
-        const result = await knex_1.default.raw(query);
-        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
-        return {
-            question: 'Q2: Designation Timeline (Previous, Current, Next)',
-            sql: query.trim(),
-            rows,
-            count: rows.length,
-        };
-    }
-    static async runQ4() {
-        // Q4: Designation held at project allocation_start
-        const query = `
+    const result = await knex_1.default.raw(query);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
+    return {
+      question: "Q2: Designation Timeline (Previous, Current, Next)",
+      sql: query.trim(),
+      rows,
+      count: rows.length,
+    };
+  }
+  static async runQ4() {
+    // Q4: Designation held at project allocation_start
+    const query = `
       WITH ActiveDesignationPerAllocation AS (
         SELECT
           a.allocation_id,
@@ -109,14 +121,17 @@ class BonusService {
       WHERE rn = 1 OR designation_at_allocation IS NULL
       ORDER BY allocation_id ASC;
     `;
-        const result = await knex_1.default.raw(query);
-        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (result.rows || result);
-        return {
-            question: 'Q4: Active Designation at Allocation Start (8 marks)',
-            sql: query.trim(),
-            rows,
-            count: rows.length,
-        };
-    }
+    const result = await knex_1.default.raw(query);
+    const rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? result[0]
+        : result.rows || result;
+    return {
+      question: "Q4: Active Designation at Allocation Start",
+      sql: query.trim(),
+      rows,
+      count: rows.length,
+    };
+  }
 }
 exports.BonusService = BonusService;

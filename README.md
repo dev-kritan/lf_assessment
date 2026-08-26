@@ -7,6 +7,7 @@ A production-grade, full-stack event planning web application built according to
 ## 🌟 Key Features
 
 ### 1. Event Management
+
 - **Create Events**: Rich inputs for title, description, start/end dates, location, max capacity, banner cover image, and category tags.
 - **Edit & Delete Events**: Protected by creator-only authorization checks.
 - **Browse & Filter**: Separate views for **Upcoming** and **Past** events.
@@ -15,42 +16,46 @@ A production-grade, full-stack event planning web application built according to
 - **Event Details View**: Deep-dive page with date countdown, interactive Google Maps link, creator profile, full description, and attendee list.
 
 ### 2. Tags & Categories
+
 - Multi-tag assignment for events (e.g. `Conference`, `Workshop`, `Meetup`, `Birthday`, `Tech`, `Design`).
 - Dynamic custom tag creation directly from event creation modals.
 - Filter events by clicking tag chips with active counts.
 
 ### 3. Authentication & Authorization
+
 - **JWT Authentication**: Short-lived access tokens with secure refresh token rotation in database.
 - **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) compatible with Google Authenticator, Authy, and 1Password with QR code setup.
 - **Email Verification Flow**: Tokenized email confirmation endpoint and UI badge.
 - **Creator Authorization**: Strict backend and frontend ownership validation so only the creator can edit or delete an event.
 
 ### 4. Interactive RSVP System
+
 - **RSVP Options**: Users can respond with **Going (Yes)**, **Interested (Maybe)**, or **Can't Go (No)**.
 - **Capacity Limits**: Real-time enforcement prevents excess "Yes" RSVPs when an event reaches maximum capacity while allowing "Maybe" responses.
 - **Live Attendee Tracking**: Real-time attendee counter and attendee avatar list with response statuses.
 - **My RSVPs Dashboard**: Dedicated dashboard tab tracking all events the user has RSVP'd to.
 
 ### 5. Bonus Section: Employee Designation & Allocation SQL Analytics
-- Integrated database queries and interactive frontend runner for **Q1**, **Q2**, and **Q4** (8 marks) answering the employee designation timeline challenge using window functions (`ROW_NUMBER()`, `LAG()`, `LEAD()`, correlated subqueries, and edge-case handling).
+
+- Integrated database queries and interactive frontend runner for **Q1**, **Q2**, and **Q4** answering the employee designation timeline challenge using window functions (`ROW_NUMBER()`, `LAG()`, `LEAD()`, correlated subqueries, and edge-case handling).
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Rationale |
-| :--- | :--- | :--- |
-| **Frontend** | **React 18 + TypeScript (Vite)** | High-performance build tooling, strict type safety, responsive UI, component reusability. |
-| **Styling** | **Tailwind CSS + CSS Design System** | Curated palette, dark/light theme support, glassmorphism, responsive micro-animations. |
-| **Backend** | **Node.js + Express with TypeScript** | Robust RESTful API architecture, modular service/controller layers, typed middleware. |
-| **Query Builder** | **Knex.js (No ORMs)** | Direct SQL query control, transaction management, migration scripts, and seeders without ORM overhead. |
-| **Database** | **MySQL 8.0** | Normalized 3NF relational database schema with foreign key integrity and indexes. |
-| **Containerization** | **Docker Compose** | One-command local database service provisioning with persistent volumes and healthchecks. |
-| **Validation** | **Zod** | Type-safe schema validation on both incoming request payloads and query filters. |
-| **Security** | **JWT, bcryptjs, Speakeasy, Helmet, CORS** | Salted password hashing, TOTP 2FA, HTTP-only refresh tokens, secure response headers. |
-| **Logging** | **Winston + Morgan** | Multi-transport structured JSON logger (error logs, combined logs, colored console output). |
-| **API Docs** | **Swagger UI / OpenAPI 3.0** | Interactive interactive documentation accessible live at `/api-docs`. |
-| **Testing** | **Jest + Supertest + Vitest** | Automated backend unit/integration tests and frontend component tests. |
+| Layer                | Technology                                 | Rationale                                                                                              |
+| :------------------- | :----------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| **Frontend**         | **React 18 + TypeScript (Vite)**           | High-performance build tooling, strict type safety, responsive UI, component reusability.              |
+| **Styling**          | **Tailwind CSS + CSS Design System**       | Curated palette, dark/light theme support, glassmorphism, responsive micro-animations.                 |
+| **Backend**          | **Node.js + Express with TypeScript**      | Robust RESTful API architecture, modular service/controller layers, typed middleware.                  |
+| **Query Builder**    | **Knex.js (No ORMs)**                      | Direct SQL query control, transaction management, migration scripts, and seeders without ORM overhead. |
+| **Database**         | **MySQL 8.0**                              | Normalized 3NF relational database schema with foreign key integrity and indexes.                      |
+| **Containerization** | **Docker Compose**                         | One-command local database service provisioning with persistent volumes and healthchecks.              |
+| **Validation**       | **Zod**                                    | Type-safe schema validation on both incoming request payloads and query filters.                       |
+| **Security**         | **JWT, bcryptjs, Speakeasy, Helmet, CORS** | Salted password hashing, TOTP 2FA, HTTP-only refresh tokens, secure response headers.                  |
+| **Logging**          | **Winston + Morgan**                       | Multi-transport structured JSON logger (error logs, combined logs, colored console output).            |
+| **API Docs**         | **Swagger UI / OpenAPI 3.0**               | Interactive interactive documentation accessible live at `/api-docs`.                                  |
+| **Testing**          | **Jest + Supertest + Vitest**              | Automated backend unit/integration tests and frontend component tests.                                 |
 
 ---
 
@@ -79,6 +84,7 @@ emp_allocation_log (allocation_id [PK], emp_id, project_name, allocated_role, al
 ## 🚀 Setup & Local Execution Instructions
 
 ### Prerequisites
+
 - **Node.js**: v18+ (tested on Node v24)
 - **npm**: v9+
 - **Docker & Docker Compose** (for running MySQL container)
@@ -108,7 +114,7 @@ docker compose up -d
 docker compose ps
 ```
 
-*Note: The MySQL container is configured on port `3306` with database `event_planner_db`, user `eventuser`, and password `eventpassword`.*
+_Note: The MySQL container is configured on port `3306` with database `event_planner_db`, user `eventuser`, and password `eventpassword`._
 
 ---
 
@@ -139,13 +145,13 @@ npm run dev
 
 ### Demo Accounts for Instant Testing
 
-| Account | Email | Password | Role |
-| :--- | :--- | :--- | :--- |
-| **Alice (Organizer)** | `alice@example.com` | `Password123!` | Event Host & Creator |
-| **Bob (Attendee)** | `bob@example.com` | `Password123!` | Active Community Member |
-| **Carol (New User)** | `carol@example.com` | `Password123!` | Unverified User |
+| Account               | Email               | Password       | Role                    |
+| :-------------------- | :------------------ | :------------- | :---------------------- |
+| **Alice (Organizer)** | `alice@example.com` | `Password123!` | Event Host & Creator    |
+| **Bob (Attendee)**    | `bob@example.com`   | `Password123!` | Active Community Member |
+| **Carol (New User)**  | `carol@example.com` | `Password123!` | Unverified User         |
 
-*(Quick one-click login buttons are also built directly into the login screen!)*
+_(Quick one-click login buttons are also built directly into the login screen!)_
 
 ---
 
@@ -169,6 +175,7 @@ npm run test:frontend
 Interactive documentation is served at [http://localhost:5000/api-docs](http://localhost:5000/api-docs).
 
 ### Key Endpoints:
+
 - `POST /api/v1/auth/register` — Register a new user account
 - `POST /api/v1/auth/login` — Sign in and obtain access + refresh tokens (supports 2FA challenge)
 - `POST /api/v1/auth/refresh-token` — Rotate and obtain fresh access token
@@ -182,7 +189,7 @@ Interactive documentation is served at [http://localhost:5000/api-docs](http://l
 - `POST /api/v1/rsvps/events/:id` — Set RSVP status (`yes`, `no`, `maybe`)
 - `GET /api/v1/bonus/q1` — Execute Q1 SQL query
 - `GET /api/v1/bonus/q2` — Execute Q2 SQL query
-- `GET /api/v1/bonus/q4` — Execute Q4 SQL query (8 marks)
+- `GET /api/v1/bonus/q4` — Execute Q4 SQL query
 
 ---
 

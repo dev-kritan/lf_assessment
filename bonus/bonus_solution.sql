@@ -125,7 +125,7 @@ ORDER BY emp_id ASC, effective_date ASC, txn_id ASC;
 
 
 -- =====================================================================
--- QUESTION 4 (Q4 - 8 marks)
+-- QUESTION 4 (Q4)
 -- =====================================================================
 -- Objective: For each project allocation, find what designation the employee held
 -- at the time they were allocated to that project (on allocation_start).
