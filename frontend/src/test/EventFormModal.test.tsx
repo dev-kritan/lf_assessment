@@ -251,4 +251,30 @@ describe('EventFormModal Component', () => {
     // Error should be removed automatically in real-time
     expect(getFieldError('endTime')).toBeNull();
   });
+
+  it('initializes new event with a random Unsplash cover image and supports re-randomizing', async () => {
+    vi.mocked(eventsApi.getTags).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+
+    render(
+      <ToastProvider>
+        <EventFormModal
+          isOpen={true}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />
+      </ToastProvider>
+    );
+
+    const bannerInput = screen.getByPlaceholderText(/https:\/\/images\.unsplash\.com/i) as HTMLInputElement;
+    expect(bannerInput.value).toMatch(/^https:\/\/images\.unsplash\.com\/photo-/);
+
+    const randomizeBtn = screen.getByRole('button', { name: /Randomize Cover/i });
+    expect(randomizeBtn).toBeInTheDocument();
+
+    fireEvent.click(randomizeBtn);
+    expect(bannerInput.value).toMatch(/^https:\/\/images\.unsplash\.com\/photo-/);
+  });
 });

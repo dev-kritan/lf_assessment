@@ -10,12 +10,13 @@ import {
   Users,
   Plus,
   Loader2,
+  Shuffle,
 } from "lucide-react";
 import { EventItem, Tag } from "../types";
 import { eventsApi } from "../api/events.api";
 import { useToast } from "../contexts/ToastContext";
 import { format, parseISO } from "date-fns";
-import { DEFAULT_ASSETS, UI_TIMINGS } from "../constants";
+import { DEFAULT_ASSETS, UI_TIMINGS, getRandomCoverImageUrl } from "../constants";
 import {
   eventFormSchema,
   validateForm as validateWithZod,
@@ -145,7 +146,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
       setStartTime(format(tomorrow, "yyyy-MM-dd'T'HH:mm"));
       setEndTime(format(endTomorrow, "yyyy-MM-dd'T'HH:mm"));
       setCapacity("");
-      setBannerUrl(DEFAULT_ASSETS.EVENT_BANNER);
+      setBannerUrl(getRandomCoverImageUrl());
       setSelectedTagIds([]);
     }
     setFormErrors({});
@@ -749,11 +750,26 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
             </div>
           </div>
 
-          {/* Banner Image URL */}
+          {/* Banner Image URL with Randomize Button & Live Preview */}
           <div data-field="bannerUrl">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Cover Image URL (Optional)
-            </label>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Cover Image URL (Optional)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const randomUrl = getRandomCoverImageUrl();
+                  setBannerUrl(randomUrl);
+                  validateFieldOnChange("bannerUrl", { bannerUrl: randomUrl });
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm active:scale-95 cursor-pointer"
+                title="Pick a random cover image from curated Unsplash collection"
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>Randomize Cover</span>
+              </button>
+            </div>
             <div className="relative">
               <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -777,6 +793,25 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
               <p className="text-xs text-rose-500 mt-1">
                 {formErrors.bannerUrl}
               </p>
+            )}
+
+            {/* Live Cover Preview Thumbnail */}
+            {bannerUrl && (
+              <div className="mt-2.5 relative h-28 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 group">
+                <img
+                  src={bannerUrl}
+                  alt="Cover preview"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 left-3 text-[11px] font-semibold text-white/90 drop-shadow flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Cover Image Preview</span>
+                </div>
+              </div>
             )}
           </div>
 
