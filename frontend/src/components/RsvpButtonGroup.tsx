@@ -1,4 +1,3 @@
-import confetti from "canvas-confetti";
 import {
   AlertTriangle,
   Check,
@@ -13,6 +12,7 @@ import { rsvpApi } from "../api/rsvp.api";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { RsvpStats } from "../types";
+import { triggerRsvpConfetti } from "../utils/confetti.util";
 
 export interface RsvpButtonGroupProps {
   eventId: number;
@@ -103,12 +103,7 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
         success(res.data.message);
 
         if (status === "yes") {
-          confetti({
-            particleCount: 60,
-            spread: 55,
-            origin: { y: 0.8 },
-            colors: ["#6366f1", "#ec4899", "#10b981", "#f59e0b"],
-          });
+          triggerRsvpConfetti();
         }
 
         if (onRsvpSuccess) {
