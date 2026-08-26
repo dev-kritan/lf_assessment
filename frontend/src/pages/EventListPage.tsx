@@ -38,12 +38,12 @@ export const EventListPage: React.FC = () => {
   // Read initial query params from URL
   const initialPage = Math.max(
     1,
-    parseInt(searchParams.get("page") || "1", 10) || 1
+    parseInt(searchParams.get("page") || "1", 10) || 1,
   );
   const initialLimit =
     parseInt(
       searchParams.get("limit") || `${PAGINATION_LIMITS.EVENT_LIST_DEFAULT}`,
-      10
+      10,
     ) || PAGINATION_LIMITS.EVENT_LIST_DEFAULT;
   const initialSearch = searchParams.get("search") || "";
   const initialTimeframe =
@@ -86,13 +86,16 @@ export const EventListPage: React.FC = () => {
   // Filter States
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
-  const [timeframe, setTimeframe] =
-    useState<"all" | "upcoming" | "past">(initialTimeframe);
-  const [eventType, setEventType] =
-    useState<"all" | "public" | "private">(initialEventType);
+  const [timeframe, setTimeframe] = useState<"all" | "upcoming" | "past">(
+    initialTimeframe,
+  );
+  const [eventType, setEventType] = useState<"all" | "public" | "private">(
+    initialEventType,
+  );
   const [selectedTag, setSelectedTag] = useState(initialTag);
-  const [sortBy, setSortBy] =
-    useState<"date" | "popularity" | "created_at">(initialSort);
+  const [sortBy, setSortBy] = useState<"date" | "popularity" | "created_at">(
+    initialSort,
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -192,7 +195,7 @@ export const EventListPage: React.FC = () => {
 
         return next;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -372,7 +375,12 @@ export const EventListPage: React.FC = () => {
     return () => {
       window.removeEventListener("event-created", handleGlobalEventCreated);
     };
-  }, [handleEventSaved, fetchEvents, fetchTagsAndMetrics, fetchTimeframeCounts]);
+  }, [
+    handleEventSaved,
+    fetchEvents,
+    fetchTagsAndMetrics,
+    fetchTimeframeCounts,
+  ]);
 
   // Pagination Change Handlers
   const handlePageChange = (newPage: number) => {
@@ -448,10 +456,10 @@ export const EventListPage: React.FC = () => {
 
   const hasActiveFilters = Boolean(
     search.trim() ||
-      timeframe !== "all" ||
-      eventType !== "all" ||
-      selectedTag ||
-      sortBy !== "date",
+    timeframe !== "all" ||
+    eventType !== "all" ||
+    selectedTag ||
+    sortBy !== "date",
   );
 
   return (
@@ -474,7 +482,7 @@ export const EventListPage: React.FC = () => {
               </h1>
               <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
                 Explore hackathons, workshops, conferences, and meetups. Filter
-                by date, tags, popularity, or RSVP in real-time.
+                by date, tags, popularity, or RSVP.
               </p>
               {isAuthenticated && (
                 <div className="pt-2">

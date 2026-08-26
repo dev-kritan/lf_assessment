@@ -1,8 +1,14 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Server } from 'lucide-react';
-import { PaginationMeta } from '../types';
-import { CustomSelect } from './CustomSelect';
-import { PER_PAGE_OPTIONS } from '../constants';
+import React from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Server,
+} from "lucide-react";
+import { PaginationMeta } from "../types";
+import { CustomSelect } from "./CustomSelect";
+import { PER_PAGE_OPTIONS } from "../constants";
 
 interface PaginationProps {
   meta: PaginationMeta;
@@ -10,10 +16,17 @@ interface PaginationProps {
   onLimitChange?: (limit: number) => void;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLimitChange }) => {
+export const Pagination: React.FC<PaginationProps> = ({
+  meta,
+  onPageChange,
+  onLimitChange,
+}) => {
   const { page, totalPages, total, limit, hasPrevPage, hasNextPage } = meta;
 
-  const limitOptions = PER_PAGE_OPTIONS as unknown as { value: number; label: string }[];
+  const limitOptions = PER_PAGE_OPTIONS as unknown as {
+    value: number;
+    label: string;
+  }[];
 
   const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
   const endItem = Math.min(total, page * limit);
@@ -38,15 +51,16 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
     <div className="mt-10 relative z-20 flex flex-col md:flex-row items-center justify-between gap-4 py-4 px-2 sm:px-4 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm">
       {/* Count & Server Indicator */}
       <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-          <Server className="w-3 h-3 text-indigo-500" />
-          Server Paginated
-        </span>
         {total > 0 ? (
           <span>
-            Showing page <span className="font-bold text-slate-800 dark:text-slate-200">{page}</span> of{' '}
-            <span className="font-bold text-slate-800 dark:text-slate-200">{totalPages}</span> ({startItem}–{endItem} of{' '}
-            <span className="font-bold text-slate-800 dark:text-slate-200">{total}</span> total events)
+            page{" "}
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              {page}
+            </span>{" "}
+            of{" "}
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              {totalPages}
+            </span>
           </span>
         ) : (
           <span>0 total events found</span>
@@ -84,11 +98,11 @@ export const Pagination: React.FC<PaginationProps> = ({ meta, onPageChange, onLi
           <button
             key={p}
             onClick={() => onPageChange(p)}
-            aria-current={page === p ? 'page' : undefined}
+            aria-current={page === p ? "page" : undefined}
             className={`min-w-[36px] h-9 px-2.5 rounded-xl text-xs font-bold transition-all ${
               page === p
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25 scale-105'
-                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25 scale-105"
+                : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             {p}

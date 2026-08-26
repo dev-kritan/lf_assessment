@@ -708,7 +708,13 @@ export const MyEventsPage: React.FC = () => {
     return () => {
       window.removeEventListener("event-created", handleGlobalEventCreated);
     };
-  }, [handleEventSaved, fetchCreatedEvents, fetchCreatedCounts, fetchRsvpCounts, user?.id]);
+  }, [
+    handleEventSaved,
+    fetchCreatedEvents,
+    fetchCreatedCounts,
+    fetchRsvpCounts,
+    user?.id,
+  ]);
 
   // Event Deletion
   const handleDelete = async () => {
@@ -738,7 +744,7 @@ export const MyEventsPage: React.FC = () => {
             My Events & RSVPs
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Manage your created events and track all gatherings you have RSVP'd
+            Manage your created events and track all gatherings you have RSVP's
             to.
           </p>
         </div>
@@ -784,9 +790,7 @@ export const MyEventsPage: React.FC = () => {
           <Users className="w-4 h-4" />
           <span>My RSVPs</span>
           <CountBadge
-            count={
-              rsvpTimeframeCounts.all || rsvpCounts.all || rsvpMeta.total
-            }
+            count={rsvpTimeframeCounts.all || rsvpCounts.all || rsvpMeta.total}
             isActive={activeTab === "rsvps"}
           />
         </button>
@@ -868,7 +872,11 @@ export const MyEventsPage: React.FC = () => {
       />
 
       {/* Tab 1: Created by Me */}
-      <div className={activeTab === "created" ? "mt-8 animate-fade-in block" : "hidden"}>
+      <div
+        className={
+          activeTab === "created" ? "mt-8 animate-fade-in block" : "hidden"
+        }
+      >
         {!hasCreatedLoadedOnce && createdEvents.length === 0 ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -927,7 +935,9 @@ export const MyEventsPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className={`transition-opacity duration-200 ${isCreatedFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+          <div
+            className={`transition-opacity duration-200 ${isCreatedFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
+          >
             <div
               className={
                 viewMode === "grid"
@@ -963,7 +973,11 @@ export const MyEventsPage: React.FC = () => {
       </div>
 
       {/* Tab 2: My RSVPs */}
-      <div className={activeTab === "rsvps" ? "mt-8 animate-fade-in block" : "hidden"}>
+      <div
+        className={
+          activeTab === "rsvps" ? "mt-8 animate-fade-in block" : "hidden"
+        }
+      >
         {!hasRsvpLoadedOnce && rsvpEvents.length === 0 ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -996,9 +1010,7 @@ export const MyEventsPage: React.FC = () => {
               <Users className="w-7 h-7" />
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              {hasActiveFilters
-                ? "No Matching RSVPs Found"
-                : "No RSVPs found"}
+              {hasActiveFilters ? "No Matching RSVPs Found" : "No RSVPs found"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
               {hasActiveFilters
@@ -1024,7 +1036,9 @@ export const MyEventsPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className={`transition-opacity duration-200 ${isRsvpFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+          <div
+            className={`transition-opacity duration-200 ${isRsvpFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
+          >
             <div
               className={
                 viewMode === "grid"
