@@ -87,15 +87,26 @@ export const BonusChallengePage: React.FC = () => {
             </p>
           </div>
 
-          <a
-            href="/bonus/BONUS_ANSWERS.md"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all self-start sm:self-auto shadow-sm"
-          >
-            <Code2 className="w-4 h-4 text-emerald-500" />
-            View BONUS_ANSWERS.md
-          </a>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <a
+              href="/bonus/BONUS_ANSWERS.md"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            >
+              <Code2 className="w-4 h-4 text-emerald-500" />
+              View BONUS_ANSWERS.md
+            </a>
+            <a
+              href="/bonus/bonus_solution.sql"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            >
+              <Database className="w-4 h-4 text-indigo-500" />
+              View bonus_solution.sql
+            </a>
+          </div>
         </div>
       </div>
 

@@ -6098,3 +6098,21 @@
 {"level":"info","message":"🚀 Server running on http://localhost:5000","service":"event-planner-api","timestamp":"2026-08-26 12:14:45"}
 {"level":"info","message":"📚 Swagger API Docs available at http://localhost:5000/api-docs","service":"event-planner-api","timestamp":"2026-08-26 12:14:45"}
 {"level":"info","message":"⚡ API endpoints live at http://localhost:5000/api/v1","service":"event-planner-api","timestamp":"2026-08-26 12:14:45"}
+{"level":"info","message":"GET /api/v1/auth/profile 401 112 - 5.715 ms","service":"event-planner-api","timestamp":"2026-08-26 12:56:54"}
+{"level":"info","message":"GET /api/v1/auth/profile 401 112 - 0.711 ms","service":"event-planner-api","timestamp":"2026-08-26 12:56:54"}
+{"level":"info","message":"POST /api/v1/auth/refresh-token 401 98 - 2.328 ms","service":"event-planner-api","timestamp":"2026-08-26 12:56:54"}
+{"level":"info","message":"GET /api/v1/bonus/data 304 - - 13.684 ms","service":"event-planner-api","timestamp":"2026-08-26 13:06:43"}
+{"level":"info","message":"GET /api/v1/bonus/q1 304 - - 6.452 ms","service":"event-planner-api","timestamp":"2026-08-26 13:06:43"}
+{"level":"info","message":"GET /api/v1/bonus/q2 304 - - 9.859 ms","service":"event-planner-api","timestamp":"2026-08-26 13:06:43"}
+{"level":"info","message":"GET /api/v1/bonus/q4 200 3906 - 10.478 ms","service":"event-planner-api","timestamp":"2026-08-26 13:06:43"}
+{"level":"info","message":"GET /api/v1/bonus/q1 200 1374 - 4.713 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/data 200 5638 - 10.368 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/q2 200 4565 - 5.972 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/q4 200 3906 - 6.237 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/auth/profile 401 112 - 0.409 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/data 200 5638 - 8.679 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/q1 200 1374 - 5.618 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/q2 200 4565 - 5.017 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/auth/profile 401 112 - 0.393 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"GET /api/v1/bonus/q4 200 3906 - 4.184 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
+{"level":"info","message":"POST /api/v1/auth/refresh-token 401 98 - 0.382 ms","service":"event-planner-api","timestamp":"2026-08-26 13:10:16"}
