@@ -1,10 +1,12 @@
 import {
   AlertTriangle,
+  BookOpen,
   Check,
   CheckCircle2,
   Code2,
   Copy,
   Database,
+  Download,
   Layers,
   Loader2,
   RefreshCw,
@@ -13,6 +15,8 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { bonusApi } from "../api/bonus.api";
+import { BonusDocsModal } from "../components/BonusDocsModal";
+import { BonusSqlModal } from "../components/BonusSqlModal";
 import { useToast } from "../contexts/ToastContext";
 import { BonusQueryResult, BonusTableData } from "../types";
 
@@ -22,6 +26,9 @@ export const BonusChallengePage: React.FC = () => {
   const [q1Result, setQ1Result] = useState<BonusQueryResult | null>(null);
   const [q2Result, setQ2Result] = useState<BonusQueryResult | null>(null);
   const [q4Result, setQ4Result] = useState<BonusQueryResult | null>(null);
+
+  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -88,24 +95,20 @@ export const BonusChallengePage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            <a
-              href="/bonus/BONUS_ANSWERS.md"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            <button
+              onClick={() => setIsDocsModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-500/40 text-slate-800 dark:text-slate-200 transition-all shadow-sm active:scale-95"
             >
               <Code2 className="w-4 h-4 text-emerald-500" />
               View BONUS_ANSWERS.md
-            </a>
-            <a
-              href="/bonus/bonus_solution.sql"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            </button>
+            <button
+              onClick={() => setIsSqlModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-500/40 text-slate-800 dark:text-slate-200 transition-all shadow-sm active:scale-95"
             >
               <Database className="w-4 h-4 text-indigo-500" />
               View bonus_solution.sql
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -566,6 +569,18 @@ export const BonusChallengePage: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Bonus Solution SQL Modal */}
+      <BonusSqlModal
+        isOpen={isSqlModalOpen}
+        onClose={() => setIsSqlModalOpen(false)}
+      />
+
+      {/* Bonus Documentation Modal */}
+      <BonusDocsModal
+        isOpen={isDocsModalOpen}
+        onClose={() => setIsDocsModalOpen(false)}
+      />
     </div>
   );
 };

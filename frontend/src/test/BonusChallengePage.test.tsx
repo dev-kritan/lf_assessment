@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { BonusChallengePage } from '../pages/BonusChallengePage';
@@ -56,7 +56,7 @@ describe('BonusChallengePage Component', () => {
     vi.mocked(bonusApi.runQ4).mockResolvedValue({ success: true, data: mockQ4Result as any });
   });
 
-  it('renders header with direct links to BONUS_ANSWERS.md and bonus_solution.sql', async () => {
+  it('renders header with interactive buttons that open modals in-app', async () => {
     render(
       <BrowserRouter>
         <ToastProvider>
@@ -65,19 +65,31 @@ describe('BonusChallengePage Component', () => {
       </BrowserRouter>
     );
 
-    const answersLink = screen.getByRole('link', { name: /View BONUS_ANSWERS\.md/i });
-    expect(answersLink).toBeInTheDocument();
-    expect(answersLink).toHaveAttribute('href', '/bonus/BONUS_ANSWERS.md');
-    expect(answersLink).toHaveAttribute('target', '_blank');
-
-    const sqlLink = screen.getByRole('link', { name: /View bonus_solution\.sql/i });
-    expect(sqlLink).toBeInTheDocument();
-    expect(sqlLink).toHaveAttribute('href', '/bonus/bonus_solution.sql');
-    expect(sqlLink).toHaveAttribute('target', '_blank');
-
+    // Wait for initial data to load
     await waitFor(() => {
       expect(screen.getByText('Question 1: Current Designation of Every Employee')).toBeInTheDocument();
       expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
     });
+
+    const docsBtn = screen.getByRole('button', { name: /View BONUS_ANSWERS\.md/i });
+    expect(docsBtn).toBeInTheDocument();
+
+    const sqlBtn = screen.getByRole('button', { name: /View bonus_solution\.sql/i });
+    expect(sqlBtn).toBeInTheDocument();
+
+    // Open SQL Modal
+    fireEvent.click(sqlBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Executable SQL')).toBeInTheDocument();
+    expect(screen.getByText('167 Lines')).toBeInTheDocument();
+
+    // Close SQL Modal
+    const closeBtns = screen.getAllByRole('button', { name: /Close/i });
+    fireEvent.click(closeBtns[0]);
+
+    // Open Docs Modal
+    fireEvent.click(docsBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Solutions & Documentation')).toBeInTheDocument();
   });
 });
