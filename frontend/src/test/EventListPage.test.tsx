@@ -240,4 +240,39 @@ describe('EventListPage Server-Side Pagination', () => {
       { timeout: 1500 }
     );
   });
+
+  it('initializes viewMode to list when URL has view_mode=list', async () => {
+    window.history.pushState({}, '', '/?view_mode=list');
+    renderWithProviders(<EventListPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Global Tech Summit 2026')).toBeInTheDocument();
+    });
+
+    const listToggle = screen.getByRole('button', { name: /list view/i });
+    expect(listToggle).toHaveClass('bg-indigo-600');
+  });
+
+  it('updates URL search params when toggling view mode', async () => {
+    window.history.pushState({}, '', '/');
+    renderWithProviders(<EventListPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Global Tech Summit 2026')).toBeInTheDocument();
+    });
+
+    const listToggle = screen.getByRole('button', { name: /list view/i });
+    fireEvent.click(listToggle);
+
+    await waitFor(() => {
+      expect(window.location.search).toContain('view_mode=list');
+    });
+
+    const gridToggle = screen.getByRole('button', { name: /grid view/i });
+    fireEvent.click(gridToggle);
+
+    await waitFor(() => {
+      expect(window.location.search).not.toContain('view_mode=list');
+    });
+  });
 });

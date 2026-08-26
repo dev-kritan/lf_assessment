@@ -54,6 +54,8 @@ export const EventListPage: React.FC = () => {
   const initialSort =
     (searchParams.get("sort_by") as "date" | "popularity" | "created_at") ||
     "date";
+  const initialViewMode =
+    (searchParams.get("view_mode") as "grid" | "list") || "grid";
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -96,7 +98,7 @@ export const EventListPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<"date" | "popularity" | "created_at">(
     initialSort,
   );
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -122,6 +124,7 @@ export const EventListPage: React.FC = () => {
     event_type?: string;
     tag?: string;
     sort_by?: string;
+    view_mode?: string;
   }) => {
     setSearchParams(
       (prev) => {
@@ -193,6 +196,15 @@ export const EventListPage: React.FC = () => {
           }
         }
 
+        // View Mode
+        if (paramsToUpdate.view_mode !== undefined) {
+          if (paramsToUpdate.view_mode === "list") {
+            next.set("view_mode", "list");
+          } else {
+            next.delete("view_mode");
+          }
+        }
+
         return next;
       },
       { replace: true },
@@ -218,6 +230,15 @@ export const EventListPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, page: 1 }));
     updateUrlParams({ search: debouncedSearch, page: 1 });
   }, [debouncedSearch]);
+
+  // Synchronize viewMode from URL search params (e.g., browser back/forward navigation)
+  useEffect(() => {
+    const urlViewMode =
+      (searchParams.get("view_mode") as "grid" | "list") || "grid";
+    if (urlViewMode !== viewMode) {
+      setViewMode(urlViewMode);
+    }
+  }, [searchParams]);
 
   // Fetch Tags and Metrics with active filter context
   const fetchTagsAndMetrics = useCallback(async () => {
@@ -394,6 +415,11 @@ export const EventListPage: React.FC = () => {
     updateUrlParams({ page: 1, limit: newLimit });
   };
 
+  const handleViewModeChange = (newMode: "grid" | "list") => {
+    setViewMode(newMode);
+    updateUrlParams({ view_mode: newMode });
+  };
+
   const handleResetFilters = () => {
     setSearch("");
     setDebouncedSearch("");
@@ -402,7 +428,16 @@ export const EventListPage: React.FC = () => {
     setSelectedTag("");
     setSortBy("date");
     setPagination((prev) => ({ ...prev, page: 1 }));
-    setSearchParams(new URLSearchParams(), { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams();
+        if (prev.get("view_mode") === "list") {
+          next.set("view_mode", "list");
+        }
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const handleDeleteConfirm = async () => {
@@ -573,7 +608,7 @@ export const EventListPage: React.FC = () => {
           }}
           tags={tags}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onReset={handleResetFilters}
           hasActiveFilters={hasActiveFilters}
           onEditTag={handleEditTag}
