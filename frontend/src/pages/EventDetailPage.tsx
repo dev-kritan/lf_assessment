@@ -44,10 +44,12 @@ export const EventDetailPage: React.FC = () => {
   const { success, error } = useToast();
   const navigate = useNavigate();
 
-  const fetchEvent = async () => {
+  const fetchEvent = async (isBackground = false) => {
     if (!id) return;
     try {
-      setIsLoading(true);
+      if (!isBackground) {
+        setIsLoading(true);
+      }
       setIsForbidden(false);
       setFetchError(null);
       const res = await eventsApi.getEventById(Number(id));
@@ -62,10 +64,14 @@ export const EventDetailPage: React.FC = () => {
       } else {
         const msg = err.response?.data?.error?.message || 'Failed to load event details. Please check your connection.';
         setFetchError(msg);
-        error(msg);
+        if (!isBackground) {
+          error(msg);
+        }
       }
     } finally {
-      setIsLoading(false);
+      if (!isBackground) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -111,7 +117,7 @@ export const EventDetailPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             type="button"
-            onClick={fetchEvent}
+            onClick={() => fetchEvent()}
             className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
@@ -524,8 +530,35 @@ export const EventDetailPage: React.FC = () => {
               capacity={event.capacity}
               isPast={isPast}
               onRsvpSuccess={(newStatus, updatedStats) => {
-                setEvent((prev) => (prev ? { ...prev, userRsvp: newStatus, rsvpStats: updatedStats } : null));
-                fetchEvent();
+                setEvent((prev) => {
+                  if (!prev) return null;
+                  let updatedAttendees = [...(prev.attendees || [])];
+                  if (user) {
+                    const existingIdx = updatedAttendees.findIndex((a) => a.id === user.id);
+                    if (existingIdx >= 0) {
+                      updatedAttendees[existingIdx] = {
+                        ...updatedAttendees[existingIdx],
+                        status: newStatus,
+                        updatedAt: new Date().toISOString(),
+                      };
+                    } else {
+                      updatedAttendees.push({
+                        id: user.id,
+                        name: user.name,
+                        avatarUrl: user.avatarUrl || undefined,
+                        status: newStatus,
+                        updatedAt: new Date().toISOString(),
+                      });
+                    }
+                  }
+                  return {
+                    ...prev,
+                    userRsvp: newStatus,
+                    rsvpStats: updatedStats,
+                    attendees: updatedAttendees,
+                  };
+                });
+                fetchEvent(true);
               }}
             />
           ) : (
