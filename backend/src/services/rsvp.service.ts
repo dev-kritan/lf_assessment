@@ -111,4 +111,44 @@ export class RsvpService {
 
     return rsvps;
   }
+
+  static async deleteRsvp(eventId: number, userId: number) {
+    const existing = await db(DB_TABLES.RSVPS)
+      .where({ event_id: eventId, user_id: userId })
+      .first();
+
+    if (!existing) {
+      const error: any = new Error('RSVP not found.');
+      error.statusCode = 404;
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
+      throw error;
+    }
+
+    await db(DB_TABLES.RSVPS)
+      .where({ event_id: eventId, user_id: userId })
+      .del();
+
+    return { message: 'RSVP removed successfully.' };
+  }
+
+  static async bulkDeleteRsvps(eventIds: number[], userId: number) {
+    if (!eventIds || eventIds.length === 0) {
+      const error: any = new Error('No event IDs provided.');
+      error.statusCode = 400;
+      error.code = ERROR_CODES.VALIDATION_ERROR;
+      throw error;
+    }
+
+    const removedCount = await db(DB_TABLES.RSVPS)
+      .where('user_id', userId)
+      .whereIn('event_id', eventIds)
+      .del();
+
+    return {
+      removedCount,
+      eventIds,
+      message: `Successfully removed ${removedCount} RSVP${removedCount === 1 ? '' : 's'}.`,
+    };
+  }
 }
+

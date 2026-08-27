@@ -156,3 +156,12 @@ export const eventIdParamSchema = z.object({
 });
 
 export type EventIdParamDTO = z.infer<typeof eventIdParamSchema>;
+
+export const bulkDeleteEventsSchema = z.object({
+  event_ids: z
+    .array(z.coerce.number().int().positive('Each event ID must be a positive integer'))
+    .min(1, 'At least one event ID is required'),
+});
+
+export type BulkDeleteEventsDTO = z.infer<typeof bulkDeleteEventsSchema>;
+

@@ -21,4 +21,18 @@ export const rsvpApi = {
     const response = await apiClient.get<ApiResponse<any[]>>(API_ENDPOINTS.RSVPS.MY_RSVPS);
     return response.data;
   },
+
+  async deleteRsvp(eventId: number) {
+    const response = await apiClient.delete<ApiResponse>(API_ENDPOINTS.RSVPS.DELETE(eventId));
+    return response.data;
+  },
+
+  async bulkDeleteRsvps(eventIds: number[]) {
+    const response = await apiClient.post<ApiResponse<{ removedCount: number; eventIds: number[] }>>(
+      API_ENDPOINTS.RSVPS.BULK_DELETE,
+      { event_ids: eventIds }
+    );
+    return response.data;
+  },
 };
+

@@ -226,6 +226,61 @@ export const swaggerSpec = {
         },
       },
     },
+    '/events/bulk-delete': {
+      post: {
+        tags: ['Events'],
+        summary: 'Bulk delete events (Creator only)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_ids'],
+                properties: {
+                  event_ids: {
+                    type: 'array',
+                    items: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Events deleted successfully' },
+          403: { description: 'Forbidden: You can only delete events that you created' },
+        },
+      },
+    },
+    '/rsvps/bulk-delete': {
+      post: {
+        tags: ['RSVP'],
+        summary: 'Bulk remove RSVPs for current user',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_ids'],
+                properties: {
+                  event_ids: {
+                    type: 'array',
+                    items: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'RSVPs removed successfully' },
+        },
+      },
+    },
     '/rsvps/events/{id}': {
       post: {
         tags: ['RSVP'],
@@ -249,6 +304,15 @@ export const swaggerSpec = {
         responses: {
           200: { description: 'RSVP updated' },
           400: { description: 'Capacity reached' },
+        },
+      },
+      delete: {
+        tags: ['RSVP'],
+        summary: 'Delete/remove RSVP for event',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'RSVP removed' },
         },
       },
     },

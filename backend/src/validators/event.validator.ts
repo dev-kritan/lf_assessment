@@ -69,3 +69,10 @@ export const queryEventsSchema = z.object({
   creator_id: z.coerce.number().int().positive().optional(),
   my_rsvps: z.enum(['all', 'yes', 'maybe', 'no']).optional(),
 });
+
+export const bulkDeleteEventsSchema = z.object({
+  event_ids: z
+    .array(z.coerce.number().int().positive('Each event ID must be a positive integer'))
+    .min(1, 'At least one event ID is required'),
+});
+

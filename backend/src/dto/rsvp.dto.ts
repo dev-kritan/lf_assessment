@@ -22,3 +22,12 @@ export const eventAttendeeParamSchema = z.object({
 });
 
 export type EventAttendeeParamDTO = z.infer<typeof eventAttendeeParamSchema>;
+
+export const bulkDeleteRsvpsSchema = z.object({
+  event_ids: z
+    .array(z.coerce.number().int().positive('Each event ID must be a positive integer'))
+    .min(1, 'At least one event ID is required'),
+});
+
+export type BulkDeleteRsvpsDTO = z.infer<typeof bulkDeleteRsvpsSchema>;
+

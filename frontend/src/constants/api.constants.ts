@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   EVENTS: {
     BASE: '/events',
     DETAIL: (id: number | string) => `/events/${id}`,
+    BULK_DELETE: '/events/bulk-delete',
     METRICS: '/events/metrics',
     ATTENDEES: (id: number | string) => `/events/${id}/attendees`,
     RSVPS: (id: number | string) => `/events/${id}/rsvps`,
@@ -29,7 +30,9 @@ export const API_ENDPOINTS = {
   },
   RSVPS: {
     BASE: '/rsvps',
+    BULK_DELETE: '/rsvps/bulk-delete',
     SET: (eventId: number | string) => `/events/${eventId}/rsvps`,
+    DELETE: (eventId: number | string) => `/rsvps/events/${eventId}`,
     ATTENDEES: (eventId: number | string) => `/events/${eventId}/attendees`,
     MY_RSVPS: '/rsvps/me',
   },

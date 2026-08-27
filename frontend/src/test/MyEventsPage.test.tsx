@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { MyEventsPage } from '../pages/MyEventsPage';
 import { eventsApi } from '../api/events.api';
+import { rsvpApi } from '../api/rsvp.api';
 import { ToastProvider } from '../contexts/ToastContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { EventItem } from '../types';
@@ -12,6 +13,7 @@ vi.mock('../api/events.api', () => ({
     getEvents: vi.fn(),
     getTags: vi.fn(),
     deleteEvent: vi.fn(),
+    bulkDeleteEvents: vi.fn().mockResolvedValue({ success: true, data: { deletedCount: 1, deletedIds: [101] } }),
   },
 }));
 
@@ -26,6 +28,7 @@ vi.mock('../api/rsvp.api', () => ({
         { id: 4, user_rsvp_status: 'no', start_time: new Date(Date.now() - 172800000).toISOString() },
       ],
     }),
+    bulkDeleteRsvps: vi.fn().mockResolvedValue({ success: true, data: { removedCount: 1, eventIds: [101] } }),
   },
 }));
 
@@ -482,4 +485,112 @@ describe('MyEventsPage Component', () => {
       expect(screen.getByRole('button', { name: /Past Events 1/i })).toBeInTheDocument();
     });
   });
+
+  it('supports selecting events in bulk and deleting them via warning dialog', async () => {
+    vi.mocked(eventsApi.getEvents).mockImplementation(async (params: any) => {
+      if (params.creator_id === 42) {
+        return {
+          success: true,
+          data: [
+            mockEventItem,
+            { ...mockEventItem, id: 102, title: 'Second Created Event' },
+          ],
+          meta: { page: 1, limit: 6, total: 2, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        };
+      }
+      return {
+        success: true,
+        data: [],
+        meta: { page: 1, limit: 6, total: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+      };
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    // Wait for events to load
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
+      expect(screen.getByText('Second Created Event')).toBeInTheDocument();
+    });
+
+    // Click "Select All Visible"
+    const selectAllBtn = screen.getByRole('button', { name: /Select All Visible/i });
+    fireEvent.click(selectAllBtn);
+
+    // Verify bulk toolbar is visible with count
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    const deleteSelectedBtn = screen.getByRole('button', { name: /Delete Selected \(2\)/i });
+    expect(deleteSelectedBtn).toBeInTheDocument();
+
+    // Click "Delete Selected (2)" to open modal
+    fireEvent.click(deleteSelectedBtn);
+
+    // Warning dialog should open with title & warning
+    await waitFor(() => {
+      expect(screen.getByText(/Delete 2 Events Permanently\?/i)).toBeInTheDocument();
+      expect(screen.getByText(/Warning: Deleted events cannot be recovered/i)).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmBtn = screen.getByRole('button', { name: /Delete 2 Events/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(eventsApi.bulkDeleteEvents).toHaveBeenCalledWith([101, 102]);
+    });
+  });
+
+  it('supports selecting and bulk removing RSVPs via warning dialog', async () => {
+    vi.mocked(eventsApi.getEvents).mockImplementation(async (params: any) => {
+      if (params.my_rsvps) {
+        return {
+          success: true,
+          data: [
+            mockEventItem,
+            { ...mockEventItem, id: 103, title: 'RSVP Event Two' },
+          ],
+          meta: { page: 1, limit: 6, total: 2, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        };
+      }
+      return {
+        success: true,
+        data: [],
+        meta: { page: 1, limit: 6, total: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+      };
+    });
+
+    renderWithProviders(<MyEventsPage />);
+
+    // Switch to RSVPs tab
+    const rsvpsTab = screen.getByRole('button', { name: /My RSVPs/i });
+    fireEvent.click(rsvpsTab);
+
+    // Wait for events to load
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Workshop')).toBeInTheDocument();
+      expect(screen.getByText('RSVP Event Two')).toBeInTheDocument();
+    });
+
+    // Click individual select button on first event
+    const selectFirstEventBtn = screen.getByRole('button', { name: `Select ${mockEventItem.title}` });
+    fireEvent.click(selectFirstEventBtn);
+
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    const removeSelectedBtn = screen.getByRole('button', { name: /Remove Selected RSVPs \(1\)/i });
+    fireEvent.click(removeSelectedBtn);
+
+    // Warning dialog should open
+    await waitFor(() => {
+      expect(screen.getByText(/Remove RSVP for 1 Event\?/i)).toBeInTheDocument();
+    });
+
+    // Confirm removal
+    const confirmBtn = screen.getByRole('button', { name: /Remove 1 RSVP/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(rsvpApi.bulkDeleteRsvps).toHaveBeenCalledWith([101]);
+    });
+  });
 });
+

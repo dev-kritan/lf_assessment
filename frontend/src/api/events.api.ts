@@ -53,6 +53,14 @@ export const eventsApi = {
     return response.data;
   },
 
+  async bulkDeleteEvents(eventIds: number[]) {
+    const response = await apiClient.post<ApiResponse<{ deletedCount: number; deletedIds: number[] }>>(
+      API_ENDPOINTS.EVENTS.BULK_DELETE,
+      { event_ids: eventIds }
+    );
+    return response.data;
+  },
+
   async getMetrics() {
     const response = await apiClient.get<ApiResponse<{
       totalEvents: number;

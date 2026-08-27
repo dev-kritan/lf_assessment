@@ -7,6 +7,7 @@ import {
   updateEventSchema,
   queryEventsSchema,
   eventIdParamSchema,
+  bulkDeleteEventsSchema,
 } from '../dto';
 
 export class EventController {
@@ -94,6 +95,22 @@ export class EventController {
     }
   }
 
+  static async bulkDeleteEvents(req: Request, res: Response, next: NextFunction) {
+    try {
+      const bodyValidation = validateDto(bulkDeleteEventsSchema, req.body);
+      if (!bodyValidation.success) {
+        return sendError(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+      }
+
+      const currentUserId = req.user!.userId;
+      const { event_ids } = bodyValidation.data;
+      const result = await EventService.bulkDeleteEvents(event_ids, currentUserId);
+      return sendSuccess(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getMetrics(req: Request, res: Response, next: NextFunction) {
     try {
       const metrics = await EventService.getEventMetrics();
@@ -103,3 +120,4 @@ export class EventController {
     }
   }
 }
+

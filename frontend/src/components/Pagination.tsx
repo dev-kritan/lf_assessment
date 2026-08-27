@@ -51,16 +51,22 @@ export const Pagination: React.FC<PaginationProps> = ({
     <div className="mt-10 relative z-20 flex flex-col md:flex-row items-center justify-between gap-4 py-4 px-2 sm:px-4 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm">
       {/* Count & Server Indicator */}
       <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200/60 dark:border-indigo-900/60">
+          <Server className="w-3.5 h-3.5" />
+          Server Paginated
+        </span>
+
         {total > 0 ? (
           <span>
-            page{" "}
+            Showing page{" "}
             <span className="font-bold text-slate-800 dark:text-slate-200">
               {page}
             </span>{" "}
             of{" "}
             <span className="font-bold text-slate-800 dark:text-slate-200">
               {totalPages}
-            </span>
+            </span>{" "}
+            ({total} total events)
           </span>
         ) : (
           <span>0 total events found</span>

@@ -8,7 +8,8 @@ import {
   Globe, 
   Edit3, 
   Trash2, 
-  Clock
+  Clock,
+  Check
 } from 'lucide-react';
 import { EventItem } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -22,6 +23,9 @@ interface EventCardProps {
   onEdit?: (event: EventItem) => void;
   onDelete?: (event: EventItem) => void;
   showAdminControls?: boolean;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (event: EventItem) => void;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
@@ -29,6 +33,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   onEdit,
   onDelete,
   showAdminControls = true,
+  selectable = false,
+  isSelected = false,
+  onToggleSelect,
 }) => {
   const authContext = useContext(AuthContext);
   const isAuthenticated = authContext?.isAuthenticated ?? false;
@@ -37,7 +44,9 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   return (
     <div className={`group relative rounded-3xl overflow-hidden glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
-      isPast 
+      isSelected
+        ? 'ring-2 ring-indigo-500 border-indigo-500 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/30'
+        : isPast 
         ? 'border-slate-200 dark:border-slate-800 opacity-85 hover:opacity-100' 
         : 'border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-500/40 dark:hover:border-indigo-400/40'
     }`}>
@@ -49,6 +58,30 @@ export const EventCard: React.FC<EventCardProps> = ({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+
+        {/* Selection Checkbox (Top-Right) */}
+        {selectable && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleSelect?.(event);
+            }}
+            aria-label={isSelected ? `Deselect ${event.title}` : `Select ${event.title}`}
+            className={`absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 backdrop-blur-md shadow-lg ${
+              isSelected
+                ? 'bg-indigo-600 text-white ring-2 ring-white dark:ring-slate-900 scale-105'
+                : 'bg-slate-900/60 text-white/70 hover:text-white hover:bg-slate-900/80 border border-white/20 hover:scale-105'
+            }`}
+          >
+            {isSelected ? (
+              <Check className="w-5 h-5 stroke-[2.5]" />
+            ) : (
+              <div className="w-4 h-4 rounded-md border-2 border-white/70" />
+            )}
+          </button>
+        )}
 
         {/* Badges: Event Type & Past Indicator */}
         <div className="absolute top-3.5 left-3.5 flex items-center gap-2">

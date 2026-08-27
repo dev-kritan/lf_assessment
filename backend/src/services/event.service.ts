@@ -538,6 +538,42 @@ export class EventService {
     return { message: 'Event successfully deleted.' };
   }
 
+  static async bulkDeleteEvents(eventIds: number[], currentUserId: number) {
+    if (!eventIds || eventIds.length === 0) {
+      const error: any = new Error('No event IDs provided for deletion.');
+      error.statusCode = 400;
+      error.code = ERROR_CODES.VALIDATION_ERROR;
+      throw error;
+    }
+
+    const events = await db(DB_TABLES.EVENTS).whereIn('id', eventIds);
+    if (events.length === 0) {
+      const error: any = new Error('No events found matching the provided IDs.');
+      error.statusCode = 404;
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
+      throw error;
+    }
+
+    const unauthorized = events.filter((e) => Number(e.creator_id) !== Number(currentUserId));
+    if (unauthorized.length > 0) {
+      const error: any = new Error('Forbidden: You can only delete events that you created.');
+      error.statusCode = 403;
+      error.code = ERROR_CODES.FORBIDDEN;
+      throw error;
+    }
+
+    const deletedCount = await db(DB_TABLES.EVENTS)
+      .whereIn('id', eventIds)
+      .andWhere('creator_id', currentUserId)
+      .del();
+
+    return {
+      deletedCount,
+      deletedIds: events.map((e) => e.id),
+      message: `Successfully deleted ${deletedCount} event${deletedCount === 1 ? '' : 's'}.`,
+    };
+  }
+
   static async getEventMetrics() {
     const now = new Date();
     const [totalEvents] = await db(DB_TABLES.EVENTS).count('* as count');

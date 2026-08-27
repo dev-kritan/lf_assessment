@@ -3,12 +3,14 @@ import {
   BookmarkCheck,
   Calendar,
   CalendarX2,
+  Check,
   CheckCircle2,
   HelpCircle,
   ListFilter,
   Loader2,
   PlusCircle,
   RefreshCw,
+  Trash2,
   Users,
   XCircle,
 } from "lucide-react";
@@ -17,6 +19,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { eventsApi } from "../api/events.api";
 import { rsvpApi } from "../api/rsvp.api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { BulkDeleteConfirmDialog } from "../components/BulkDeleteConfirmDialog";
 import { EventCard } from "../components/EventCard";
 import { EventFormModal } from "../components/EventFormModal";
 import { FilterBar } from "../components/FilterBar";
@@ -127,6 +130,13 @@ export const MyEventsPage: React.FC = () => {
   const [eventToEdit, setEventToEdit] = useState<EventItem | null>(null);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Bulk Multi-Select & Bulk Delete State
+  const [selectedCreatedIds, setSelectedCreatedIds] = useState<number[]>([]);
+  const [selectedRsvpIds, setSelectedRsvpIds] = useState<number[]>([]);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -524,6 +534,8 @@ export const MyEventsPage: React.FC = () => {
   // Tab switching
   const handleTabChange = (tab: "created" | "rsvps") => {
     setActiveTab(tab);
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     updateUrlParams({
       tab,
       page: 1,
@@ -538,6 +550,8 @@ export const MyEventsPage: React.FC = () => {
   // Filter change handlers
   const handleTimeframeChange = (newTf: "all" | "upcoming" | "past") => {
     setTimeframe(newTf);
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     if (activeTab === "created") {
       setCreatedMeta((prev) => ({ ...prev, page: 1 }));
     } else {
@@ -548,6 +562,8 @@ export const MyEventsPage: React.FC = () => {
 
   const handleTypeChange = (newType: "all" | "public" | "private") => {
     setEventType(newType);
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     if (activeTab === "created") {
       setCreatedMeta((prev) => ({ ...prev, page: 1 }));
     } else {
@@ -558,6 +574,8 @@ export const MyEventsPage: React.FC = () => {
 
   const handleTagChange = (newTag: string) => {
     setSelectedTag(newTag);
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     if (activeTab === "created") {
       setCreatedMeta((prev) => ({ ...prev, page: 1 }));
     } else {
@@ -568,6 +586,8 @@ export const MyEventsPage: React.FC = () => {
 
   const handleSortChange = (newSort: "date" | "popularity" | "created_at") => {
     setSortBy(newSort);
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     if (activeTab === "created") {
       setCreatedMeta((prev) => ({ ...prev, page: 1 }));
     } else {
@@ -586,6 +606,7 @@ export const MyEventsPage: React.FC = () => {
     status: "all" | "yes" | "maybe" | "no",
   ) => {
     setRsvpStatusFilter(status);
+    setSelectedRsvpIds([]);
     setRsvpMeta((prev) => ({ ...prev, page: 1 }));
     updateUrlParams({ rsvp_status: status, page: 1 });
   };
@@ -598,6 +619,8 @@ export const MyEventsPage: React.FC = () => {
     setEventType("all");
     setSelectedTag("");
     setSortBy("date");
+    setSelectedCreatedIds([]);
+    setSelectedRsvpIds([]);
     if (activeTab === "rsvps") {
       setRsvpStatusFilter("all");
     }
@@ -629,23 +652,116 @@ export const MyEventsPage: React.FC = () => {
 
   // Pagination change handlers
   const handleCreatedPageChange = (newPage: number) => {
+    setSelectedCreatedIds([]);
     setCreatedMeta((prev) => ({ ...prev, page: newPage }));
     updateUrlParams({ page: newPage });
   };
 
   const handleCreatedLimitChange = (newLimit: number) => {
+    setSelectedCreatedIds([]);
     setCreatedMeta((prev) => ({ ...prev, page: 1, limit: newLimit }));
     updateUrlParams({ page: 1, limit: newLimit });
   };
 
   const handleRsvpPageChange = (newPage: number) => {
+    setSelectedRsvpIds([]);
     setRsvpMeta((prev) => ({ ...prev, page: newPage }));
     updateUrlParams({ page: newPage });
   };
 
   const handleRsvpLimitChange = (newLimit: number) => {
+    setSelectedRsvpIds([]);
     setRsvpMeta((prev) => ({ ...prev, page: 1, limit: newLimit }));
     updateUrlParams({ page: 1, limit: newLimit });
+  };
+
+  // Multi-select handlers for Created Events
+  const handleToggleSelectCreated = (event: EventItem) => {
+    setSelectedCreatedIds((prev) =>
+      prev.includes(event.id)
+        ? prev.filter((id) => id !== event.id)
+        : [...prev, event.id],
+    );
+  };
+
+  const handleToggleSelectAllCreated = () => {
+    const visibleIds = createdEvents.map((e) => e.id);
+    const allVisibleSelected =
+      visibleIds.length > 0 &&
+      visibleIds.every((id) => selectedCreatedIds.includes(id));
+    if (allVisibleSelected) {
+      setSelectedCreatedIds((prev) =>
+        prev.filter((id) => !visibleIds.includes(id)),
+      );
+    } else {
+      setSelectedCreatedIds((prev) =>
+        Array.from(new Set([...prev, ...visibleIds])),
+      );
+    }
+  };
+
+  // Multi-select handlers for RSVP Events
+  const handleToggleSelectRsvp = (event: EventItem) => {
+    setSelectedRsvpIds((prev) =>
+      prev.includes(event.id)
+        ? prev.filter((id) => id !== event.id)
+        : [...prev, event.id],
+    );
+  };
+
+  const handleToggleSelectAllRsvp = () => {
+    const visibleIds = rsvpEvents.map((e) => e.id);
+    const allVisibleSelected =
+      visibleIds.length > 0 &&
+      visibleIds.every((id) => selectedRsvpIds.includes(id));
+    if (allVisibleSelected) {
+      setSelectedRsvpIds((prev) =>
+        prev.filter((id) => !visibleIds.includes(id)),
+      );
+    } else {
+      setSelectedRsvpIds((prev) =>
+        Array.from(new Set([...prev, ...visibleIds])),
+      );
+    }
+  };
+
+  // Bulk Delete Execution
+  const handleBulkDeleteConfirm = async () => {
+    if (isBulkDeleting) return;
+    setIsBulkDeleting(true);
+    try {
+      if (activeTab === "created") {
+        if (selectedCreatedIds.length === 0) return;
+        const res = await eventsApi.bulkDeleteEvents(selectedCreatedIds);
+        if (res.success) {
+          const count = res.data?.deletedCount ?? selectedCreatedIds.length;
+          success(
+            `Successfully deleted ${count} event${count === 1 ? "" : "s"}`,
+          );
+          setSelectedCreatedIds([]);
+          setIsBulkDeleteModalOpen(false);
+          refreshAll();
+        }
+      } else {
+        if (selectedRsvpIds.length === 0) return;
+        const res = await rsvpApi.bulkDeleteRsvps(selectedRsvpIds);
+        if (res.success) {
+          const count = res.data?.removedCount ?? selectedRsvpIds.length;
+          success(
+            `Successfully removed RSVP for ${count} event${count === 1 ? "" : "s"}`,
+          );
+          setSelectedRsvpIds([]);
+          setIsBulkDeleteModalOpen(false);
+          refreshAll();
+        }
+      }
+    } catch (err: any) {
+      error(
+        err.response?.data?.error?.message || "Failed to execute bulk deletion",
+      );
+    } finally {
+      setIsBulkDeleting(false);
+    }
   };
 
   const refreshAll = () => {
@@ -938,6 +1054,70 @@ export const MyEventsPage: React.FC = () => {
           <div
             className={`transition-opacity duration-200 ${isCreatedFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
           >
+            {/* Bulk Selection Bar for Created Events */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5 p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAllCreated}
+                  className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <div
+                    className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
+                      createdEvents.length > 0 &&
+                      createdEvents.every((e) =>
+                        selectedCreatedIds.includes(e.id),
+                      )
+                        ? "bg-indigo-600 border-indigo-600 text-white"
+                        : selectedCreatedIds.some((id) =>
+                              createdEvents.some((e) => e.id === id),
+                            )
+                          ? "bg-indigo-100 dark:bg-indigo-950 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                          : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    }`}
+                  >
+                    {createdEvents.length > 0 &&
+                    createdEvents.every((e) =>
+                      selectedCreatedIds.includes(e.id),
+                    ) ? (
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    ) : selectedCreatedIds.some((id) =>
+                        createdEvents.some((e) => e.id === id),
+                      ) ? (
+                      <div className="w-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded" />
+                    ) : null}
+                  </div>
+                  <span>Select All Visible ({createdEvents.length})</span>
+                </button>
+
+                {selectedCreatedIds.length > 0 && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 animate-fade-in">
+                    {selectedCreatedIds.length} selected
+                  </span>
+                )}
+              </div>
+
+              {selectedCreatedIds.length > 0 && (
+                <div className="flex items-center gap-2 animate-fade-in">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCreatedIds([])}
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Clear Selection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkDeleteModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm shadow-rose-500/20 active:scale-95 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Selected ({selectedCreatedIds.length})
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div
               className={
                 viewMode === "grid"
@@ -952,6 +1132,9 @@ export const MyEventsPage: React.FC = () => {
                 >
                   <EventCard
                     event={event}
+                    selectable
+                    isSelected={selectedCreatedIds.includes(event.id)}
+                    onToggleSelect={handleToggleSelectCreated}
                     onEdit={(evt) => {
                       setEventToEdit(evt);
                       setIsCreateModalOpen(true);
@@ -1039,6 +1222,66 @@ export const MyEventsPage: React.FC = () => {
           <div
             className={`transition-opacity duration-200 ${isRsvpFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
           >
+            {/* Bulk Selection Bar for RSVP Events */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5 p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAllRsvp}
+                  className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <div
+                    className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
+                      rsvpEvents.length > 0 &&
+                      rsvpEvents.every((e) => selectedRsvpIds.includes(e.id))
+                        ? "bg-indigo-600 border-indigo-600 text-white"
+                        : selectedRsvpIds.some((id) =>
+                              rsvpEvents.some((e) => e.id === id),
+                            )
+                          ? "bg-indigo-100 dark:bg-indigo-950 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                          : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    }`}
+                  >
+                    {rsvpEvents.length > 0 &&
+                    rsvpEvents.every((e) => selectedRsvpIds.includes(e.id)) ? (
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    ) : selectedRsvpIds.some((id) =>
+                        rsvpEvents.some((e) => e.id === id),
+                      ) ? (
+                      <div className="w-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded" />
+                    ) : null}
+                  </div>
+                  <span>Select All Visible ({rsvpEvents.length})</span>
+                </button>
+
+                {selectedRsvpIds.length > 0 && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 animate-fade-in">
+                    {selectedRsvpIds.length} selected
+                  </span>
+                )}
+              </div>
+
+              {selectedRsvpIds.length > 0 && (
+                <div className="flex items-center gap-2 animate-fade-in">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRsvpIds([])}
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Clear Selection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkDeleteModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm shadow-rose-500/20 active:scale-95 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove Selected RSVPs ({selectedRsvpIds.length})
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div
               className={
                 viewMode === "grid"
@@ -1051,7 +1294,13 @@ export const MyEventsPage: React.FC = () => {
                   key={event.id}
                   className="animate-slide-up transition-all duration-300 h-full"
                 >
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    selectable
+                    isSelected={selectedRsvpIds.includes(event.id)}
+                    onToggleSelect={handleToggleSelectRsvp}
+                  />
                 </div>
               ))}
             </div>
@@ -1079,7 +1328,7 @@ export const MyEventsPage: React.FC = () => {
         onTagCreated={(newTag) => setAllTags((prev) => [...prev, newTag])}
       />
 
-      {/* Delete Confirm Modal */}
+      {/* Single Delete Confirm Modal */}
       <ConfirmDialog
         isOpen={!!eventToDelete}
         title="Delete Event"
@@ -1090,6 +1339,21 @@ export const MyEventsPage: React.FC = () => {
         onConfirm={handleDelete}
         onCancel={() => setEventToDelete(null)}
       />
+
+      {/* Bulk Delete Warning Confirm Dialog */}
+      <BulkDeleteConfirmDialog
+        isOpen={isBulkDeleteModalOpen}
+        type={activeTab}
+        selectedEvents={
+          activeTab === "created"
+            ? createdEvents.filter((e) => selectedCreatedIds.includes(e.id))
+            : rsvpEvents.filter((e) => selectedRsvpIds.includes(e.id))
+        }
+        isLoading={isBulkDeleting}
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={() => setIsBulkDeleteModalOpen(false)}
+      />
     </div>
   );
 };
+

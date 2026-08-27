@@ -8,6 +8,7 @@ import {
   updateEventSchema,
   queryEventsSchema,
   setRsvpSchema,
+  bulkDeleteEventsSchema,
 } from '../dto';
 
 const router = Router();
@@ -15,6 +16,10 @@ const router = Router();
 // Event Collection & Metrics
 router.get('/metrics', EventController.getMetrics);
 router.get('/', optionalAuthenticate, validate(queryEventsSchema, 'query'), EventController.getEvents);
+
+// Bulk Event Operations
+router.post('/bulk-delete', authenticate, validate(bulkDeleteEventsSchema), EventController.bulkDeleteEvents);
+router.delete('/bulk', authenticate, validate(bulkDeleteEventsSchema), EventController.bulkDeleteEvents);
 
 // Event CRUD
 router.get('/:id', optionalAuthenticate, EventController.getEventById);
@@ -27,5 +32,8 @@ router.delete('/:id', authenticate, EventController.deleteEvent);
 router.get('/:id/attendees', RsvpController.getAttendees);
 router.post('/:id/rsvps', authenticate, validate(setRsvpSchema), RsvpController.setRsvp);
 router.post('/:id/rsvp', authenticate, validate(setRsvpSchema), RsvpController.setRsvp);
+router.delete('/:id/rsvps', authenticate, RsvpController.deleteRsvp);
+router.delete('/:id/rsvp', authenticate, RsvpController.deleteRsvp);
 
 export default router;
+
