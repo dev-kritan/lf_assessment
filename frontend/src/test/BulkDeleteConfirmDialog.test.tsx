@@ -98,4 +98,33 @@ describe('BulkDeleteConfirmDialog Component', () => {
     fireEvent.click(cancelBtn);
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it('renders all selected events in full without truncation when more than 5 events are selected', () => {
+    const sixEvents: EventItem[] = Array.from({ length: 6 }, (_, i) => ({
+      ...mockEvents[0],
+      id: i + 1,
+      title: `Selected Event Number ${i + 1}`,
+      userRsvp: i % 2 === 0 ? 'yes' : 'maybe',
+    }));
+
+    render(
+      <BulkDeleteConfirmDialog
+        isOpen={true}
+        type="created"
+        selectedEvents={sixEvents}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    // Verify all 6 events are rendered
+    for (let i = 1; i <= 6; i++) {
+      expect(screen.getByText(`Selected Event Number ${i}`)).toBeInTheDocument();
+    }
+
+    // Verify there is no truncation "+ and X more events" text
+    expect(screen.queryByText(/more event/i)).toBeNull();
+    expect(screen.getByText('6 items selected')).toBeInTheDocument();
+  });
 });
+
