@@ -21,6 +21,7 @@ const mockEvents: EventItem[] = [
     tags: [],
     rsvpStats: { yes: 10, maybe: 2, no: 1, total: 13 },
     userRsvp: 'yes',
+    isCreator: true,
   },
   {
     id: 2,
@@ -39,6 +40,7 @@ const mockEvents: EventItem[] = [
     tags: [],
     rsvpStats: { yes: 5, maybe: 1, no: 0, total: 6 },
     userRsvp: 'maybe',
+    isCreator: true,
   },
 ];
 
