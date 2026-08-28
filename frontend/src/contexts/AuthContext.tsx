@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, twoFactorCode?: string) => Promise<{ requiresTwoFactor?: boolean; userId?: number }>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<{ user: User; message: string; verificationToken?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -68,10 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string) => {
     const res = await authApi.register({ name, email, password });
-    if (res.data.user) {
+    if (res.data.user && res.data.user.isEmailVerified) {
       localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(res.data.user));
       setUser(res.data.user);
     }
+    return res.data;
   };
 
   const logout = async () => {
@@ -111,7 +112,7 @@ export const useAuth = (): AuthContextType => {
       isAuthenticated: false,
       isLoading: false,
       login: async () => ({}),
-      register: async () => {},
+      register: async () => ({ user: {} as User, message: '' }),
       logout: async () => {},
       refreshProfile: async () => {},
       setUser: () => {},

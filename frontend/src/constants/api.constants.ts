@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     PROFILE: '/auth/profile',
     LOGOUT: '/auth/logout',
     VERIFY_EMAIL: '/auth/verify-email',
+    RESEND_VERIFICATION: '/auth/resend-verification',
     REQUEST_VERIFICATION: '/auth/request-verification',
     REFRESH_TOKEN: '/auth/refresh-token',
   },

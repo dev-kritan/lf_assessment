@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from '../constants';
 
 export const authApi = {
   async register(data: { name: string; email: string; password: string }) {
-    const response = await apiClient.post<ApiResponse<{ user: User; accessToken: string; refreshToken: string; verificationToken: string }>>(
+    const response = await apiClient.post<ApiResponse<{ user: User; message: string; verificationToken?: string }>>(
       API_ENDPOINTS.AUTH.REGISTER,
       data
     );
@@ -32,8 +32,19 @@ export const authApi = {
     return response.data;
   },
 
-  async verifyEmail(token: string) {
-    const response = await apiClient.post<ApiResponse>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { token });
+  async verifyEmail(token: string, uid?: number | string) {
+    const response = await apiClient.post<ApiResponse<{ alreadyVerified?: boolean; message: string }>>(
+      API_ENDPOINTS.AUTH.VERIFY_EMAIL,
+      { token, uid: uid ? Number(uid) : undefined }
+    );
+    return response.data;
+  },
+
+  async resendVerification(email: string) {
+    const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      API_ENDPOINTS.AUTH.RESEND_VERIFICATION,
+      { email }
+    );
     return response.data;
   },
 

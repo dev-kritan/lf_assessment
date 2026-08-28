@@ -8,9 +8,12 @@ import {
   KeyRound,
   Loader2,
   ArrowRight,
+  AlertTriangle,
+  RotateCw,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { authApi } from "../api/auth.api";
 import { APP_ROUTES, UI_TIMINGS } from "../constants";
 import { loginSchema, validateForm, mapApiErrors } from "../dto";
 
@@ -21,6 +24,8 @@ export const LoginPage: React.FC = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const errorRef = useRef<HTMLParagraphElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +61,7 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     if (isLoading) return;
     setFormError("");
+    setIsUnverified(false);
     setFieldErrors({});
 
     const validation = validateForm(loginSchema, {
@@ -95,6 +101,11 @@ export const LoginPage: React.FC = () => {
       const apiError = err.response?.data?.error;
       const msg = apiError?.message || "Login failed. Please check your credentials.";
       setFormError(msg);
+
+      if (apiError?.code === 'EMAIL_NOT_VERIFIED') {
+        setIsUnverified(true);
+      }
+
       if (apiError?.details) {
         setFieldErrors(mapApiErrors(apiError));
       }
@@ -104,10 +115,25 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email.trim() || isResending) return;
+    try {
+      setIsResending(true);
+      const res = await authApi.resendVerification(email.trim());
+      success(res.message || "Verification email sent!");
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || "Failed to resend verification email.";
+      error(msg);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const fillDemoAccount = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword("Password123!");
     setFormError("");
+    setIsUnverified(false);
     setRequires2FA(false);
   };
 
@@ -188,6 +214,7 @@ export const LoginPage: React.FC = () => {
                       setEmail(e.target.value);
                       if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
                       if (formError) setFormError("");
+                      if (isUnverified) setIsUnverified(false);
                     }}
                     placeholder="you@example.com"
                     autoFocus
@@ -268,7 +295,35 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {formError && !Object.keys(fieldErrors).length && (
+          {/* Unverified Email Alert & 1-Click Resend */}
+          {isUnverified && (
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-left space-y-2">
+              <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>Your email address is not verified yet. Please check your inbox or request a new verification link.</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition-all"
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5" />
+                    Resend Verification Email
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {formError && !isUnverified && !Object.keys(fieldErrors).length && (
             <p
               ref={errorRef}
               className="text-xs text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60"

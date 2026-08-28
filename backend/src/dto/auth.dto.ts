@@ -57,6 +57,20 @@ export const emailVerifySchema = z.object({
     .string({ message: 'Verification token is required' })
     .trim()
     .min(1, 'Verification token is required'),
+  uid: z
+    .union([z.number(), z.string().regex(/^\d+$/, 'User ID must be a number')])
+    .transform((val) => Number(val))
+    .optional(),
 });
 
 export type EmailVerifyDTO = z.infer<typeof emailVerifySchema>;
+
+export const resendVerificationSchema = z.object({
+  email: z
+    .string({ message: 'Email is required' })
+    .trim()
+    .email('Please enter a valid email address')
+    .toLowerCase(),
+});
+
+export type ResendVerificationDTO = z.infer<typeof resendVerificationSchema>;

@@ -2,12 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
 import { sendSuccess, sendCreated, sendError } from '../utils/response.utils';
 import { setAuthCookies, clearAuthCookies } from '../utils/cookie.utils';
+import { config } from '../config/env';
 import {
   validateDto,
   registerSchema,
   loginSchema,
   refreshTokenSchema,
   emailVerifySchema,
+  resendVerificationSchema,
 } from '../dto';
 
 export class AuthController {
@@ -19,10 +21,7 @@ export class AuthController {
       }
 
       const result = await AuthService.register(validation.data);
-      if (result.accessToken) {
-        setAuthCookies(res, result.accessToken, result.refreshToken);
-      }
-      return sendCreated(res, result, 'User registered successfully');
+      return sendCreated(res, result, result.message);
     } catch (error) {
       next(error);
     }
@@ -88,15 +87,54 @@ export class AuthController {
     }
   }
 
+  /**
+   * Supports both GET (direct link / browser click) and POST (SPA API calls).
+   * For browser GET navigation, redirects to the frontend with verification status.
+   */
   static async verifyEmail(req: Request, res: Response, next: NextFunction) {
     try {
-      const validation = validateDto(emailVerifySchema, req.body);
+      const isGet = req.method === 'GET';
+      const token = (isGet ? req.query.token : req.body?.token) as string;
+      const uidRaw = (isGet ? req.query.uid : req.body?.uid);
+      const uid = uidRaw ? parseInt(String(uidRaw), 10) : undefined;
+
+      const validation = validateDto(emailVerifySchema, { token, uid });
+      if (!validation.success) {
+        if (isGet && req.accepts('html') && !req.xhr) {
+          return res.redirect(`${config.clientUrl}/verify-email?status=error&message=${encodeURIComponent(validation.message)}`);
+        }
+        return sendError(res, validation.message, validation.statusCode, validation.errors, validation.code);
+      }
+
+      const result = await AuthService.verifyEmail(validation.data.token, validation.data.uid);
+
+      if (isGet && req.accepts('html') && !req.xhr) {
+        const queryStatus = result.alreadyVerified ? 'already-verified' : 'success';
+        return res.redirect(`${config.clientUrl}/verify-email?status=${queryStatus}&message=${encodeURIComponent(result.message)}`);
+      }
+
+      return sendSuccess(res, result, result.message);
+    } catch (error: any) {
+      if (req.method === 'GET' && req.accepts('html') && !req.xhr) {
+        const errorMsg = error.message || 'Verification failed.';
+        return res.redirect(`${config.clientUrl}/verify-email?status=error&message=${encodeURIComponent(errorMsg)}`);
+      }
+      next(error);
+    }
+  }
+
+  /**
+   * Resends verification email with rate limiting.
+   */
+  static async resendVerification(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validation = validateDto(resendVerificationSchema, req.body);
       if (!validation.success) {
         return sendError(res, validation.message, validation.statusCode, validation.errors, validation.code);
       }
 
-      const result = await AuthService.verifyEmail(validation.data.token);
-      return sendSuccess(res, result, 'Email verified successfully');
+      const result = await AuthService.resendVerification(validation.data.email);
+      return sendSuccess(res, result, result.message);
     } catch (error) {
       next(error);
     }
@@ -106,7 +144,7 @@ export class AuthController {
     try {
       const userId = req.user!.userId;
       const result = await AuthService.generateEmailVerification(userId);
-      return sendSuccess(res, result, 'Verification token generated');
+      return sendSuccess(res, result, result.message);
     } catch (error) {
       next(error);
     }

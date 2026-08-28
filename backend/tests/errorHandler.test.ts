@@ -20,6 +20,13 @@ describe('Graceful Error Handling & RESTful Endpoints', () => {
         password: 'Password123!',
       });
 
+    await request(app)
+      .post('/api/v1/auth/verify-email')
+      .send({
+        token: regRes.body.data.verificationToken,
+        uid: regRes.body.data.user.id,
+      });
+
     const loginRes = await request(app)
       .post('/api/v1/auth/login')
       .send({

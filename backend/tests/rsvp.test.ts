@@ -10,7 +10,7 @@ describe('RSVP System', () => {
 
   beforeAll(async () => {
     const res = await request(app).post('/api/v1/auth/login').send({
-      email: 'carol@example.com',
+      email: 'bob@example.com',
       password: 'Password123!',
     });
     userToken = res.body.data.accessToken;
