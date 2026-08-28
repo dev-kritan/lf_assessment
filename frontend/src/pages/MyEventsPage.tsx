@@ -137,7 +137,6 @@ export const MyEventsPage: React.FC = () => {
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-
   // Redirect if unauthenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -864,17 +863,6 @@ export const MyEventsPage: React.FC = () => {
             to.
           </p>
         </div>
-
-        <button
-          onClick={() => {
-            setEventToEdit(null);
-            setIsCreateModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-500/20 active:scale-95 transition-all self-start sm:self-auto"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Create New Event
-        </button>
       </div>
 
       {/* Tabs */}
@@ -1356,4 +1344,3 @@ export const MyEventsPage: React.FC = () => {
     </div>
   );
 };
-

@@ -1,36 +1,33 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Sparkles,
-  Calendar,
-  Users,
-  Tag as TagIcon,
-  PlusCircle,
-  Layers,
+  AlertTriangle,
+  CalendarX2,
   Flame,
   Loader2,
-  CalendarX2,
-  AlertTriangle,
   RefreshCw,
+  Sparkles,
+  Tag as TagIcon,
+  Users,
 } from "lucide-react";
-import { EventItem, Tag, PaginationMeta } from "../types";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { eventsApi } from "../api/events.api";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EventCard } from "../components/EventCard";
+import { EventFormModal } from "../components/EventFormModal";
 import { FilterBar } from "../components/FilterBar";
-import { Pagination } from "../components/Pagination";
-import { StatCard } from "../components/StatCard";
 import {
   MetricDetailDrawer,
   MetricType,
   clearDrawerEventsCache,
 } from "../components/MetricDetailDrawer";
-import { EventFormModal } from "../components/EventFormModal";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { TagEditModal } from "../components/TagEditModal";
+import { Pagination } from "../components/Pagination";
+import { StatCard } from "../components/StatCard";
 import { TagDeleteModal } from "../components/TagDeleteModal";
-import { useToast } from "../contexts/ToastContext";
-import { useAuth } from "../contexts/AuthContext";
-import { Link, useSearchParams } from "react-router-dom";
+import { TagEditModal } from "../components/TagEditModal";
 import { PAGINATION_LIMITS } from "../constants";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import { EventItem, PaginationMeta, Tag } from "../types";
 
 export const EventListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -519,20 +516,6 @@ export const EventListPage: React.FC = () => {
                 Explore hackathons, workshops, conferences, and meetups. Filter
                 by date, tags, popularity, or RSVP.
               </p>
-              {isAuthenticated && (
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      setEventToEdit(null);
-                      setIsModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all cursor-pointer"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    Create Your Event
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Quick Metrics Grid */}
