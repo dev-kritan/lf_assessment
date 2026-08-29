@@ -28,12 +28,12 @@ class TagService {
         }
         return color;
     }
-    static async getAllTags(params = {}, currentUserId) {
+    static async getAllTags(params = {}, currentUserId, isVerified = false) {
         const eventsSubquery = (0, knex_1.default)(constants_1.DB_TABLES.EVENT_TAGS)
             .join(constants_1.DB_TABLES.EVENTS, 'event_tags.event_id', 'events.id')
             .select('event_tags.tag_id', 'events.id as event_id');
-        // If not authenticated, true private events are excluded from tag counts
-        if (!currentUserId) {
+        // If not authenticated or not verified, true private events are excluded from tag counts
+        if (!currentUserId || !isVerified) {
             eventsSubquery.where((builder) => {
                 builder
                     .where('events.is_true_private', false)
@@ -99,7 +99,7 @@ class TagService {
             colorHex: newTag.color_hex,
         };
     }
-    static async getTagUsage(tagId, currentUserId) {
+    static async getTagUsage(tagId, currentUserId, isVerified = false) {
         const tag = await (0, knex_1.default)(constants_1.DB_TABLES.TAGS).where({ id: tagId }).first();
         if (!tag) {
             const error = new Error('Tag not found');
@@ -111,7 +111,7 @@ class TagService {
             .where('event_tags.tag_id', tagId)
             .select('events.id', 'events.title', 'events.event_type', 'events.is_true_private', 'events.start_time', 'events.location')
             .orderBy('events.start_time', 'asc');
-        if (!currentUserId) {
+        if (!currentUserId || !isVerified) {
             query.where((builder) => {
                 builder
                     .where('events.is_true_private', false)

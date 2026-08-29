@@ -95,5 +95,37 @@ class RsvpService {
             .orderBy('events.start_time', 'asc');
         return rsvps;
     }
+    static async deleteRsvp(eventId, userId) {
+        const existing = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
+            .where({ event_id: eventId, user_id: userId })
+            .first();
+        if (!existing) {
+            const error = new Error('RSVP not found.');
+            error.statusCode = 404;
+            error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
+            throw error;
+        }
+        await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
+            .where({ event_id: eventId, user_id: userId })
+            .del();
+        return { message: 'RSVP removed successfully.' };
+    }
+    static async bulkDeleteRsvps(eventIds, userId) {
+        if (!eventIds || eventIds.length === 0) {
+            const error = new Error('No event IDs provided.');
+            error.statusCode = 400;
+            error.code = constants_1.ERROR_CODES.VALIDATION_ERROR;
+            throw error;
+        }
+        const removedCount = await (0, knex_1.default)(constants_1.DB_TABLES.RSVPS)
+            .where('user_id', userId)
+            .whereIn('event_id', eventIds)
+            .del();
+        return {
+            removedCount,
+            eventIds,
+            message: `Successfully removed ${removedCount} RSVP${removedCount === 1 ? '' : 's'}.`,
+        };
+    }
 }
 exports.RsvpService = RsvpService;

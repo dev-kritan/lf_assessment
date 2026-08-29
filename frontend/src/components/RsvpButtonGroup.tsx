@@ -44,7 +44,7 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
   const [currentStats, setCurrentStats] = useState<RsvpStats>(stats);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { success, error, info } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,6 +79,11 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
       targetParams.set('auto_rsvp', status);
       const targetUrl = `${location.pathname}?${targetParams.toString()}`;
       navigate(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+      return;
+    }
+
+    if (user && !user.isEmailVerified) {
+      error("Email verification required: Please verify your email address in your profile to RSVP.");
       return;
     }
 
@@ -202,6 +207,23 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
           <span className="text-[11px] leading-tight">
             Capacity reached. You can still RSVP as <strong>Maybe</strong>!
           </span>
+        </div>
+      )}
+
+      {/* Unverified Email Notice */}
+      {isCard && user && !user.isEmailVerified && (
+        <div className="mb-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <div className="text-[11px] leading-tight">
+            <span>Email verification required to RSVP. </span>
+            <button
+              type="button"
+              onClick={() => navigate('/profile')}
+              className="underline font-bold text-amber-900 dark:text-amber-200 hover:opacity-80"
+            >
+              Verify in Profile
+            </button>
+          </div>
         </div>
       )}
 

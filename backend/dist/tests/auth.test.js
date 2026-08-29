@@ -19,15 +19,35 @@ describe('Auth Endpoints & 2FA / Refresh Tokens', () => {
     };
     let accessToken = '';
     let refreshToken = '';
-    it('should register a new user successfully', async () => {
+    let verificationToken = '';
+    let userId;
+    it('should register a new user successfully and send verification email', async () => {
         const res = await (0, supertest_1.default)(app).post('/api/v1/auth/register').send(testUser);
         expect(res.status).toBe(201);
         expect(res.body.success).toBe(true);
         expect(res.body.data.user.email).toBe(testUser.email.toLowerCase());
-        expect(res.headers['set-cookie']).toBeDefined();
-        const cookies = getCookies(res);
-        expect(cookies).toContain('accessToken=');
-        expect(cookies).toContain('refreshToken=');
+        expect(res.body.data.user.isEmailVerified).toBe(false);
+        expect(res.body.data.verificationToken).toBeDefined();
+        verificationToken = res.body.data.verificationToken;
+        userId = res.body.data.user.id;
+    });
+    it('should allow unverified user to log in with isEmailVerified: false', async () => {
+        const res = await (0, supertest_1.default)(app).post('/api/v1/auth/login').send({
+            email: testUser.email,
+            password: testUser.password,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.user.isEmailVerified).toBe(false);
+    });
+    it('should verify email successfully via verification token', async () => {
+        const res = await (0, supertest_1.default)(app).post('/api/v1/auth/verify-email').send({
+            token: verificationToken,
+            uid: userId,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.alreadyVerified).toBe(false);
     });
     it('should fail registration with duplicate email', async () => {
         const res = await (0, supertest_1.default)(app).post('/api/v1/auth/register').send(testUser);
@@ -45,7 +65,7 @@ describe('Auth Endpoints & 2FA / Refresh Tokens', () => {
         expect(res.body.success).toBe(false);
         expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
-    it('should login an existing user and set HttpOnly cookies', async () => {
+    it('should login an existing verified user and set HttpOnly cookies', async () => {
         const res = await (0, supertest_1.default)(app).post('/api/v1/auth/login').send({
             email: testUser.email,
             password: testUser.password,

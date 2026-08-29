@@ -121,16 +121,6 @@ export class AuthService {
       throw error;
     }
 
-    // Step 4: Block unverified users from logging in until is_email_verified is true
-    if (!user.is_email_verified) {
-      const error: any = new Error(
-        "Please verify your email address before signing in. Check your inbox for the verification link or request a new one.",
-      );
-      error.statusCode = 403;
-      error.code = ERROR_CODES.EMAIL_NOT_VERIFIED;
-      throw error;
-    }
-
     // If 2FA is enabled for this user
     if (user.two_factor_enabled) {
       if (!data.twoFactorCode) {
@@ -178,7 +168,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        isEmailVerified: true,
+        isEmailVerified: Boolean(user.is_email_verified),
         twoFactorEnabled: !!user.two_factor_enabled,
         avatarUrl: user.avatar_url,
       },
@@ -228,14 +218,6 @@ export class AuthService {
       if (!user) {
         const error: any = new Error("User not found.");
         error.statusCode = 401;
-        throw error;
-      }
-
-      // Check if email is verified
-      if (!user.is_email_verified) {
-        const error: any = new Error("Your email address is not verified.");
-        error.statusCode = 403;
-        error.code = ERROR_CODES.EMAIL_NOT_VERIFIED;
         throw error;
       }
 

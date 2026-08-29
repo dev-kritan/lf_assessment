@@ -135,23 +135,39 @@ export const EventDetailPage: React.FC = () => {
   }
 
   if (isForbidden) {
+    const isUnverifiedUser = isAuthenticated && user && !user.isEmailVerified;
+
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center animate-fade-in">
         <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-4 shadow-inner ring-1 ring-indigo-500/20">
           <Lock className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Private Event</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+          {isUnverifiedUser ? 'Email Verification Required' : 'Private Event'}
+        </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 mb-8 leading-relaxed">
-          This gathering is private and restricted to signed-in community members. Sign in to view full event details and RSVP.
+          {isUnverifiedUser
+            ? 'This gathering is True Private and restricted to verified community members. Please verify your email address to access details and RSVP.'
+            : 'This gathering is private and restricted to signed-in community members. Sign in to view full event details and RSVP.'}
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
-            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-4 h-4" />
-            Sign In to View
-          </Link>
+          {isUnverifiedUser ? (
+            <Link
+              to={APP_ROUTES.PROFILE}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Verify Email in Profile
+            </Link>
+          ) : (
+            <Link
+              to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In to View
+            </Link>
+          )}
           <Link
             to={APP_ROUTES.HOME}
             className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"

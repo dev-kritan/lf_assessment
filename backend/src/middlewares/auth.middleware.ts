@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, TokenPayload } from '../utils/token.utils';
 import { sendError } from '../utils/response.utils';
-import { AUTH_COOKIES, ERROR_CODES } from '../constants';
+import { AUTH_COOKIES, DB_TABLES, ERROR_CODES } from '../constants';
+import db from '../config/knex';
 
 declare global {
   namespace Express {
@@ -11,7 +12,7 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, res: Response, next: NextFunction) {
+export async function authenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   let token: string | undefined;
 
@@ -30,6 +31,13 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = verifyAccessToken(token);
     req.user = payload;
+    const user = await db(DB_TABLES.USERS)
+      .where({ id: payload.userId })
+      .select('is_email_verified')
+      .first();
+    if (user) {
+      req.user.isEmailVerified = Boolean(user.is_email_verified);
+    }
     return next();
   } catch (error: any) {
     if (error.name === 'TokenExpiredError') {
@@ -39,7 +47,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
+export async function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   let token: string | undefined;
 
@@ -55,10 +63,45 @@ export function optionalAuthenticate(req: Request, res: Response, next: NextFunc
     try {
       const payload = verifyAccessToken(token);
       req.user = payload;
+      const user = await db(DB_TABLES.USERS)
+        .where({ id: payload.userId })
+        .select('is_email_verified')
+        .first();
+      if (user) {
+        req.user.isEmailVerified = Boolean(user.is_email_verified);
+      }
     } catch {
       // Ignore token validation failure in optional auth mode
     }
   }
 
   return next();
+}
+
+export async function requireVerified(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return sendError(res, 'Authentication required. Please login to continue.', 401, null, ERROR_CODES.UNAUTHORIZED);
+  }
+
+  try {
+    const user = await db(DB_TABLES.USERS)
+      .where({ id: req.user.userId })
+      .select('is_email_verified')
+      .first();
+
+    if (!user || !user.is_email_verified) {
+      return sendError(
+        res,
+        'Your email address is not verified. Please verify your email address to perform this action.',
+        403,
+        null,
+        ERROR_CODES.EMAIL_NOT_VERIFIED
+      );
+    }
+
+    req.user.isEmailVerified = true;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 }

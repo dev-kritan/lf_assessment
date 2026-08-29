@@ -216,9 +216,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                             2FA Disabled
                           </span>
                         )}
-                        {user.isEmailVerified && (
-                          <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded">
+                        {user.isEmailVerified ? (
+                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">
                             Verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">
+                            Unverified
                           </span>
                         )}
                       </div>

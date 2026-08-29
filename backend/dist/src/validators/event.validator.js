@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.queryEventsSchema = exports.updateEventSchema = exports.createEventSchema = exports.baseEventSchema = void 0;
+exports.bulkDeleteEventsSchema = exports.queryEventsSchema = exports.updateEventSchema = exports.createEventSchema = exports.baseEventSchema = void 0;
 const zod_1 = require("zod");
 const constants_1 = require("../constants");
 exports.baseEventSchema = zod_1.z.object({
@@ -64,4 +64,9 @@ exports.queryEventsSchema = zod_1.z.object({
     sort_order: zod_1.z.enum(['asc', 'desc']).default('asc'),
     creator_id: zod_1.z.coerce.number().int().positive().optional(),
     my_rsvps: zod_1.z.enum(['all', 'yes', 'maybe', 'no']).optional(),
+});
+exports.bulkDeleteEventsSchema = zod_1.z.object({
+    event_ids: zod_1.z
+        .array(zod_1.z.coerce.number().int().positive('Each event ID must be a positive integer'))
+        .min(1, 'At least one event ID is required'),
 });

@@ -31,7 +31,7 @@ export interface CreateEventInput {
 }
 
 export class EventService {
-  static async getEvents(params: EventQueryParams, currentUserId?: number) {
+  static async getEvents(params: EventQueryParams, currentUserId?: number, isVerified: boolean = false) {
     const page = Math.max(1, Number(params.page || PAGINATION_DEFAULTS.PAGE));
     const limit = Math.min(PAGINATION_DEFAULTS.MAX_LIMIT, Math.max(1, Number(params.limit || PAGINATION_DEFAULTS.LIMIT)));
     const offset = (page - 1) * limit;
@@ -58,9 +58,9 @@ export class EventService {
       );
 
     // True Private events policy:
-    // If not authenticated, true private events cannot be viewed in the event list.
+    // If not authenticated or not email verified, true private events cannot be viewed in the event list.
     // Public events and standard private events (with is_true_private = false) ARE viewable.
-    if (!currentUserId) {
+    if (!currentUserId || !isVerified) {
       baseQuery.where((builder) => {
         builder
           .where('events.is_true_private', false)
@@ -268,7 +268,7 @@ export class EventService {
     };
   }
 
-  static async getEventById(id: number, currentUserId?: number) {
+  static async getEventById(id: number, currentUserId?: number, isVerified: boolean = false) {
     const event = await db(DB_TABLES.EVENTS)
       .leftJoin(DB_TABLES.USERS, 'events.creator_id', 'users.id')
       .where('events.id', id)
@@ -299,9 +299,9 @@ export class EventService {
       throw error;
     }
 
-    // Logic 2: True Private event is strictly forbidden for unauthenticated visitors
-    if (Boolean(event.is_true_private) && !currentUserId) {
-      const error: any = new Error('This event is strictly private. Please sign in to view details.');
+    // Logic 2: True Private event is strictly forbidden for unauthenticated or unverified visitors
+    if (Boolean(event.is_true_private) && (!currentUserId || !isVerified)) {
+      const error: any = new Error('This event is strictly private. Please verify your email address to view details.');
       error.statusCode = 403;
       error.code = ERROR_CODES.PRIVATE_EVENT_FORBIDDEN;
       throw error;
@@ -515,7 +515,7 @@ export class EventService {
       }
     });
 
-    return await this.getEventById(id, currentUserId);
+    return await this.getEventById(id, currentUserId, true);
   }
 
   static async deleteEvent(id: number, currentUserId: number) {

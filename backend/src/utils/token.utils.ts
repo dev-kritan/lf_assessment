@@ -6,6 +6,7 @@ export interface TokenPayload {
   userId: number;
   email: string;
   name: string;
+  isEmailVerified?: boolean;
 }
 
 export function generateAccessToken(payload: TokenPayload): string {

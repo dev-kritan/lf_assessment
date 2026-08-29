@@ -19,7 +19,8 @@ export class EventController {
       }
 
       const currentUserId = req.user?.userId;
-      const result = await EventService.getEvents(queryValidation.data, currentUserId);
+      const isVerified = Boolean(req.user?.isEmailVerified);
+      const result = await EventService.getEvents(queryValidation.data, currentUserId, isVerified);
       return sendSuccess(res, result.events, 'Events retrieved successfully', 200, result.pagination);
     } catch (error) {
       next(error);
@@ -35,7 +36,8 @@ export class EventController {
 
       const id = paramValidation.data.id;
       const currentUserId = req.user?.userId;
-      const event = await EventService.getEventById(id, currentUserId);
+      const isVerified = Boolean(req.user?.isEmailVerified);
+      const event = await EventService.getEventById(id, currentUserId, isVerified);
       return sendSuccess(res, event, 'Event details retrieved successfully');
     } catch (error) {
       next(error);
@@ -51,7 +53,7 @@ export class EventController {
 
       const creatorId = req.user!.userId;
       const eventId = await EventService.createEvent(bodyValidation.data, creatorId);
-      const event = await EventService.getEventById(eventId, creatorId);
+      const event = await EventService.getEventById(eventId, creatorId, true);
       return sendCreated(res, event, 'Event created successfully');
     } catch (error) {
       next(error);

@@ -186,4 +186,46 @@ describe('Events Endpoints & Filtering', () => {
         expect(allGoalTag).toBeDefined();
         expect(allGoalTag.eventCount).toBe(2);
     });
+    it('should bulk delete created events for the authenticated creator', async () => {
+        // Create 2 events
+        const res1 = await (0, supertest_1.default)(app)
+            .post('/api/v1/events')
+            .set('Authorization', `Bearer ${user1Token}`)
+            .send({
+            title: 'Bulk Test Event 1',
+            description: 'Testing bulk deletion',
+            location: 'Hall A',
+            event_type: 'public',
+            start_time: new Date(Date.now() + 86400000).toISOString(),
+        });
+        const res2 = await (0, supertest_1.default)(app)
+            .post('/api/v1/events')
+            .set('Authorization', `Bearer ${user1Token}`)
+            .send({
+            title: 'Bulk Test Event 2',
+            description: 'Testing bulk deletion',
+            location: 'Hall B',
+            event_type: 'public',
+            start_time: new Date(Date.now() + 172800000).toISOString(),
+        });
+        const id1 = res1.body.data.id;
+        const id2 = res2.body.data.id;
+        // Reject bulk delete when another user tries to delete them
+        const forbiddenRes = await (0, supertest_1.default)(app)
+            .post('/api/v1/events/bulk-delete')
+            .set('Authorization', `Bearer ${user2Token}`)
+            .send({ event_ids: [id1, id2] });
+        expect(forbiddenRes.status).toBe(403);
+        // Creator successfully bulk deletes
+        const deleteRes = await (0, supertest_1.default)(app)
+            .post('/api/v1/events/bulk-delete')
+            .set('Authorization', `Bearer ${user1Token}`)
+            .send({ event_ids: [id1, id2] });
+        expect(deleteRes.status).toBe(200);
+        expect(deleteRes.body.success).toBe(true);
+        expect(deleteRes.body.data.deletedCount).toBe(2);
+        // Verify events no longer exist
+        const check1 = await (0, supertest_1.default)(app).get(`/api/v1/events/${id1}`);
+        expect(check1.status).toBe(404);
+    });
 });

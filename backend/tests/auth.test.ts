@@ -34,16 +34,15 @@ describe('Auth Endpoints & 2FA / Refresh Tokens', () => {
     userId = res.body.data.user.id;
   });
 
-  it('should block unverified user from logging in', async () => {
+  it('should allow unverified user to log in with isEmailVerified: false', async () => {
     const res = await request(app).post('/api/v1/auth/login').send({
       email: testUser.email,
       password: testUser.password,
     });
 
-    expect(res.status).toBe(403);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('EMAIL_NOT_VERIFIED');
-    expect(res.body.error.message).toContain('verify your email address');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.user.isEmailVerified).toBe(false);
   });
 
   it('should verify email successfully via verification token', async () => {

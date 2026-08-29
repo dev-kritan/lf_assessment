@@ -8,7 +8,7 @@ const knex_1 = __importDefault(require("../config/knex"));
 const tag_service_1 = require("./tag.service");
 const constants_1 = require("../constants");
 class EventService {
-    static async getEvents(params, currentUserId) {
+    static async getEvents(params, currentUserId, isVerified = false) {
         const page = Math.max(1, Number(params.page || constants_1.PAGINATION_DEFAULTS.PAGE));
         const limit = Math.min(constants_1.PAGINATION_DEFAULTS.MAX_LIMIT, Math.max(1, Number(params.limit || constants_1.PAGINATION_DEFAULTS.LIMIT)));
         const offset = (page - 1) * limit;
@@ -16,9 +16,9 @@ class EventService {
             .leftJoin(constants_1.DB_TABLES.USERS, 'events.creator_id', 'users.id')
             .select('events.id', 'events.title', 'events.description', 'events.location', 'events.event_type', 'events.is_true_private', 'events.start_time', 'events.end_time', 'events.capacity', 'events.banner_url', 'events.created_at', 'events.updated_at', 'users.id as creator_id', 'users.name as creator_name', 'users.email as creator_email', 'users.avatar_url as creator_avatar');
         // True Private events policy:
-        // If not authenticated, true private events cannot be viewed in the event list.
+        // If not authenticated or not email verified, true private events cannot be viewed in the event list.
         // Public events and standard private events (with is_true_private = false) ARE viewable.
-        if (!currentUserId) {
+        if (!currentUserId || !isVerified) {
             baseQuery.where((builder) => {
                 builder
                     .where('events.is_true_private', false)
@@ -209,7 +209,7 @@ class EventService {
             },
         };
     }
-    static async getEventById(id, currentUserId) {
+    static async getEventById(id, currentUserId, isVerified = false) {
         const event = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS)
             .leftJoin(constants_1.DB_TABLES.USERS, 'events.creator_id', 'users.id')
             .where('events.id', id)
@@ -221,9 +221,9 @@ class EventService {
             error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
             throw error;
         }
-        // Logic 2: True Private event is strictly forbidden for unauthenticated visitors
-        if (Boolean(event.is_true_private) && !currentUserId) {
-            const error = new Error('This event is strictly private. Please sign in to view details.');
+        // Logic 2: True Private event is strictly forbidden for unauthenticated or unverified visitors
+        if (Boolean(event.is_true_private) && (!currentUserId || !isVerified)) {
+            const error = new Error('This event is strictly private. Please verify your email address to view details.');
             error.statusCode = 403;
             error.code = constants_1.ERROR_CODES.PRIVATE_EVENT_FORBIDDEN;
             throw error;
@@ -417,7 +417,7 @@ class EventService {
                 }
             }
         });
-        return await this.getEventById(id, currentUserId);
+        return await this.getEventById(id, currentUserId, true);
     }
     static async deleteEvent(id, currentUserId) {
         const existing = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where({ id }).first();
@@ -435,6 +435,37 @@ class EventService {
         }
         await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).where({ id }).del();
         return { message: 'Event successfully deleted.' };
+    }
+    static async bulkDeleteEvents(eventIds, currentUserId) {
+        if (!eventIds || eventIds.length === 0) {
+            const error = new Error('No event IDs provided for deletion.');
+            error.statusCode = 400;
+            error.code = constants_1.ERROR_CODES.VALIDATION_ERROR;
+            throw error;
+        }
+        const events = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS).whereIn('id', eventIds);
+        if (events.length === 0) {
+            const error = new Error('No events found matching the provided IDs.');
+            error.statusCode = 404;
+            error.code = constants_1.ERROR_CODES.EVENT_NOT_FOUND;
+            throw error;
+        }
+        const unauthorized = events.filter((e) => Number(e.creator_id) !== Number(currentUserId));
+        if (unauthorized.length > 0) {
+            const error = new Error('Forbidden: You can only delete events that you created.');
+            error.statusCode = 403;
+            error.code = constants_1.ERROR_CODES.FORBIDDEN;
+            throw error;
+        }
+        const deletedCount = await (0, knex_1.default)(constants_1.DB_TABLES.EVENTS)
+            .whereIn('id', eventIds)
+            .andWhere('creator_id', currentUserId)
+            .del();
+        return {
+            deletedCount,
+            deletedIds: events.map((e) => e.id),
+            message: `Successfully deleted ${deletedCount} event${deletedCount === 1 ? '' : 's'}.`,
+        };
     }
     static async getEventMetrics() {
         const now = new Date();

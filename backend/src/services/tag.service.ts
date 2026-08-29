@@ -32,13 +32,13 @@ export class TagService {
     return color;
   }
 
-  static async getAllTags(params: TagFilterParams = {}, currentUserId?: number) {
+  static async getAllTags(params: TagFilterParams = {}, currentUserId?: number, isVerified: boolean = false) {
     const eventsSubquery = db(DB_TABLES.EVENT_TAGS)
       .join(DB_TABLES.EVENTS, 'event_tags.event_id', 'events.id')
       .select('event_tags.tag_id', 'events.id as event_id');
 
-    // If not authenticated, true private events are excluded from tag counts
-    if (!currentUserId) {
+    // If not authenticated or not verified, true private events are excluded from tag counts
+    if (!currentUserId || !isVerified) {
       eventsSubquery.where((builder) => {
         builder
           .where('events.is_true_private', false)
@@ -114,7 +114,7 @@ export class TagService {
     };
   }
 
-  static async getTagUsage(tagId: number, currentUserId?: number) {
+  static async getTagUsage(tagId: number, currentUserId?: number, isVerified: boolean = false) {
     const tag = await db(DB_TABLES.TAGS).where({ id: tagId }).first();
     if (!tag) {
       const error = new Error('Tag not found');
@@ -135,7 +135,7 @@ export class TagService {
       )
       .orderBy('events.start_time', 'asc');
 
-    if (!currentUserId) {
+    if (!currentUserId || !isVerified) {
       query.where((builder) => {
         builder
           .where('events.is_true_private', false)

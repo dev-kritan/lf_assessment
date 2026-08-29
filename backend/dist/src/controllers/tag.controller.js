@@ -12,7 +12,8 @@ class TagController {
                 return (0, response_utils_1.sendError)(res, queryValidation.message, queryValidation.statusCode, queryValidation.errors, queryValidation.code);
             }
             const currentUserId = req.user?.userId;
-            const tags = await tag_service_1.TagService.getAllTags(queryValidation.data, currentUserId);
+            const isVerified = Boolean(req.user?.isEmailVerified);
+            const tags = await tag_service_1.TagService.getAllTags(queryValidation.data, currentUserId, isVerified);
             return (0, response_utils_1.sendSuccess)(res, tags, 'Tags retrieved successfully');
         }
         catch (error) {
@@ -41,7 +42,8 @@ class TagController {
             }
             const tagId = paramValidation.data.id;
             const currentUserId = req.user?.userId;
-            const usage = await tag_service_1.TagService.getTagUsage(tagId, currentUserId);
+            const isVerified = Boolean(req.user?.isEmailVerified);
+            const usage = await tag_service_1.TagService.getTagUsage(tagId, currentUserId, isVerified);
             return (0, response_utils_1.sendSuccess)(res, usage, 'Tag usage retrieved successfully');
         }
         catch (error) {

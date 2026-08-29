@@ -9,6 +9,8 @@ exports.TOKEN_DURATIONS = {
     ACCESS_TOKEN_MS: 15 * 60 * 1000, // 15 minutes
     REFRESH_TOKEN_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
     REFRESH_TOKEN_DAYS: 7,
+    VERIFICATION_TOKEN_HOURS: 24,
+    VERIFICATION_TOKEN_MS: 24 * 60 * 60 * 1000, // 24 hours
 };
 exports.AUTH_CONFIG = {
     SALT_ROUNDS: 10,

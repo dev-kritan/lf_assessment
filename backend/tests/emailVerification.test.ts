@@ -51,15 +51,16 @@ describe('Email Verification & Nodemailer Integration', () => {
     expect(EmailService.lastSentEmail.verificationUrl).toContain(`uid=${userId}`);
   });
 
-  it('should reject login for unverified user with 403 EMAIL_NOT_VERIFIED', async () => {
+  it('should allow login for unverified user with isEmailVerified: false', async () => {
     const res = await request(app).post('/api/v1/auth/login').send({
       email: newUser.email,
       password: newUser.password,
     });
 
-    expect(res.status).toBe(403);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('EMAIL_NOT_VERIFIED');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.user.isEmailVerified).toBe(false);
   });
 
   it('should reject invalid or tampered verification token', async () => {
@@ -181,5 +182,158 @@ describe('Email Verification & Nodemailer Integration', () => {
     expect(blockedRes.status).toBe(429);
     expect(blockedRes.body.success).toBe(false);
     expect(blockedRes.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+  });
+
+  describe('Unverified User Permissions & Access Control', () => {
+    let unverifiedToken = '';
+    let verifiedToken = '';
+    let truePrivateEventId: number;
+    let standardPrivateEventId: number;
+    let publicEventId: number;
+
+    beforeAll(async () => {
+      // Login as Carol (unverified user in seeds)
+      const carolRes = await request(app).post('/api/v1/auth/login').send({
+        email: 'carol@example.com',
+        password: 'Password123!',
+      });
+      expect(carolRes.status).toBe(200);
+      expect(carolRes.body.data.user.isEmailVerified).toBe(false);
+      unverifiedToken = carolRes.body.data.accessToken;
+
+      // Login as Alice (verified user in seeds)
+      const aliceRes = await request(app).post('/api/v1/auth/login').send({
+        email: 'alice@example.com',
+        password: 'Password123!',
+      });
+      expect(aliceRes.status).toBe(200);
+      expect(aliceRes.body.data.user.isEmailVerified).toBe(true);
+      verifiedToken = aliceRes.body.data.accessToken;
+
+      // Alice creates 1 public, 1 standard private, and 1 true private event
+      const pubRes = await request(app)
+        .post('/api/v1/events')
+        .set('Authorization', `Bearer ${verifiedToken}`)
+        .send({
+          title: 'Public Community Showcase',
+          description: 'Open to everyone in the tech ecosystem.',
+          location: 'Main Auditorium',
+          event_type: 'public',
+          start_time: new Date(Date.now() + 86400000).toISOString(),
+        });
+      publicEventId = pubRes.body.data.id;
+
+      const stdRes = await request(app)
+        .post('/api/v1/events')
+        .set('Authorization', `Bearer ${verifiedToken}`)
+        .send({
+          title: 'Standard Private Guild Meetup',
+          description: 'Private meetup for members.',
+          location: 'Room B',
+          event_type: 'private',
+          is_true_private: false,
+          start_time: new Date(Date.now() + 86400000).toISOString(),
+        });
+      standardPrivateEventId = stdRes.body.data.id;
+
+      const truePrivRes = await request(app)
+        .post('/api/v1/events')
+        .set('Authorization', `Bearer ${verifiedToken}`)
+        .send({
+          title: 'Executive Board Secret Strategy',
+          description: 'True private executive session.',
+          location: 'Secret Chamber',
+          event_type: 'private',
+          is_true_private: true,
+          start_time: new Date(Date.now() + 86400000).toISOString(),
+        });
+      truePrivateEventId = truePrivRes.body.data.id;
+    });
+
+    it('unverified user can view public events and standard private events, but NOT true private events in list', async () => {
+      const res = await request(app)
+        .get('/api/v1/events')
+        .set('Authorization', `Bearer ${unverifiedToken}`);
+
+      expect(res.status).toBe(200);
+      const eventIds = res.body.data.map((e: any) => e.id);
+      expect(eventIds).toContain(publicEventId);
+      expect(eventIds).toContain(standardPrivateEventId);
+      expect(eventIds).not.toContain(truePrivateEventId);
+    });
+
+    it('verified user CAN see true private events in event list', async () => {
+      const res = await request(app)
+        .get('/api/v1/events')
+        .set('Authorization', `Bearer ${verifiedToken}`);
+
+      expect(res.status).toBe(200);
+      const eventIds = res.body.data.map((e: any) => e.id);
+      expect(eventIds).toContain(publicEventId);
+      expect(eventIds).toContain(standardPrivateEventId);
+      expect(eventIds).toContain(truePrivateEventId);
+    });
+
+    it('unverified user receives 403 PRIVATE_EVENT_FORBIDDEN when accessing true private event by ID', async () => {
+      const res = await request(app)
+        .get(`/api/v1/events/${truePrivateEventId}`)
+        .set('Authorization', `Bearer ${unverifiedToken}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('PRIVATE_EVENT_FORBIDDEN');
+    });
+
+    it('unverified user can access public and standard private event details by ID', async () => {
+      const pubRes = await request(app)
+        .get(`/api/v1/events/${publicEventId}`)
+        .set('Authorization', `Bearer ${unverifiedToken}`);
+      expect(pubRes.status).toBe(200);
+
+      const stdRes = await request(app)
+        .get(`/api/v1/events/${standardPrivateEventId}`)
+        .set('Authorization', `Bearer ${unverifiedToken}`);
+      expect(stdRes.status).toBe(200);
+    });
+
+    it('unverified user is blocked from creating events with 403 EMAIL_NOT_VERIFIED', async () => {
+      const res = await request(app)
+        .post('/api/v1/events')
+        .set('Authorization', `Bearer ${unverifiedToken}`)
+        .send({
+          title: 'Unverified Hackathon',
+          description: 'Should be rejected',
+          location: 'Hall X',
+          event_type: 'public',
+          start_time: new Date(Date.now() + 86400000).toISOString(),
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('unverified user is blocked from responding to RSVPs with 403 EMAIL_NOT_VERIFIED', async () => {
+      const res = await request(app)
+        .post(`/api/v1/events/${publicEventId}/rsvps`)
+        .set('Authorization', `Bearer ${unverifiedToken}`)
+        .send({ status: 'yes' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('unverified user can request verification email from authenticated profile endpoint', async () => {
+      const res = await request(app)
+        .post('/api/v1/auth/request-verification')
+        .set('Authorization', `Bearer ${unverifiedToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.verificationUrl).toBeDefined();
+      expect(res.body.data.verificationToken).toBeDefined();
+      expect(EmailService.lastSentEmail.to).toBe('carol@example.com');
+    });
   });
 });

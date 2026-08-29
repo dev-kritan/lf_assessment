@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.emailVerifySchema = exports.twoFactorVerifySchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.resendVerificationSchema = exports.emailVerifySchema = exports.twoFactorVerifySchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 const constants_1 = require("../constants");
 exports.registerSchema = zod_1.z.object({
@@ -47,4 +47,15 @@ exports.emailVerifySchema = zod_1.z.object({
         .string({ message: 'Verification token is required' })
         .trim()
         .min(1, 'Verification token is required'),
+    uid: zod_1.z
+        .union([zod_1.z.number(), zod_1.z.string().regex(/^\d+$/, 'User ID must be a number')])
+        .transform((val) => Number(val))
+        .optional(),
+});
+exports.resendVerificationSchema = zod_1.z.object({
+    email: zod_1.z
+        .string({ message: 'Email is required' })
+        .trim()
+        .email('Please enter a valid email address')
+        .toLowerCase(),
 });

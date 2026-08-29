@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Tag } from '../types';
 import { eventsApi } from '../api/events.api';
+import { authApi } from '../api/auth.api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { format } from 'date-fns';
@@ -22,8 +23,8 @@ import { APP_ROUTES, DEFAULT_ASSETS, UI_TIMINGS } from '../constants';
 import { eventFormSchema, validateForm as validateWithZod, mapApiErrors } from '../dto';
 
 export const CreateEventPage: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { success, error } = useToast();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { success, error, info } = useToast();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
@@ -42,6 +43,7 @@ export const CreateEventPage: React.FC = () => {
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
   const titleInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -206,9 +208,29 @@ export const CreateEventPage: React.FC = () => {
     }, UI_TIMINGS.AUTO_FOCUS_DELAY_MS);
   };
 
+  const handleSendVerification = async () => {
+    try {
+      setIsSendingVerification(true);
+      const res = await authApi.requestVerificationLink();
+      if (res.success) {
+        success('Verification link sent to your email address!');
+      }
+    } catch (err: any) {
+      error(err.response?.data?.error?.message || 'Failed to send verification link');
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (!user?.isEmailVerified) {
+      error('Email verification required. Please verify your email before publishing an event.');
+      return;
+    }
+
     setHasSubmitted(true);
     setFormErrors({});
 
@@ -301,6 +323,40 @@ export const CreateEventPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Unverified Email Warning Banner */}
+        {user && !user.isEmailVerified && (
+          <div className="mx-6 sm:mx-8 mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Email Verification Required</p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
+                  Only verified accounts can publish events. Please verify your email address to unlock publishing.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={handleSendVerification}
+                disabled={isSendingVerification}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isSendingVerification && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Send Verification Email
+              </button>
+              <Link
+                to={APP_ROUTES.PROFILE}
+                className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold hover:bg-amber-100/50 transition-colors"
+              >
+                Go to Profile
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
@@ -682,13 +738,23 @@ export const CreateEventPage: React.FC = () => {
             </Link>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+              disabled={isSubmitting || !user?.isEmailVerified}
+              title={!user?.isEmailVerified ? 'Email verification is required to create events' : undefined}
+              className={`px-6 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 ${
+                !user?.isEmailVerified
+                  ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-indigo-500/25 disabled:opacity-50'
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Creating Event...
+                </>
+              ) : !user?.isEmailVerified ? (
+                <>
+                  <Lock className="w-4 h-4" />
+                  Verification Required
                 </>
               ) : (
                 <>

@@ -163,8 +163,8 @@ export const ProfilePage: React.FC = () => {
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                 {user.isEmailVerified
-                  ? 'Your email address is verified and active for event notifications.'
-                  : 'Your email address has not been verified yet. Click below to generate a verification link.'}
+                  ? 'Your email address is verified. You have full access to create events, manage RSVPs, and view private community events.'
+                  : 'Your email address is not verified yet. Verification is required to create, edit, or delete events, submit RSVPs, and view True Private events.'}
               </p>
             </div>
 
@@ -175,22 +175,22 @@ export const ProfilePage: React.FC = () => {
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5 self-start sm:self-auto disabled:opacity-50"
               >
                 {isRequestingEmail && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Generate Verification Link
+                Send Verification Link
               </button>
             )}
           </div>
 
           {verificationUrl && (
-            <div className="mt-4 p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between">
+            <div className="mt-4 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold text-blue-900 dark:text-blue-200">Email Verification Link Ready:</p>
-                <p className="text-[11px] text-blue-700 dark:text-blue-300 truncate max-w-md">{verificationUrl}</p>
+                <p className="text-xs font-bold text-blue-900 dark:text-blue-200">Email Verification Link Sent & Ready:</p>
+                <p className="text-[11px] text-blue-700 dark:text-blue-300 truncate max-w-md mt-0.5">{verificationUrl}</p>
               </div>
               <Link
                 to={verificationUrl}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 flex items-center gap-1"
+                className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 flex items-center gap-1.5 self-start sm:self-auto shadow-sm"
               >
-                Confirm Now <ExternalLink className="w-3 h-3" />
+                Confirm Now <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}

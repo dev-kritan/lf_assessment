@@ -12,7 +12,8 @@ class EventController {
                 return (0, response_utils_1.sendError)(res, queryValidation.message, queryValidation.statusCode, queryValidation.errors, queryValidation.code);
             }
             const currentUserId = req.user?.userId;
-            const result = await event_service_1.EventService.getEvents(queryValidation.data, currentUserId);
+            const isVerified = Boolean(req.user?.isEmailVerified);
+            const result = await event_service_1.EventService.getEvents(queryValidation.data, currentUserId, isVerified);
             return (0, response_utils_1.sendSuccess)(res, result.events, 'Events retrieved successfully', 200, result.pagination);
         }
         catch (error) {
@@ -27,7 +28,8 @@ class EventController {
             }
             const id = paramValidation.data.id;
             const currentUserId = req.user?.userId;
-            const event = await event_service_1.EventService.getEventById(id, currentUserId);
+            const isVerified = Boolean(req.user?.isEmailVerified);
+            const event = await event_service_1.EventService.getEventById(id, currentUserId, isVerified);
             return (0, response_utils_1.sendSuccess)(res, event, 'Event details retrieved successfully');
         }
         catch (error) {
@@ -42,7 +44,7 @@ class EventController {
             }
             const creatorId = req.user.userId;
             const eventId = await event_service_1.EventService.createEvent(bodyValidation.data, creatorId);
-            const event = await event_service_1.EventService.getEventById(eventId, creatorId);
+            const event = await event_service_1.EventService.getEventById(eventId, creatorId, true);
             return (0, response_utils_1.sendCreated)(res, event, 'Event created successfully');
         }
         catch (error) {
@@ -78,6 +80,21 @@ class EventController {
             const currentUserId = req.user.userId;
             const result = await event_service_1.EventService.deleteEvent(id, currentUserId);
             return (0, response_utils_1.sendSuccess)(res, result, 'Event deleted successfully');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async bulkDeleteEvents(req, res, next) {
+        try {
+            const bodyValidation = (0, dto_1.validateDto)(dto_1.bulkDeleteEventsSchema, req.body);
+            if (!bodyValidation.success) {
+                return (0, response_utils_1.sendError)(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+            }
+            const currentUserId = req.user.userId;
+            const { event_ids } = bodyValidation.data;
+            const result = await event_service_1.EventService.bulkDeleteEvents(event_ids, currentUserId);
+            return (0, response_utils_1.sendSuccess)(res, result, result.message);
         }
         catch (error) {
             next(error);

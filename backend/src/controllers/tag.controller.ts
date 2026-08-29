@@ -18,7 +18,8 @@ export class TagController {
       }
 
       const currentUserId = req.user?.userId;
-      const tags = await TagService.getAllTags(queryValidation.data, currentUserId);
+      const isVerified = Boolean(req.user?.isEmailVerified);
+      const tags = await TagService.getAllTags(queryValidation.data, currentUserId, isVerified);
       return sendSuccess(res, tags, 'Tags retrieved successfully');
     } catch (error) {
       next(error);
@@ -49,7 +50,8 @@ export class TagController {
 
       const tagId = paramValidation.data.id;
       const currentUserId = req.user?.userId;
-      const usage = await TagService.getTagUsage(tagId, currentUserId);
+      const isVerified = Boolean(req.user?.isEmailVerified);
+      const usage = await TagService.getTagUsage(tagId, currentUserId, isVerified);
       return sendSuccess(res, usage, 'Tag usage retrieved successfully');
     } catch (error) {
       next(error);

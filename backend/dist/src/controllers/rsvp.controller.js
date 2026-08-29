@@ -25,6 +25,36 @@ class RsvpController {
             next(error);
         }
     }
+    static async deleteRsvp(req, res, next) {
+        try {
+            const paramValidation = (0, dto_1.validateDto)(dto_1.eventAttendeeParamSchema, req.params);
+            if (!paramValidation.success) {
+                return (0, response_utils_1.sendError)(res, paramValidation.message, paramValidation.statusCode, paramValidation.errors, paramValidation.code);
+            }
+            const eventId = paramValidation.data.id;
+            const userId = req.user.userId;
+            const result = await rsvp_service_1.RsvpService.deleteRsvp(eventId, userId);
+            return (0, response_utils_1.sendSuccess)(res, result, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async bulkDeleteRsvps(req, res, next) {
+        try {
+            const bodyValidation = (0, dto_1.validateDto)(dto_1.bulkDeleteRsvpsSchema, req.body);
+            if (!bodyValidation.success) {
+                return (0, response_utils_1.sendError)(res, bodyValidation.message, bodyValidation.statusCode, bodyValidation.errors, bodyValidation.code);
+            }
+            const userId = req.user.userId;
+            const { event_ids } = bodyValidation.data;
+            const result = await rsvp_service_1.RsvpService.bulkDeleteRsvps(event_ids, userId);
+            return (0, response_utils_1.sendSuccess)(res, result, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
     static async getAttendees(req, res, next) {
         try {
             const paramValidation = (0, dto_1.validateDto)(dto_1.eventAttendeeParamSchema, req.params);
