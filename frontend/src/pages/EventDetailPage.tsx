@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -30,6 +30,7 @@ import { APP_ROUTES, DEFAULT_ASSETS, getDicebearAvatarUrl } from '../constants';
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const [event, setEvent] = useState<EventItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +80,18 @@ export const EventDetailPage: React.FC = () => {
     fetchEvent();
   }, [id, isAuthenticated]);
 
+  const handleBack = () => {
+    const isFromMyEvents =
+      searchParams.get("tab") !== null || searchParams.has("rsvp_status");
+    const targetBase = isFromMyEvents ? APP_ROUTES.MY_EVENTS : APP_ROUTES.HOME;
+    const queryString = searchParams.toString();
+    if (queryString) {
+      navigate(`${targetBase}?${queryString}`);
+    } else {
+      navigate(targetBase);
+    }
+  };
+
   const handleDelete = async () => {
     if (!event || isDeleting) return;
     try {
@@ -86,7 +99,15 @@ export const EventDetailPage: React.FC = () => {
       const res = await eventsApi.deleteEvent(event.id);
       if (res.success) {
         success('Event deleted successfully');
-        navigate(APP_ROUTES.HOME);
+        const isFromMyEvents =
+          searchParams.get("tab") !== null || searchParams.has("rsvp_status");
+        const targetBase = isFromMyEvents ? APP_ROUTES.MY_EVENTS : APP_ROUTES.HOME;
+        const queryString = searchParams.toString();
+        if (queryString) {
+          navigate(`${targetBase}?${queryString}`);
+        } else {
+          navigate(targetBase);
+        }
       }
     } catch (err: any) {
       error(err.response?.data?.error?.message || 'Failed to delete event');
@@ -123,12 +144,13 @@ export const EventDetailPage: React.FC = () => {
             <RefreshCw className="w-4 h-4" />
             Retry
           </button>
-          <Link
-            to={APP_ROUTES.HOME}
-            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors cursor-pointer"
           >
             Return to Events
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -168,12 +190,13 @@ export const EventDetailPage: React.FC = () => {
               Sign In to View
             </Link>
           )}
-          <Link
-            to={APP_ROUTES.HOME}
-            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors cursor-pointer"
           >
             Browse Public Events
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -184,9 +207,13 @@ export const EventDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Event Not Found</h2>
         <p className="text-slate-500 mt-2 mb-6">The event you are looking for does not exist or has been removed.</p>
-        <Link to={APP_ROUTES.HOME} className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+        >
           Return to Events
-        </Link>
+        </button>
       </div>
     );
   }
@@ -194,17 +221,24 @@ export const EventDetailPage: React.FC = () => {
   const startDate = parseISO(event.startTime);
   const endDate = event.endTime ? parseISO(event.endTime) : null;
   const isPast = event.isPast;
+  const pageParam = searchParams.get('page');
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20">
       {/* Back Button */}
-      <Link
-        to={APP_ROUTES.HOME}
-        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+      <button
+        type="button"
+        onClick={handleBack}
+        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors group cursor-pointer"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Events
-      </Link>
+        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        <span>Back to Events</span>
+        {pageParam && Number(pageParam) > 1 && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+            Page {pageParam}
+          </span>
+        )}
+      </button>
 
       {/* Main Event Visual Header */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-200/80 dark:border-slate-800">

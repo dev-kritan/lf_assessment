@@ -275,4 +275,37 @@ describe('EventListPage Server-Side Pagination', () => {
       expect(window.location.search).not.toContain('view_mode=list');
     });
   });
+
+  it('initializes with page 2 when URL has ?page=2 and triggers server fetch for page 2', async () => {
+    window.history.pushState({}, '', '/?page=2');
+    renderWithProviders(<EventListPage />);
+
+    await waitFor(() => {
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 2,
+        })
+      );
+    });
+  });
+
+  it('preserves ?limit=3&page=3 in URL and does not strip query params after debounce period', async () => {
+    window.history.pushState({}, '', '/?limit=3&page=3');
+    renderWithProviders(<EventListPage />);
+
+    await waitFor(() => {
+      expect(eventsApi.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 3,
+          limit: 3,
+        })
+      );
+    });
+
+    // Wait past search debounce window (300ms)
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(window.location.search).toContain('limit=3');
+    expect(window.location.search).toContain('page=3');
+  });
 });

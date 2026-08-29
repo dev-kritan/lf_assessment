@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { EventCard } from '../components/EventCard';
 import { EventItem } from '../types';
 
@@ -88,5 +88,19 @@ describe('EventCard Component', () => {
 
     expect(screen.getByText('Private Executive Session')).toBeInTheDocument();
     expect(screen.getByText('Members Only')).toBeInTheDocument();
+  });
+
+  it('includes query parameters in event detail links when rendered with location.search (e.g. ?page=2)', () => {
+    render(
+      <MemoryRouter initialEntries={['/?page=2']}>
+        <EventCard event={mockEvent} />
+      </MemoryRouter>
+    );
+
+    const links = screen.getAllByRole('link', { name: /React & TypeScript Summit 2026/i });
+    expect(links.length).toBeGreaterThan(0);
+    links.forEach((link) => {
+      expect(link).toHaveAttribute('href', '/events/1?page=2');
+    });
   });
 });

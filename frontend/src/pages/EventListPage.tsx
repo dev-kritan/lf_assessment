@@ -209,8 +209,6 @@ export const EventListPage: React.FC = () => {
     );
   };
 
-  const isFirstSearchEffect = useRef(true);
-
   // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -219,23 +217,51 @@ export const EventListPage: React.FC = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Sync debounced search with URL and reset page
+  // Sync debounced search with URL and reset page ONLY when the search keyword actually changes from the current URL
   useEffect(() => {
-    if (isFirstSearchEffect.current) {
-      isFirstSearchEffect.current = false;
-      return;
+    const currentUrlSearch = searchParams.get("search") || "";
+    if (debouncedSearch.trim() !== currentUrlSearch.trim()) {
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      updateUrlParams({ search: debouncedSearch, page: 1 });
     }
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    updateUrlParams({ search: debouncedSearch, page: 1 });
-  }, [debouncedSearch]);
+  }, [debouncedSearch, searchParams]);
 
-  // Synchronize viewMode from URL search params (e.g., browser back/forward navigation)
+  // Synchronize all states from URL search params (e.g., Back to Events, Browser Navigation, Direct Links)
   useEffect(() => {
+    const urlPage = parseInt(searchParams.get("page") || "1", 10) || 1;
+    const urlLimit =
+      parseInt(
+        searchParams.get("limit") || `${PAGINATION_LIMITS.EVENT_LIST_DEFAULT}`,
+        10,
+      ) || PAGINATION_LIMITS.EVENT_LIST_DEFAULT;
+    const urlSearch = searchParams.get("search") || "";
+    const urlTimeframe =
+      (searchParams.get("timeframe") as "all" | "upcoming" | "past") || "all";
+    const urlEventType =
+      (searchParams.get("event_type") as "all" | "public" | "private") || "all";
+    const urlTag = searchParams.get("tag") || "";
+    const urlSort =
+      (searchParams.get("sort_by") as "date" | "popularity" | "created_at") ||
+      "date";
     const urlViewMode =
       (searchParams.get("view_mode") as "grid" | "list") || "grid";
-    if (urlViewMode !== viewMode) {
-      setViewMode(urlViewMode);
+
+    setPagination((prev) => {
+      if (prev.page !== urlPage || prev.limit !== urlLimit) {
+        return { ...prev, page: urlPage, limit: urlLimit };
+      }
+      return prev;
+    });
+
+    if (search !== urlSearch) {
+      setSearch(urlSearch);
+      setDebouncedSearch(urlSearch);
     }
+    if (timeframe !== urlTimeframe) setTimeframe(urlTimeframe);
+    if (eventType !== urlEventType) setEventType(urlEventType);
+    if (selectedTag !== urlTag) setSelectedTag(urlTag);
+    if (sortBy !== urlSort) setSortBy(urlSort);
+    if (viewMode !== urlViewMode) setViewMode(urlViewMode);
   }, [searchParams]);
 
   // Fetch Tags and Metrics with active filter context

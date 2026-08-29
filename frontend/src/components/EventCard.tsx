@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Calendar, 
   MapPin, 
@@ -37,6 +37,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   isSelected = false,
   onToggleSelect,
 }) => {
+  const location = useLocation();
   const authContext = useContext(AuthContext);
   const isAuthenticated = authContext?.isAuthenticated ?? false;
   const user = authContext?.user;
@@ -54,12 +55,14 @@ export const EventCard: React.FC<EventCardProps> = ({
     }`}>
       {/* Banner / Header Visual */}
       <div className="relative h-48 w-full overflow-hidden bg-slate-800">
-        <img
-          src={event.bannerUrl || DEFAULT_ASSETS.EVENT_CARD_BANNER}
-          alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+        <Link to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)} className="block w-full h-full">
+          <img
+            src={event.bannerUrl || DEFAULT_ASSETS.EVENT_CARD_BANNER}
+            alt={event.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+        </Link>
 
         {/* Selection Checkbox (Top-Right) */}
         {selectable && (
@@ -154,7 +157,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           </div>
 
           {/* Title */}
-          <Link to={APP_ROUTES.EVENT_DETAIL(event.id)}>
+          <Link to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)}>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
               {event.title}
             </h3>

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { EventItem, Tag } from '../types';
 import { format, parseISO } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { eventsApi } from '../api/events.api';
 import { PAGINATION_LIMITS, APP_ROUTES } from '../constants';
 
@@ -82,6 +82,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
   onEditTag,
   onDeleteTag,
 }) => {
+  const location = useLocation();
   const [tagSearch, setTagSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'details' | 'list'>('details');
 
@@ -459,7 +460,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                       return (
                         <Link
                           key={evt.id}
-                          to={APP_ROUTES.EVENT_DETAIL(evt.id)}
+                          to={APP_ROUTES.EVENT_DETAIL(evt.id, location.search)}
                           onClick={onClose}
                           className="group block p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-indigo-500/40 bg-slate-50/40 dark:bg-slate-950/40 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
                         >
@@ -753,7 +754,7 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
                       return (
                         <Link
                           key={evt.id}
-                          to={APP_ROUTES.EVENT_DETAIL(evt.id)}
+                          to={APP_ROUTES.EVENT_DETAIL(evt.id, location.search)}
                           onClick={onClose}
                           className="group block p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-purple-500/40 bg-slate-50/40 dark:bg-slate-950/40 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
                         >

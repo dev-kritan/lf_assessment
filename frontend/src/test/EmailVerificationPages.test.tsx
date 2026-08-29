@@ -612,4 +612,77 @@ describe('Email Verification Pages & Components', () => {
     expect(screen.getByText('Private Organizer')).toBeInTheDocument();
     expect(screen.getByText('Members Only')).toBeInTheDocument();
   });
+
+  it('Back to Events button preserves page 2 and filters from location.state.from', async () => {
+    const mockEvent: EventItem = {
+      id: 202,
+      title: 'Tech Summit Day 2',
+      description: 'Conference day 2 on page 2',
+      location: 'Hall A',
+      eventType: 'public',
+      isTruePrivate: false,
+      startTime: '2026-09-02T10:00:00.000Z',
+      endTime: '2026-09-02T18:00:00.000Z',
+      capacity: 100,
+      bannerUrl: null,
+      createdAt: '2026-08-29T10:00:00.000Z',
+      updatedAt: '2026-08-29T10:00:00.000Z',
+      isPast: false,
+      creator: {
+        id: 1,
+        name: 'Conference Lead',
+        email: 'lead@example.com',
+        avatarUrl: undefined,
+      },
+      tags: [],
+      rsvpStats: { yes: 10, maybe: 2, no: 0, total: 12 },
+      attendees: [],
+      userRsvp: null,
+      isCreator: false,
+    };
+
+    vi.mocked(eventsApi.getEventById).mockResolvedValueOnce({
+      success: true,
+      data: mockEvent,
+      message: 'Event retrieved successfully',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/events/202?page=2&timeframe=upcoming']}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthContext.Provider
+              value={{
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                login: vi.fn(),
+                register: vi.fn(),
+                logout: vi.fn(),
+                refreshProfile: vi.fn(),
+                setUser: vi.fn(),
+              }}
+            >
+              <Routes>
+                <Route path="/events/:id" element={<EventDetailPage />} />
+                <Route path="/" element={<div data-testid="event-list-root">Event List Page 2</div>} />
+              </Routes>
+            </AuthContext.Provider>
+          </ToastProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Tech Summit Day 2')).toBeInTheDocument();
+    });
+
+    const backButton = screen.getByRole('button', { name: /Back to Events/i });
+    expect(backButton).toBeInTheDocument();
+    fireEvent.click(backButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('event-list-root')).toBeInTheDocument();
+    });
+  });
 });

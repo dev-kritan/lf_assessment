@@ -294,21 +294,75 @@ export const MyEventsPage: React.FC = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  const isFirstSearchEffect = useRef(true);
-
-  // When debounced search updates, sync with URL and reset page to 1
+  // When debounced search updates, sync with URL and reset page to 1 ONLY if search keyword differs from URL
   useEffect(() => {
-    if (isFirstSearchEffect.current) {
-      isFirstSearchEffect.current = false;
-      return;
+    const currentUrlSearch = searchParams.get("search") || "";
+    if (debouncedSearch.trim() !== currentUrlSearch.trim()) {
+      if (activeTab === "created") {
+        setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+      } else {
+        setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+      }
+      updateUrlParams({ search: debouncedSearch, page: 1 });
     }
-    if (activeTab === "created") {
-      setCreatedMeta((prev) => ({ ...prev, page: 1 }));
+  }, [debouncedSearch, searchParams, activeTab]);
+
+  // Synchronize all states from URL search params (e.g., Back to Events, Browser Navigation, Tab switches)
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") === "rsvps" ? "rsvps" : "created";
+    const urlPage = parseInt(searchParams.get("page") || "1", 10) || 1;
+    const urlLimit =
+      parseInt(
+        searchParams.get("limit") ||
+          String(PAGINATION_LIMITS.MY_EVENTS_DEFAULT),
+        10,
+      ) || PAGINATION_LIMITS.MY_EVENTS_DEFAULT;
+    const urlSearch = searchParams.get("search") || "";
+    const urlTimeframe =
+      (searchParams.get("timeframe") as "all" | "upcoming" | "past") || "all";
+    const urlEventType =
+      (searchParams.get("event_type") as "all" | "public" | "private") || "all";
+    const urlTag = searchParams.get("tag") || "";
+    const urlSort =
+      (searchParams.get("sort_by") as "date" | "popularity" | "created_at") ||
+      "date";
+    const urlRsvpStatus =
+      (searchParams.get("rsvp_status") as "all" | "yes" | "maybe" | "no") ||
+      "all";
+    const urlViewMode =
+      (searchParams.get("view_mode") as "grid" | "list") || "grid";
+
+    if (activeTab !== urlTab) {
+      setActiveTab(urlTab);
+    }
+
+    if (urlTab === "created") {
+      setCreatedMeta((prev) => {
+        if (prev.page !== urlPage || prev.limit !== urlLimit) {
+          return { ...prev, page: urlPage, limit: urlLimit };
+        }
+        return prev;
+      });
     } else {
-      setRsvpMeta((prev) => ({ ...prev, page: 1 }));
+      setRsvpMeta((prev) => {
+        if (prev.page !== urlPage || prev.limit !== urlLimit) {
+          return { ...prev, page: urlPage, limit: urlLimit };
+        }
+        return prev;
+      });
     }
-    updateUrlParams({ search: debouncedSearch, page: 1 });
-  }, [debouncedSearch]);
+
+    if (search !== urlSearch) {
+      setSearch(urlSearch);
+      setDebouncedSearch(urlSearch);
+    }
+    if (timeframe !== urlTimeframe) setTimeframe(urlTimeframe);
+    if (eventType !== urlEventType) setEventType(urlEventType);
+    if (selectedTag !== urlTag) setSelectedTag(urlTag);
+    if (sortBy !== urlSort) setSortBy(urlSort);
+    if (rsvpStatusFilter !== urlRsvpStatus) setRsvpStatusFilter(urlRsvpStatus);
+    if (viewMode !== urlViewMode) setViewMode(urlViewMode);
+  }, [searchParams]);
 
   // Fetch paginated Created Events from Server
   const fetchCreatedEvents = useCallback(
