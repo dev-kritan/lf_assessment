@@ -388,4 +388,62 @@ describe('Email Verification Pages & Components', () => {
       expect(screen.getByRole('button', { name: /Resend Verification Link/i })).toBeInTheDocument();
     });
   });
+
+  it('profile popover in Navbar opens on click and automatically hides on outside click and Escape', async () => {
+    const verifiedUser = {
+      id: 8,
+      name: 'Alice Wonder',
+      email: 'alice@example.com',
+      isEmailVerified: true,
+      twoFactorEnabled: false,
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthContext.Provider
+              value={{
+                user: verifiedUser,
+                isAuthenticated: true,
+                isLoading: false,
+                login: vi.fn(),
+                register: vi.fn(),
+                logout: vi.fn(),
+                refreshProfile: vi.fn(),
+                setUser: vi.fn(),
+              }}
+            >
+              <div data-testid="outside-area">Outside Content</div>
+              <Navbar />
+            </AuthContext.Provider>
+          </ToastProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    // Dropdown is initially closed
+    expect(screen.queryByText('Profile & Security')).not.toBeInTheDocument();
+
+    // Click profile button to open
+    const profileBtn = screen.getByRole('button', { name: /User Profile Menu/i });
+    fireEvent.click(profileBtn);
+
+    // Popover is open
+    expect(screen.getByText('Profile & Security')).toBeInTheDocument();
+    expect(screen.getByText('Sign Out')).toBeInTheDocument();
+
+    // 1. Test clicking outside closes popover
+    const outsideArea = screen.getByTestId('outside-area');
+    fireEvent.mouseDown(outsideArea);
+    expect(screen.queryByText('Profile & Security')).not.toBeInTheDocument();
+
+    // Reopen popover
+    fireEvent.click(profileBtn);
+    expect(screen.getByText('Profile & Security')).toBeInTheDocument();
+
+    // 2. Test pressing Escape closes popover
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByText('Profile & Security')).not.toBeInTheDocument();
+  });
 });

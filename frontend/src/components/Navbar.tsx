@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Calendar,
@@ -33,6 +33,34 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    if (profileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [profileDropdownOpen]);
 
   const handleCreateEventClick = () => {
     if (!isAuthenticated) {
@@ -184,10 +212,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
             {/* User Profile / Auth State */}
             {isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative" ref={profileDropdownRef}>
                 <button
                   onClick={() => setProfileDropdownOpen((prev) => !prev)}
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none"
+                  aria-label="User Profile Menu"
+                  aria-expanded={profileDropdownOpen}
                 >
                   <img
                     src={user.avatarUrl || getDicebearAvatarUrl(user.name)}
@@ -202,7 +232,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 {profileDropdownOpen && (
                   <div
                     className="absolute right-0 mt-2 w-56 rounded-2xl glass-card shadow-2xl py-2 z-50 border border-slate-200/80 dark:border-slate-800/80 animate-fade-in"
-                    onMouseLeave={() => setProfileDropdownOpen(false)}
                   >
                     <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
