@@ -27,12 +27,27 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, resolvedTheme, toggleTheme } = useTheme();
-  const { success } = useToast();
+  const { success, error } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const handleCreateEventClick = () => {
+    if (!isAuthenticated) {
+      navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`);
+      return;
+    }
+
+    if (user && !user.isEmailVerified) {
+      error("Email verification required: Please verify your email address to create events.");
+      navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+      return;
+    }
+
+    onOpenCreateModal?.();
+  };
 
   const getThemeIcon = () => {
     if (theme === "system") {
@@ -159,23 +174,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             </button>
 
             {/* Create Event CTA */}
-            {isAuthenticated ? (
-              <button
-                onClick={onOpenCreateModal}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Create Event
-              </button>
-            ) : (
-              <Link
-                to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 active:scale-95 transition-all"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Create Event
-              </Link>
-            )}
+            <button
+              onClick={handleCreateEventClick}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Create Event
+            </button>
 
             {/* User Profile / Auth State */}
             {isAuthenticated && user ? (
@@ -312,6 +317,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           >
             Browse Events
           </Link>
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              handleCreateEventClick();
+            }}
+            className="w-full text-left block px-3 py-2 rounded-lg text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            Create Event
+          </button>
 
           {isAuthenticated && (
             <Link

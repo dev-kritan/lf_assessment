@@ -47,10 +47,15 @@ export const CreateEventPage: React.FC = () => {
   const titleInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`);
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`);
+      } else if (user && !user.isEmailVerified) {
+        error('Email verification required: Please verify your email address to create events.');
+        navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+      }
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, user, authLoading, navigate]);
 
   useEffect(() => {
     // Focus title input on mount

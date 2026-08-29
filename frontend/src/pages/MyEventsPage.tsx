@@ -1031,7 +1031,14 @@ export const MyEventsPage: React.FC = () => {
               </button>
             ) : (
               <button
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => {
+                  if (user && !user.isEmailVerified) {
+                    error("Email verification required: Please verify your email address to create events.");
+                    navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+                    return;
+                  }
+                  setIsCreateModalOpen(true);
+                }}
                 className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm"
               >
                 Host Your First Event

@@ -4,7 +4,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { VerifyEmailPage } from '../pages/VerifyEmailPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { ProfilePage } from '../pages/ProfilePage';
+import { Navbar } from '../components/Navbar';
 import { ToastProvider } from '../contexts/ToastContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { authApi } from '../api/auth.api';
 
@@ -12,12 +15,16 @@ vi.mock('../api/auth.api', () => ({
   authApi: {
     verifyEmail: vi.fn(),
     resendVerification: vi.fn(),
+    requestVerificationLink: vi.fn(),
     getProfile: vi.fn(),
     login: vi.fn(),
     register: vi.fn(),
     logout: vi.fn(),
   },
 }));
+
+// Mock scrollIntoView for JSDOM
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 describe('Email Verification Pages & Components', () => {
   beforeEach(() => {
@@ -265,6 +272,116 @@ describe('Email Verification Pages & Components', () => {
       expect(screen.getByText('Check Your Inbox')).toBeInTheDocument();
       expect(screen.getByText('newuser@example.com')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Go to Sign In/i })).toBeInTheDocument();
+    });
+  });
+
+  it('unverified user clicking Create Event on Navbar triggers toast, prevents modal open, and navigates to Profile with state', async () => {
+    const unverifiedUser = {
+      id: 5,
+      name: 'Unverified Carol',
+      email: 'carol@example.com',
+      isEmailVerified: false,
+      twoFactorEnabled: false,
+    };
+    const onOpenCreateModal = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthContext.Provider
+              value={{
+                user: unverifiedUser,
+                isAuthenticated: true,
+                isLoading: false,
+                login: vi.fn(),
+                register: vi.fn(),
+                logout: vi.fn(),
+                refreshProfile: vi.fn(),
+                setUser: vi.fn(),
+              }}
+            >
+              <Navbar onOpenCreateModal={onOpenCreateModal} />
+              <Routes>
+                <Route path="/" element={<div>Home Page</div>} />
+                <Route path="/profile" element={<div>Profile Page Route</div>} />
+              </Routes>
+            </AuthContext.Provider>
+          </ToastProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    const createBtn = screen.getByRole('button', { name: /^Create Event$/i });
+    fireEvent.click(createBtn);
+
+    // Assert modal was NOT opened
+    expect(onOpenCreateModal).not.toHaveBeenCalled();
+
+    // Assert toast error message is rendered
+    await waitFor(() => {
+      expect(screen.getByText(/Please verify your email address to create events/i)).toBeInTheDocument();
+      expect(screen.getByText('Profile Page Route')).toBeInTheDocument();
+    });
+  });
+
+  it('highlights Email Verification card on ProfilePage when navigated with state and dismisses on Send Verification Link click', async () => {
+    const unverifiedUser = {
+      id: 5,
+      name: 'Unverified Carol',
+      email: 'carol@example.com',
+      isEmailVerified: false,
+      twoFactorEnabled: false,
+    };
+
+    vi.mocked(authApi.requestVerificationLink).mockResolvedValueOnce({
+      success: true,
+      data: {
+        verificationUrl: 'http://localhost:5173/verify-email?token=xyz123&uid=5',
+        verificationToken: 'xyz123',
+      },
+      message: 'Verification link sent!',
+    });
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/profile', state: { highlightEmailVerification: true } }]}>
+        <ToastProvider>
+          <AuthContext.Provider
+            value={{
+              user: unverifiedUser,
+              isAuthenticated: true,
+              isLoading: false,
+              login: vi.fn(),
+              register: vi.fn(),
+              logout: vi.fn(),
+              refreshProfile: vi.fn(),
+              setUser: vi.fn(),
+            }}
+          >
+            <Routes>
+              <Route path="/profile" element={<ProfilePage />} />
+            </Routes>
+          </AuthContext.Provider>
+        </ToastProvider>
+      </MemoryRouter>
+    );
+
+    // Check highlighted action badge
+    expect(screen.getByText(/Action Required: Send verification link to enable event creation & RSVPs/i)).toBeInTheDocument();
+
+    // Check highlighted card classes
+    const emailCard = screen.getByTestId('email-verification-card');
+    expect(emailCard.className).toContain('ring-4');
+
+    // Click "Send Verification Link"
+    const sendBtn = screen.getByRole('button', { name: /Send Verification Link/i });
+    fireEvent.click(sendBtn);
+
+    // Assert highlight badge is immediately dismissed
+    await waitFor(() => {
+      expect(screen.queryByText(/Action Required: Send verification link/i)).not.toBeInTheDocument();
+      expect(emailCard.className).not.toContain('ring-4');
+      expect(screen.getByText(/Email Verification Link Sent & Ready/i)).toBeInTheDocument();
     });
   });
 });

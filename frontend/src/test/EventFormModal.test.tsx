@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { EventFormModal } from '../components/EventFormModal';
 import { ToastProvider } from '../contexts/ToastContext';
 import { eventsApi } from '../api/events.api';
@@ -12,6 +13,16 @@ vi.mock('../api/events.api', () => ({
     updateEvent: vi.fn(),
   },
 }));
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(
+    <MemoryRouter>
+      <ToastProvider>
+        {ui}
+      </ToastProvider>
+    </MemoryRouter>
+  );
+};
 
 describe('EventFormModal Component', () => {
   it('renders existing tags and adds new custom tag in real-time', async () => {
@@ -32,16 +43,14 @@ describe('EventFormModal Component', () => {
 
     const onTagCreatedMock = vi.fn();
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-          allTags={initialTags}
-          onTagCreated={onTagCreatedMock}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        allTags={initialTags}
+        onTagCreated={onTagCreatedMock}
+      />
     );
 
     expect(screen.getByText('#AI')).toBeInTheDocument();
@@ -81,15 +90,13 @@ describe('EventFormModal Component', () => {
     const createTagSpy = vi.mocked(eventsApi.createTag);
     createTagSpy.mockClear();
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-          allTags={initialTags}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        allTags={initialTags}
+      />
     );
 
     const input = screen.getByPlaceholderText(/Add custom tag/i);
@@ -118,14 +125,12 @@ describe('EventFormModal Component', () => {
       data: [],
     });
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={onCloseMock}
-          onSuccess={vi.fn()}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={onCloseMock}
+        onSuccess={vi.fn()}
+      />
     );
 
     const titleInput = screen.getByPlaceholderText(/NextGen Web & AI Conference/i);
@@ -154,14 +159,12 @@ describe('EventFormModal Component', () => {
       data: [],
     });
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
     );
 
     const getFieldError = (fieldName: string) => {
@@ -208,14 +211,12 @@ describe('EventFormModal Component', () => {
       data: [],
     });
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
     );
 
     const getFieldError = (fieldName: string) => {
@@ -258,14 +259,12 @@ describe('EventFormModal Component', () => {
       data: [],
     });
 
-    render(
-      <ToastProvider>
-        <EventFormModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-        />
-      </ToastProvider>
+    renderWithProviders(
+      <EventFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
     );
 
     const bannerInput = screen.getByPlaceholderText(/https:\/\/images\.unsplash\.com/i) as HTMLInputElement;

@@ -15,8 +15,10 @@ import {
 import { EventItem, Tag } from "../types";
 import { eventsApi } from "../api/events.api";
 import { useToast } from "../contexts/ToastContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { DEFAULT_ASSETS, UI_TIMINGS, getRandomCoverImageUrl } from "../constants";
+import { APP_ROUTES, DEFAULT_ASSETS, UI_TIMINGS, getRandomCoverImageUrl } from "../constants";
 import {
   eventFormSchema,
   validateForm as validateWithZod,
@@ -40,7 +42,9 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   allTags,
   onTagCreated,
 }) => {
+  const { user } = useAuth();
   const { success, error } = useToast();
+  const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -310,6 +314,14 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (user && !user.isEmailVerified) {
+      error("Email verification required: Please verify your email address to create events.");
+      onClose();
+      navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+      return;
+    }
+
     setHasSubmitted(true);
     setFormErrors({});
 

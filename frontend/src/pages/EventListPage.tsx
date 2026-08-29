@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { eventsApi } from "../api/events.api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EventCard } from "../components/EventCard";
@@ -24,7 +24,7 @@ import { Pagination } from "../components/Pagination";
 import { StatCard } from "../components/StatCard";
 import { TagDeleteModal } from "../components/TagDeleteModal";
 import { TagEditModal } from "../components/TagEditModal";
-import { PAGINATION_LIMITS } from "../constants";
+import { APP_ROUTES, PAGINATION_LIMITS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { EventItem, PaginationMeta, Tag } from "../types";
@@ -111,6 +111,7 @@ export const EventListPage: React.FC = () => {
 
   const { isAuthenticated, user } = useAuth();
   const { success, error } = useToast();
+  const navigate = useNavigate();
 
   // Helper to synchronize state with URL search params
   const updateUrlParams = (paramsToUpdate: {
@@ -654,6 +655,11 @@ export const EventListPage: React.FC = () => {
             ) : isAuthenticated ? (
               <button
                 onClick={() => {
+                  if (user && !user.isEmailVerified) {
+                    error("Email verification required: Please verify your email address to create events.");
+                    navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+                    return;
+                  }
                   setEventToEdit(null);
                   setIsModalOpen(true);
                 }}

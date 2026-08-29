@@ -15,12 +15,13 @@ import { useToast } from '../contexts/ToastContext';
 import { authApi } from '../api/auth.api';
 import { TwoFactorModal } from '../components/TwoFactorModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { APP_ROUTES, getDicebearAvatarUrl } from '../constants';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshProfile } = useAuth();
   const { success, error, info } = useToast();
+  const location = useLocation();
 
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
   const [isDisable2FADialogOpen, setIsDisable2FADialogOpen] = useState(false);
@@ -28,6 +29,16 @@ export const ProfilePage: React.FC = () => {
   const [isDisabling, setIsDisabling] = useState(false);
   const [verificationUrl, setVerificationUrl] = useState('');
   const [isRequestingEmail, setIsRequestingEmail] = useState(false);
+  const [isEmailCardHighlighted, setIsEmailCardHighlighted] = useState<boolean>(
+    Boolean(location.state?.highlightEmailVerification)
+  );
+  const emailCardRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isEmailCardHighlighted && emailCardRef.current) {
+      emailCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isEmailCardHighlighted]);
 
   if (!user) {
     return (
@@ -64,6 +75,9 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleRequestVerificationEmail = async () => {
+    // Immediately remove highlight once the user clicks send verification link
+    setIsEmailCardHighlighted(false);
+
     try {
       setIsRequestingEmail(true);
       const res = await authApi.requestVerificationLink();
@@ -154,7 +168,22 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {/* Email Verification Card */}
-        <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+        <div
+          ref={emailCardRef}
+          data-testid="email-verification-card"
+          className={`glass-card rounded-3xl p-6 border transition-all duration-500 ${
+            isEmailCardHighlighted
+              ? 'ring-4 ring-blue-500/60 dark:ring-blue-400/60 border-blue-400 dark:border-blue-500 shadow-2xl shadow-blue-500/30 bg-blue-50/50 dark:bg-blue-950/40'
+              : 'border-slate-200/80 dark:border-slate-800/80 shadow-md'
+          }`}
+        >
+          {isEmailCardHighlighted && (
+            <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/30 animate-pulse">
+              <AlertCircle className="w-4 h-4" />
+              Action Required: Send verification link to enable event creation & RSVPs
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="max-w-xl">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
