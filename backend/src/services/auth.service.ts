@@ -404,7 +404,6 @@ export class AuthService {
       .first();
 
     if (user && !user.is_email_verified) {
-      console.log("user is not email verified");
       const rawVerificationToken = crypto
         .randomBytes(AUTH_CONFIG.VERIFICATION_TOKEN_BYTES)
         .toString("hex");
@@ -423,8 +422,6 @@ export class AuthService {
       });
 
       const verificationUrl = `${config.clientUrl}/verify-email?token=${rawVerificationToken}&uid=${user.id}`;
-
-      console.log({ verificationUrl });
 
       await EmailService.sendVerificationEmail({
         to: user.email,

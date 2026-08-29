@@ -377,11 +377,15 @@ describe('Email Verification Pages & Components', () => {
     const sendBtn = screen.getByRole('button', { name: /Send Verification Link/i });
     fireEvent.click(sendBtn);
 
-    // Assert highlight badge is immediately dismissed
+    // Assert highlight badge is immediately dismissed and inbox check confirmation is displayed
     await waitFor(() => {
       expect(screen.queryByText(/Action Required: Send verification link/i)).not.toBeInTheDocument();
       expect(emailCard.className).not.toContain('ring-4');
-      expect(screen.getByText(/Email Verification Link Sent & Ready/i)).toBeInTheDocument();
+      expect(screen.getByText('Verification Email Sent')).toBeInTheDocument();
+      expect(screen.getAllByText('carol@example.com')).toHaveLength(2);
+      expect(screen.queryByText(/Email Verification Link Sent & Ready/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Confirm Now/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Resend Verification Link/i })).toBeInTheDocument();
     });
   });
 });

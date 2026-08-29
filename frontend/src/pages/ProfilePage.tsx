@@ -7,7 +7,6 @@ import {
   AlertCircle, 
   Calendar, 
   Key, 
-  ExternalLink,
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,7 +26,7 @@ export const ProfilePage: React.FC = () => {
   const [isDisable2FADialogOpen, setIsDisable2FADialogOpen] = useState(false);
   const [disableToken, setDisableToken] = useState('');
   const [isDisabling, setIsDisabling] = useState(false);
-  const [verificationUrl, setVerificationUrl] = useState('');
+  const [isEmailSent, setIsEmailSent] = useState(false);
   const [isRequestingEmail, setIsRequestingEmail] = useState(false);
   const [isEmailCardHighlighted, setIsEmailCardHighlighted] = useState<boolean>(
     Boolean(location.state?.highlightEmailVerification)
@@ -81,12 +80,12 @@ export const ProfilePage: React.FC = () => {
     try {
       setIsRequestingEmail(true);
       const res = await authApi.requestVerificationLink();
-      if (res.success && res.data) {
-        setVerificationUrl(res.data.verificationUrl);
-        info('Verification link generated below. In production this would be sent via SMTP.');
+      if (res.success) {
+        setIsEmailSent(true);
+        success('Verification email sent! Please check your inbox.');
       }
     } catch (err: any) {
-      error(err.response?.data?.error?.message || 'Failed to generate verification link');
+      error(err.response?.data?.error?.message || 'Failed to send verification email');
     } finally {
       setIsRequestingEmail(false);
     }
@@ -204,23 +203,24 @@ export const ProfilePage: React.FC = () => {
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5 self-start sm:self-auto disabled:opacity-50"
               >
                 {isRequestingEmail && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Send Verification Link
+                {isEmailSent ? 'Resend Verification Link' : 'Send Verification Link'}
               </button>
             )}
           </div>
 
-          {verificationUrl && (
-            <div className="mt-4 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-blue-900 dark:text-blue-200">Email Verification Link Sent & Ready:</p>
-                <p className="text-[11px] text-blue-700 dark:text-blue-300 truncate max-w-md mt-0.5">{verificationUrl}</p>
+          {isEmailSent && (
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex items-start gap-3 animate-fade-in">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
-              <Link
-                to={verificationUrl}
-                className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 flex items-center gap-1.5 self-start sm:self-auto shadow-sm"
-              >
-                Confirm Now <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
+              <div>
+                <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                  Verification Email Sent
+                </p>
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-0.5 leading-relaxed">
+                  We've sent a verification link to <strong className="font-semibold text-emerald-900 dark:text-emerald-100">{user.email}</strong>. Please check your inbox and click the verification link to confirm your account.
+                </p>
+              </div>
             </div>
           )}
         </div>
