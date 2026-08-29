@@ -1,38 +1,35 @@
 import {
   AlertTriangle,
+  ArrowRight,
   BookOpen,
   Check,
   CheckCircle2,
-  Code2,
   Copy,
   Database,
-  Download,
+  HelpCircle,
   Layers,
   Loader2,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
   Table,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { bonusApi } from "../api/bonus.api";
-import { BonusDocsModal } from "../components/BonusDocsModal";
-import { BonusSqlModal } from "../components/BonusSqlModal";
 import { useToast } from "../contexts/ToastContext";
 import { BonusQueryResult, BonusTableData } from "../types";
 
 export const BonusChallengePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"q1" | "q2" | "q4" | "raw">("q1");
+  const [activeTab, setActiveTab] = useState<
+    "q1" | "q2" | "q4" | "strategy" | "raw"
+  >("q1");
   const [rawData, setRawData] = useState<BonusTableData | null>(null);
   const [q1Result, setQ1Result] = useState<BonusQueryResult | null>(null);
   const [q2Result, setQ2Result] = useState<BonusQueryResult | null>(null);
   const [q4Result, setQ4Result] = useState<BonusQueryResult | null>(null);
 
-  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
-  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
   const [copiedQuery, setCopiedQuery] = useState("");
 
   const { success, error } = useToast();
@@ -70,7 +67,7 @@ export const BonusChallengePage: React.FC = () => {
   const handleCopy = (sql: string, id: string) => {
     navigator.clipboard.writeText(sql);
     setCopiedQuery(id);
-    success("SQL Query copied to clipboard");
+    success("Copied to clipboard");
     setTimeout(() => setCopiedQuery(""), 2000);
   };
 
@@ -88,27 +85,10 @@ export const BonusChallengePage: React.FC = () => {
               Employee Designation & Project Allocation Queries
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
-              Interactive execution and detailed breakdown of window functions,
-              timeline tracking, and date-range joins for Questions Q1, Q2, and
-              Q4.
+              Interactive execution, deep architectural reasoning, and detailed
+              breakdown of window functions, timeline tracking, and
+              point-in-time joins for Questions Q1, Q2, and Q4.
             </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            <button
-              onClick={() => setIsDocsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-500/40 text-slate-800 dark:text-slate-200 transition-all shadow-sm active:scale-95"
-            >
-              <Code2 className="w-4 h-4 text-emerald-500" />
-              View BONUS_ANSWERS.md
-            </button>
-            <button
-              onClick={() => setIsSqlModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-500/40 text-slate-800 dark:text-slate-200 transition-all shadow-sm active:scale-95"
-            >
-              <Database className="w-4 h-4 text-indigo-500" />
-              View bonus_solution.sql
-            </button>
           </div>
         </div>
       </div>
@@ -149,6 +129,19 @@ export const BonusChallengePage: React.FC = () => {
         >
           <Database className="w-4 h-4 text-emerald-500" />
           <span>Q4: Designation at Allocation</span>
+        </button>
+
+        <button
+          data-testid="strategy-tab-btn"
+          onClick={() => setActiveTab("strategy")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
+            activeTab === "strategy"
+              ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-md"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <BookOpen className="w-4 h-4 text-amber-500" />
+          <span>Strategy & Reasoning</span>
         </button>
 
         <button
@@ -489,9 +482,207 @@ export const BonusChallengePage: React.FC = () => {
             </div>
           )}
 
+          {/* Q4 STRATEGY & REASONING TAB */}
+          {activeTab === "strategy" && (
+            <div className="space-y-8 animate-fade-in">
+              {/* Architecture Intro Hero */}
+              <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg bg-gradient-to-br from-amber-500/5 via-indigo-500/5 to-emerald-500/5">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      Assessment Architectural Deep-Dive
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      Q4 Join Strategy, Temporal Logic & Edge Case Handling
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                      Detailed answers to the core questions posed in the
+                      assessment guidelines: handling multiple designations over
+                      time, deriving active state without an explicit{" "}
+                      <code className="text-indigo-600 dark:text-indigo-400">
+                        end_date
+                      </code>
+                      , and safely managing missing historical records with{" "}
+                      <code className="text-indigo-600 dark:text-indigo-400">
+                        LEFT JOIN
+                      </code>
+                      .
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Core Considerations Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Question 1 Card */}
+                <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-sm mb-3">
+                      01
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                      Multiple Designations Over Time
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 italic">
+                      "An employee may have had multiple designations over time.
+                      Only one was active on allocation_start."
+                    </p>
+                    <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+                      <p>
+                        <strong>The Challenge:</strong> An employee like Alice (
+                        <code className="text-indigo-600 dark:text-indigo-400">
+                          EMP001
+                        </code>
+                        ) has multiple promotion events:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pl-1 font-mono">
+                        <li>2024-02-01: Associate Developer</li>
+                        <li>2024-02-05: Mid Developer</li>
+                        <li>2024-02-10: Senior Developer</li>
+                      </ul>
+                      <p>
+                        When allocated to <em>Project Alpha</em> on{" "}
+                        <strong>2024-02-03</strong>, only{" "}
+                        <strong>Associate Developer</strong> was active (she
+                        became Mid Developer 2 days later).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 font-medium">
+                    <strong>Solution:</strong> Filter candidates with{" "}
+                    <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+                      effective_date &lt;= allocation_start
+                    </code>{" "}
+                    and rank with{" "}
+                    <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+                      ROW_NUMBER() OVER (PARTITION BY allocation_id ORDER BY
+                      effective_date DESC, txn_id DESC)
+                    </code>
+                    . Filtering for{" "}
+                    <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+                      rn = 1
+                    </code>{" "}
+                    isolates the exact active title.
+                  </div>
+                </div>
+
+                {/* Question 2 Card */}
+                <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black text-sm mb-3">
+                      02
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                      Active State Without End Date
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 italic">
+                      "The designation table does not store an end date — you
+                      need to figure out the active designation purely from the
+                      history of rows."
+                    </p>
+                    <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+                      <p>
+                        <strong>The Challenge:</strong> The table is an
+                        append-only event log. Titles remain valid indefinitely
+                        until superseded by a subsequent record with a later
+                        effective date.
+                      </p>
+                      <p>
+                        We evaluated 3 distinct architectural patterns to solve
+                        this point-in-time state lookup:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pl-1">
+                        <li>
+                          <strong>Strategy A (Recommended):</strong> Non-equi
+                          join + CTE window ranking.
+                        </li>
+                        <li>
+                          <strong>Strategy B:</strong> Range synthesis using{" "}
+                          <code className="text-purple-500 font-mono">
+                            LEAD(effective_date)
+                          </code>
+                          .
+                        </li>
+                        <li>
+                          <strong>Strategy C:</strong> Correlated scalar
+                          subquery with{" "}
+                          <code className="text-purple-500 font-mono">
+                            LIMIT 1
+                          </code>
+                          .
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-900/60 text-xs text-purple-900 dark:text-purple-200 font-medium">
+                    <strong>Solution:</strong> Strategy A provides clean ANSI
+                    standard SQL with $O(N \log N)$ complexity and full index
+                    utilization via{" "}
+                    <code className="text-purple-600 dark:text-purple-400 font-mono">
+                      (emp_id, effective_date DESC, txn_id DESC)
+                    </code>
+                    .
+                  </div>
+                </div>
+
+                {/* Question 3 Card */}
+                <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm mb-3">
+                      03
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                      No Prior Designation Record
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 italic">
+                      "What happens if an employee has no designation record
+                      before their allocation_start?"
+                    </p>
+                    <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+                      <p>
+                        <strong>The Challenge:</strong> If an employee was
+                        assigned to a project prior to their initial designation
+                        record, or onboarded as an unclassified contractor
+                        without an initial designation log:
+                      </p>
+                      <p>
+                        An{" "}
+                        <code className="text-rose-500 font-semibold font-mono">
+                          INNER JOIN
+                        </code>{" "}
+                        would completely discard the project allocation from the
+                        result set, causing false data loss in executive HR
+                        reporting!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200 font-medium">
+                    <strong>Solution:</strong> We apply a{" "}
+                    <code className="text-emerald-600 dark:text-emerald-400 font-mono">
+                      LEFT JOIN
+                    </code>{" "}
+                    from{" "}
+                    <code className="text-emerald-600 dark:text-emerald-400 font-mono">
+                      emp_allocation_log
+                    </code>{" "}
+                    to the ranked CTE. All allocation records are strictly
+                    preserved, safely returning{" "}
+                    <code className="text-emerald-600 dark:text-emerald-400 font-mono">
+                      NULL
+                    </code>{" "}
+                    for missing designations without dropping rows.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* RAW TABLES VIEW */}
           {activeTab === "raw" && rawData && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
               {/* Designation Log Table */}
               <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
@@ -569,18 +760,6 @@ export const BonusChallengePage: React.FC = () => {
           )}
         </>
       )}
-
-      {/* Bonus Solution SQL Modal */}
-      <BonusSqlModal
-        isOpen={isSqlModalOpen}
-        onClose={() => setIsSqlModalOpen(false)}
-      />
-
-      {/* Bonus Documentation Modal */}
-      <BonusDocsModal
-        isOpen={isDocsModalOpen}
-        onClose={() => setIsDocsModalOpen(false)}
-      />
     </div>
   );
 };

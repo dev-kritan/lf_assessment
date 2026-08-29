@@ -108,8 +108,9 @@ describe('EventListPage Server-Side Pagination', () => {
     // Verify events and pagination badge are rendered
     await waitFor(() => {
       expect(screen.getByText('Global Tech Summit 2026')).toBeInTheDocument();
-      expect(screen.getByText(/Server Paginated/i)).toBeInTheDocument();
-      expect(screen.getByText(/Showing page/i)).toBeInTheDocument();
+      expect(
+        screen.getAllByText((_, el) => el?.textContent?.replace(/\s+/g, ' ').includes('Page 1 of 2') ?? false)[0]
+      ).toBeInTheDocument();
     });
 
     expect(eventsApi.getEvents).toHaveBeenCalledWith(

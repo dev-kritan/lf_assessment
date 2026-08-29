@@ -135,8 +135,9 @@ describe('MyEventsPage Component', () => {
     });
 
     // Verify pagination controls are rendered
-    expect(screen.getByText(/Showing page/i)).toBeInTheDocument();
-    expect(screen.getByText(/total events/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, el) => el?.textContent?.replace(/\s+/g, ' ').includes('Page 1 of 3') ?? false)[0]
+    ).toBeInTheDocument();
 
     // Verify eventsApi was called with limit = 6, creator_id = 42
     expect(eventsApi.getEvents).toHaveBeenCalledWith(

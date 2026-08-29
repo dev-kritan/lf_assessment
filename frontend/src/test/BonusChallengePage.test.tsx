@@ -56,7 +56,7 @@ describe('BonusChallengePage Component', () => {
     vi.mocked(bonusApi.runQ4).mockResolvedValue({ success: true, data: mockQ4Result as any });
   });
 
-  it('renders header with interactive buttons that open modals in-app', async () => {
+  it('renders clean header and allows switching to Q4 Strategy & Reasoning tab', async () => {
     render(
       <BrowserRouter>
         <ToastProvider>
@@ -71,25 +71,20 @@ describe('BonusChallengePage Component', () => {
       expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
     });
 
-    const docsBtn = screen.getByRole('button', { name: /View BONUS_ANSWERS\.md/i });
-    expect(docsBtn).toBeInTheDocument();
+    // Ensure removed buttons are not present
+    expect(screen.queryByRole('button', { name: /View BONUS_ANSWERS\.md/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /View bonus_solution\.sql/i })).not.toBeInTheDocument();
 
-    const sqlBtn = screen.getByRole('button', { name: /View bonus_solution\.sql/i });
-    expect(sqlBtn).toBeInTheDocument();
+    // Click Q4 Strategy & Reasoning Tab
+    const strategyTabBtn = screen.getByTestId('strategy-tab-btn');
+    expect(strategyTabBtn).toBeInTheDocument();
+    fireEvent.click(strategyTabBtn);
 
-    // Open SQL Modal
-    fireEvent.click(sqlBtn);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Executable SQL')).toBeInTheDocument();
-    expect(screen.getByText('167 Lines')).toBeInTheDocument();
-
-    // Close SQL Modal
-    const closeBtns = screen.getAllByRole('button', { name: /Close/i });
-    fireEvent.click(closeBtns[0]);
-
-    // Open Docs Modal
-    fireEvent.click(docsBtn);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Solutions & Documentation')).toBeInTheDocument();
+    // Verify Strategy content is rendered answering the 3 core questions
+    await waitFor(() => {
+      expect(screen.getByText('Multiple Designations Over Time')).toBeInTheDocument();
+      expect(screen.getByText('Active State Without End Date')).toBeInTheDocument();
+      expect(screen.getByText('No Prior Designation Record')).toBeInTheDocument();
+    });
   });
 });
