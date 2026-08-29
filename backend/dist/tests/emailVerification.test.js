@@ -243,15 +243,27 @@ describe('Email Verification & Nodemailer Integration', () => {
             expect(res.body.success).toBe(false);
             expect(res.body.error.code).toBe('PRIVATE_EVENT_FORBIDDEN');
         });
-        it('unverified user can access public and standard private event details by ID', async () => {
+        it('unverified user receives masked/protected fields on standard private events, while public events remain fully visible', async () => {
             const pubRes = await (0, supertest_1.default)(app)
                 .get(`/api/v1/events/${publicEventId}`)
                 .set('Authorization', `Bearer ${unverifiedToken}`);
             expect(pubRes.status).toBe(200);
+            expect(pubRes.body.data.location).toBe('Main Auditorium');
             const stdRes = await (0, supertest_1.default)(app)
                 .get(`/api/v1/events/${standardPrivateEventId}`)
                 .set('Authorization', `Bearer ${unverifiedToken}`);
             expect(stdRes.status).toBe(200);
+            expect(stdRes.body.data.location).toContain('Protected');
+            expect(stdRes.body.data.description).toContain('Protected');
+            expect(stdRes.body.data.creator.name).toBe('Private Organizer');
+            expect(stdRes.body.data.attendees).toEqual([]);
+            const verifiedRes = await (0, supertest_1.default)(app)
+                .get(`/api/v1/events/${standardPrivateEventId}`)
+                .set('Authorization', `Bearer ${verifiedToken}`);
+            expect(verifiedRes.status).toBe(200);
+            expect(verifiedRes.body.data.location).toBe('Room B');
+            expect(verifiedRes.body.data.description).toBe('Private meetup for members.');
+            expect(verifiedRes.body.data.creator.name).not.toBe('Private Organizer');
         });
         it('unverified user is blocked from creating events with 403 EMAIL_NOT_VERIFIED', async () => {
             const res = await (0, supertest_1.default)(app)

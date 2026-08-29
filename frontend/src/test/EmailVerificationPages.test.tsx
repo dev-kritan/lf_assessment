@@ -5,11 +5,15 @@ import { VerifyEmailPage } from '../pages/VerifyEmailPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { EventDetailPage } from '../pages/EventDetailPage';
+import { EventCard } from '../components/EventCard';
 import { Navbar } from '../components/Navbar';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { authApi } from '../api/auth.api';
+import { eventsApi } from '../api/events.api';
+import { EventItem } from '../types';
 
 vi.mock('../api/auth.api', () => ({
   authApi: {
@@ -20,6 +24,13 @@ vi.mock('../api/auth.api', () => ({
     login: vi.fn(),
     register: vi.fn(),
     logout: vi.fn(),
+  },
+}));
+
+vi.mock('../api/events.api', () => ({
+  eventsApi: {
+    getEventById: vi.fn(),
+    getEvents: vi.fn(),
   },
 }));
 
@@ -445,5 +456,160 @@ describe('Email Verification Pages & Components', () => {
     // 2. Test pressing Escape closes popover
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByText('Profile & Security')).not.toBeInTheDocument();
+  });
+
+  it('EventDetailPage displays locked placeholders for schedule, location, description, organizer, and attendees when visited by an unverified user', async () => {
+    const unverifiedUser = {
+      id: 9,
+      name: 'Unverified Bob',
+      email: 'bob@example.com',
+      isEmailVerified: false,
+      twoFactorEnabled: false,
+    };
+
+    const mockPrivateEvent: EventItem = {
+      id: 101,
+      title: 'Secret Strategy Meeting',
+      description: '[Protected: Event details are visible to verified community members only]',
+      location: '[Protected: Location visible to verified members only]',
+      eventType: 'private',
+      isTruePrivate: false,
+      startTime: '2026-09-01T10:00:00.000Z',
+      endTime: '2026-09-01T12:00:00.000Z',
+      capacity: 20,
+      bannerUrl: null,
+      createdAt: '2026-08-29T10:00:00.000Z',
+      updatedAt: '2026-08-29T10:00:00.000Z',
+      isPast: false,
+      isRestricted: true,
+      creator: {
+        id: 5,
+        name: 'Private Organizer',
+        email: '[hidden]',
+        avatarUrl: undefined,
+      },
+      tags: [{ id: 1, name: 'Leadership', colorHex: '#4f46e5' }],
+      rsvpStats: { yes: 0, maybe: 0, no: 0, total: 0 },
+      attendees: [],
+      userRsvp: null,
+      isCreator: false,
+    };
+
+    vi.mocked(eventsApi.getEventById).mockResolvedValueOnce({
+      success: true,
+      data: mockPrivateEvent,
+      message: 'Event retrieved successfully',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/events/101']}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthContext.Provider
+              value={{
+                user: unverifiedUser,
+                isAuthenticated: true,
+                isLoading: false,
+                login: vi.fn(),
+                register: vi.fn(),
+                logout: vi.fn(),
+                refreshProfile: vi.fn(),
+                setUser: vi.fn(),
+              }}
+            >
+              <Routes>
+                <Route path="/events/:id" element={<EventDetailPage />} />
+              </Routes>
+            </AuthContext.Provider>
+          </ToastProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Secret Strategy Meeting')).toBeInTheDocument();
+    });
+
+    // Check notice banner
+    expect(screen.getByText('Email Verification Required')).toBeInTheDocument();
+    expect(screen.getByText(/Please verify your email address to unlock event schedule/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Verify Email in Profile/i }).length).toBeGreaterThan(0);
+
+    // Check locked schedule & location
+    expect(screen.getByText('Private Schedule')).toBeInTheDocument();
+    expect(screen.getByText('Private Location')).toBeInTheDocument();
+
+    // Check locked description
+    expect(screen.getByText('Protected Event Details')).toBeInTheDocument();
+
+    // Check locked organizer
+    expect(screen.getByText('Community Member')).toBeInTheDocument();
+    expect(screen.getByText('Verified members only')).toBeInTheDocument();
+
+    // Check locked RSVP attendance
+    expect(screen.getByText('RSVP & Attendance are Private')).toBeInTheDocument();
+  });
+
+  it('EventCard masks schedule, location, description, creator, and RSVP badge for private events when user is unverified', () => {
+    const unverifiedUser = {
+      id: 9,
+      name: 'Unverified Bob',
+      email: 'bob@example.com',
+      isEmailVerified: false,
+      twoFactorEnabled: false,
+    };
+
+    const mockPrivateEvent: EventItem = {
+      id: 102,
+      title: 'Confidential Roundtable',
+      description: 'Some internal description text',
+      location: 'Secret Conference Room',
+      eventType: 'private',
+      isTruePrivate: false,
+      startTime: '2026-09-01T14:00:00.000Z',
+      endTime: '2026-09-01T16:00:00.000Z',
+      capacity: 15,
+      bannerUrl: null,
+      createdAt: '2026-08-29T10:00:00.000Z',
+      updatedAt: '2026-08-29T10:00:00.000Z',
+      isPast: false,
+      creator: {
+        id: 3,
+        name: 'Alice President',
+        email: 'alice@example.com',
+        avatarUrl: undefined,
+      },
+      tags: [{ id: 2, name: 'Executive', colorHex: '#9333ea' }],
+      rsvpStats: { yes: 5, maybe: 2, no: 1, total: 8 },
+      attendees: [],
+      userRsvp: null,
+      isCreator: false,
+    };
+
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider
+          value={{
+            user: unverifiedUser,
+            isAuthenticated: true,
+            isLoading: false,
+            login: vi.fn(),
+            register: vi.fn(),
+            logout: vi.fn(),
+            refreshProfile: vi.fn(),
+            setUser: vi.fn(),
+          }}
+        >
+          <EventCard event={mockPrivateEvent} />
+        </AuthContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Confidential Roundtable')).toBeInTheDocument();
+    expect(screen.getByText('Private event details restricted to verified members.')).toBeInTheDocument();
+    expect(screen.getByText('Private Schedule • Verified Members Only')).toBeInTheDocument();
+    expect(screen.getByText('Private Location • Verified Members Only')).toBeInTheDocument();
+    expect(screen.getByText('Private Organizer')).toBeInTheDocument();
+    expect(screen.getByText('Members Only')).toBeInTheDocument();
   });
 });

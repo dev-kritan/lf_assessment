@@ -321,7 +321,6 @@ class AuthService {
             .where({ email: normalizedEmail })
             .first();
         if (user && !user.is_email_verified) {
-            console.log("user is not email verified");
             const rawVerificationToken = crypto_1.default
                 .randomBytes(constants_1.AUTH_CONFIG.VERIFICATION_TOKEN_BYTES)
                 .toString("hex");
@@ -336,7 +335,6 @@ class AuthService {
                 updated_at: new Date(),
             });
             const verificationUrl = `${env_1.config.clientUrl}/verify-email?token=${rawVerificationToken}&uid=${user.id}`;
-            console.log({ verificationUrl });
             await email_service_1.EmailService.sendVerificationEmail({
                 to: user.email,
                 name: user.name,

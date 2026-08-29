@@ -39,6 +39,8 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const authContext = useContext(AuthContext);
   const isAuthenticated = authContext?.isAuthenticated ?? false;
+  const user = authContext?.user;
+  const isRestrictedPrivate = event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified));
   const startDate = parseISO(event.startTime);
   const isPast = event.isPast;
 
@@ -99,49 +101,43 @@ export const EventCard: React.FC<EventCardProps> = ({
             ) : (
               <Lock className="w-3.5 h-3.5" />
             )}
-            {event.eventType === 'public' ? 'Public' : event.isTruePrivate ? 'True Private' : 'Private'}
+            <span>
+              {event.eventType === 'public' 
+                ? 'Public' 
+                : event.isTruePrivate 
+                ? 'True Private' 
+                : 'Private'}
+            </span>
           </span>
 
           {isPast && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/80 backdrop-blur-md text-white border border-amber-400/30 shadow-md">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900/80 text-slate-300 backdrop-blur-md shadow-sm border border-slate-700/40">
               <Clock className="w-3 h-3" />
-              Past
-            </span>
-          )}
-
-          {event.userRsvp && (
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
-                event.userRsvp === 'yes'
-                  ? 'bg-indigo-600/90 text-white'
-                  : event.userRsvp === 'maybe'
-                  ? 'bg-amber-600/90 text-white'
-                  : 'bg-rose-600/90 text-white'
-              }`}
-            >
-              RSVP: {event.userRsvp === 'yes' ? 'Going' : event.userRsvp === 'maybe' ? 'Interested' : 'Declined'}
+              <span>Past</span>
             </span>
           )}
         </div>
 
         {/* Date Stamp Widget */}
-        <div className="absolute bottom-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-lg text-center flex items-center gap-2">
-          <div className="text-rose-600 dark:text-rose-400 font-extrabold text-lg leading-none">
-            {format(startDate, 'dd')}
-          </div>
-          <div className="text-left border-l border-slate-200 dark:border-slate-700 pl-2">
-            <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-              {format(startDate, 'MMM')}
+        {!isRestrictedPrivate && (
+          <div className="absolute bottom-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-lg text-center flex items-center gap-2">
+            <div className="text-rose-600 dark:text-rose-400 font-extrabold text-lg leading-none">
+              {format(startDate, 'dd')}
             </div>
-            <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-              {format(startDate, 'EEE')}
+            <div className="text-left border-l border-slate-200 dark:border-slate-700 pl-2">
+              <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                {format(startDate, 'MMM')}
+              </div>
+              <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                {format(startDate, 'EEE')}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
+      {/* Content Body */}
+      <div className="p-6 flex-1 flex flex-col justify-between">
         <div>
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-1.5 mb-3">
@@ -166,7 +162,9 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           {/* Description Excerpt */}
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
-            {event.description}
+            {isRestrictedPrivate
+              ? 'Private event details restricted to verified members.'
+              : event.description}
           </p>
 
           {/* Meta Info */}
@@ -174,12 +172,18 @@ export const EventCard: React.FC<EventCardProps> = ({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-indigo-500 flex-shrink-0" />
               <span>
-                {format(startDate, 'EEE, MMM d, yyyy • h:mm a')}
+                {isRestrictedPrivate
+                  ? 'Private Schedule • Verified Members Only'
+                  : format(startDate, 'EEE, MMM d, yyyy • h:mm a')}
               </span>
             </div>
             <div className="flex items-center gap-2 truncate">
               <MapPin className="w-4 h-4 text-rose-500 flex-shrink-0" />
-              <span className="truncate">{event.location}</span>
+              <span className="truncate">
+                {isRestrictedPrivate
+                  ? 'Private Location • Verified Members Only'
+                  : event.location}
+              </span>
             </div>
           </div>
         </div>
@@ -193,12 +197,12 @@ export const EventCard: React.FC<EventCardProps> = ({
               className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700"
             />
             <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
-              {event.creator.name}
+              {isRestrictedPrivate ? 'Private Organizer' : event.creator.name}
             </span>
           </div>
 
           {/* RSVP Attendees Counter */}
-          {!isAuthenticated && event.eventType === 'private' ? (
+          {isRestrictedPrivate ? (
             <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-900/60">
               <Lock className="w-3 h-3" />
               <span>Members Only</span>

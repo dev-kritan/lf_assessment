@@ -224,11 +224,17 @@ export class EventService {
     const formattedEvents = events.map((e) => {
       const parsedTime = typeof e.start_time === 'number' ? e.start_time : (!isNaN(Number(e.start_time)) && String(e.start_time).trim() !== '') ? Number(e.start_time) : e.start_time;
       const isPast = new Date(parsedTime) < new Date();
+      const isRestricted = e.event_type === 'private' && (!currentUserId || !isVerified);
+
       return {
         id: e.id,
         title: e.title,
-        description: e.description,
-        location: e.location,
+        description: isRestricted
+          ? '[Protected: Event details are visible to verified community members only]'
+          : e.description,
+        location: isRestricted
+          ? '[Protected: Location visible to verified members only]'
+          : e.location,
         eventType: e.event_type,
         isTruePrivate: Boolean(e.is_true_private),
         startTime: e.start_time,
@@ -238,14 +244,22 @@ export class EventService {
         createdAt: e.created_at,
         updatedAt: e.updated_at,
         isPast,
-        creator: {
-          id: e.creator_id,
-          name: e.creator_name,
-          email: e.creator_email,
-          avatarUrl: e.creator_avatar,
-        },
+        isRestricted,
+        creator: isRestricted
+          ? {
+              id: e.creator_id,
+              name: 'Private Organizer',
+              email: '[hidden]',
+              avatarUrl: null,
+            }
+          : {
+              id: e.creator_id,
+              name: e.creator_name,
+              email: e.creator_email,
+              avatarUrl: e.creator_avatar,
+            },
         tags: eventTagsMap[e.id] || [],
-        rsvpStats: (!currentUserId && e.event_type === 'private')
+        rsvpStats: isRestricted
           ? { yes: 0, maybe: 0, no: 0, total: 0 }
           : (rsvpStatsMap[e.id] || { yes: 0, maybe: 0, no: 0, total: 0 }),
         userRsvp: userRsvpMap[e.id] || null,
@@ -307,8 +321,8 @@ export class EventService {
       throw error;
     }
 
-    // Logic 1: Standard Private event allows preview to guests with restricted RSVP and masked attendees
-    const isStandardPrivateGuest = event.event_type === 'private' && !currentUserId;
+    // Logic 1: Standard Private event masks sensitive details (location, description, creator, attendees, rsvpStats) for unauthenticated or unverified visitors
+    const isRestrictedVisitor = event.event_type === 'private' && (!currentUserId || !isVerified);
 
     // Fetch tags
     const tags = await db(DB_TABLES.EVENT_TAGS)
@@ -316,9 +330,9 @@ export class EventService {
       .where('event_tags.event_id', id)
       .select('tags.id', 'tags.name', 'tags.color_hex');
 
-    // Fetch RSVP stats (only if not a standard private guest)
+    // Fetch RSVP stats (only if not a restricted private visitor)
     const rsvpStats = { yes: 0, maybe: 0, no: 0, total: 0 };
-    if (!isStandardPrivateGuest) {
+    if (!isRestrictedVisitor) {
       const rsvpCounts = await db(DB_TABLES.RSVPS)
         .where('event_id', id)
         .select('status')
@@ -334,9 +348,9 @@ export class EventService {
       });
     }
 
-    // Fetch attendees list (users who RSVP'd yes/maybe) - only if not standard private guest
+    // Fetch attendees list (users who RSVP'd yes/maybe) - only if not restricted private visitor
     let attendees: any[] = [];
-    if (!isStandardPrivateGuest) {
+    if (!isRestrictedVisitor) {
       attendees = await db(DB_TABLES.RSVPS)
         .join(DB_TABLES.USERS, 'rsvps.user_id', 'users.id')
         .where('rsvps.event_id', id)
@@ -353,7 +367,7 @@ export class EventService {
 
     // Current user's RSVP status
     let userRsvp = null;
-    if (currentUserId) {
+    if (currentUserId && !isRestrictedVisitor) {
       const rsvpRecord = await db(DB_TABLES.RSVPS)
         .where({ event_id: id, user_id: currentUserId })
         .first();
@@ -368,8 +382,12 @@ export class EventService {
     return {
       id: event.id,
       title: event.title,
-      description: event.description,
-      location: event.location,
+      description: isRestrictedVisitor
+        ? '[Protected: Event details are visible to verified community members only]'
+        : event.description,
+      location: isRestrictedVisitor
+        ? '[Protected: Location visible to verified members only]'
+        : event.location,
       eventType: event.event_type,
       isTruePrivate: Boolean(event.is_true_private),
       startTime: event.start_time,
@@ -379,13 +397,20 @@ export class EventService {
       createdAt: event.created_at,
       updatedAt: event.updated_at,
       isPast,
-      isRestricted: isStandardPrivateGuest,
-      creator: {
-        id: event.creator_id,
-        name: event.creator_name,
-        email: event.creator_email,
-        avatarUrl: event.creator_avatar,
-      },
+      isRestricted: isRestrictedVisitor,
+      creator: isRestrictedVisitor
+        ? {
+            id: event.creator_id,
+            name: 'Private Organizer',
+            email: '[hidden]',
+            avatarUrl: null,
+          }
+        : {
+            id: event.creator_id,
+            name: event.creator_name,
+            email: event.creator_email,
+            avatarUrl: event.creator_avatar,
+          },
       tags: tags.map((t) => ({ id: t.id, name: t.name, colorHex: t.color_hex })),
       rsvpStats,
       attendees: attendees.map((a) => ({
