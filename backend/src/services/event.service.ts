@@ -181,6 +181,7 @@ export class EventService {
 
     // Pagination
     const events = await baseQuery.limit(limit).offset(offset);
+    events.reverse();
 
     // Fetch tags and RSVP stats for each event
     const eventIds = events.map((e) => e.id);
