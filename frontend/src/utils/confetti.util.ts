@@ -1,5 +1,6 @@
 import confetti from 'canvas-confetti';
 import { CONFETTI_COLORS } from '../constants/theme.constants';
+import { playCelebrationSound } from './audio.util';
 
 const EXTENDED_CONFETTI_COLORS = [
   ...CONFETTI_COLORS,
@@ -11,9 +12,12 @@ const EXTENDED_CONFETTI_COLORS = [
 
 /**
  * Triggers a vibrant, multi-cannon celebration confetti animation
- * with top-level z-index ensuring visibility over all UI layers.
+ * and celebratory fanfare audio effect.
  */
 export const triggerRsvpConfetti = () => {
+  // Play synthesized celebration chime / fanfare sound
+  playCelebrationSound();
+
   try {
     const fire =
       typeof confetti === 'function'
