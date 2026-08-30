@@ -15,6 +15,7 @@ import { EventItem } from '../types';
 import { format, parseISO } from 'date-fns';
 
 import { TagsPopover } from './TagsPopover';
+import { LocationHoverCard } from './LocationHoverCard';
 import { AuthContext } from '../contexts/AuthContext';
 import { DEFAULT_ASSETS, getDicebearAvatarUrl, APP_ROUTES } from '../constants';
 
@@ -180,13 +181,12 @@ export const EventCard: React.FC<EventCardProps> = ({
                   : format(startDate, 'EEE, MMM d, yyyy • h:mm a')}
               </span>
             </div>
-            <div className="flex items-center gap-2 truncate">
-              <MapPin className="w-4 h-4 text-rose-500 flex-shrink-0" />
-              <span className="truncate">
-                {isRestrictedPrivate
-                  ? 'Private Location • Verified Members Only'
-                  : event.location}
-              </span>
+            <div className="flex items-center gap-2 max-w-full">
+              <LocationHoverCard
+                location={event.location}
+                isRestricted={Boolean(isRestrictedPrivate)}
+                className="max-w-full"
+              />
             </div>
           </div>
         </div>

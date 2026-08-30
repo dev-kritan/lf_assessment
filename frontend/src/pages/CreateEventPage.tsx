@@ -428,7 +428,7 @@ export const CreateEventPage: React.FC = () => {
                     setLocation(val);
                     validateFieldOnChange('location', { location: val });
                   }}
-                  placeholder="e.g. Innovation Hub or Zoom URL"
+                  placeholder="e.g. Grand Hall or Zoom Link, or https://maps.app.goo.gl/..."
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
                     formErrors.location ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-800'
                   }`}

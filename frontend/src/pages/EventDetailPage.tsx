@@ -1,38 +1,38 @@
-import React, { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
 import {
-  useParams,
-  Link,
-  useNavigate,
-  useLocation,
-  useSearchParams,
-} from "react-router-dom";
-import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
-  MapPin,
-  Users,
-  Globe,
-  Lock,
-  Edit3,
-  Trash2,
-  ExternalLink,
-  ShieldCheck,
-  Loader2,
   Clock,
+  Edit3,
+  Globe,
+  Loader2,
+  Lock,
   LogIn,
-  AlertTriangle,
+  MapPin,
   RefreshCw,
+  ShieldCheck,
+  Trash2,
+  Users,
 } from "lucide-react";
-import { EventItem } from "../types";
+import React, { useEffect, useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { eventsApi } from "../api/events.api";
-import { RsvpButtonGroup } from "../components/RsvpButtonGroup";
-import { EventFormModal } from "../components/EventFormModal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { useToast } from "../contexts/ToastContext";
-import { useAuth } from "../contexts/AuthContext";
-import { format, parseISO } from "date-fns";
+import { EventFormModal } from "../components/EventFormModal";
+import { LocationHoverCard } from "../components/LocationHoverCard";
+import { RsvpButtonGroup } from "../components/RsvpButtonGroup";
 import { TagsPopover } from "../components/TagsPopover";
 import { APP_ROUTES, DEFAULT_ASSETS, getDicebearAvatarUrl } from "../constants";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import { EventItem } from "../types";
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -396,19 +396,19 @@ export const EventDetailPage: React.FC = () => {
       {/* Grid Layout: Details & Sidebar */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column (2 Cols): Information & Description */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 relative z-20">
           {/* Key Facts Card */}
-          <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+          <div className="glass-card rounded-3xl p-6 sm:p-7 border border-slate-200/80 dark:border-slate-800/80 shadow-md relative z-30">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
               Event Schedule & Location
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Date & Time */}
-              <div className="flex items-start gap-3.5">
+              <div className="flex items-start gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     Date & Time
                   </p>
@@ -437,12 +437,12 @@ export const EventDetailPage: React.FC = () => {
               </div>
 
               {/* Location */}
-              <div className="flex items-start gap-3.5">
+              <div className="flex items-start gap-3.5 min-w-0 overflow-hidden pr-2">
                 <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-5 h-5" />
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">
                     Location
                   </p>
                   {event.eventType === "private" &&
@@ -456,19 +456,10 @@ export const EventDetailPage: React.FC = () => {
                       </p>
                     </>
                   ) : (
-                    <>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-                        {event.location}
-                      </p>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1 font-semibold"
-                      >
-                        Open in Google Maps <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </>
+                    <LocationHoverCard
+                      location={event.location}
+                      variant="detail"
+                    />
                   )}
                 </div>
               </div>
@@ -476,7 +467,7 @@ export const EventDetailPage: React.FC = () => {
           </div>
 
           {/* Description Card */}
-          <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+          <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md relative z-10">
             <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
               About this Event
             </h2>
@@ -502,7 +493,7 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Tags & Categories Card */}
           {event.tags && event.tags.length > 0 && (
-            <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+            <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md relative z-10">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
                   Categories & Tags
@@ -530,7 +521,7 @@ export const EventDetailPage: React.FC = () => {
           )}
 
           {/* Attendees List Card */}
-          <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+          <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md relative z-10">
             {event.eventType === "private" &&
             (!isAuthenticated || (user && !user.isEmailVerified)) ? (
               <div className="py-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
@@ -694,7 +685,7 @@ export const EventDetailPage: React.FC = () => {
         </div>
 
         {/* Right Sidebar: RSVP Widget & Organizer Card */}
-        <div className="space-y-6">
+        <div className="space-y-6 relative z-10">
           {/* RSVP Widget: Full interactive for public events or verified private events; Locked card for unverified/guest private events */}
           {event.eventType === "public" ||
           (isAuthenticated && user?.isEmailVerified) ? (
