@@ -4,7 +4,7 @@ A production-grade, full-stack event planning and community web application buil
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 ### 1. Event Management Lifecycle
 
@@ -72,7 +72,7 @@ A production-grade, full-stack event planning and community web application buil
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer                | Technology                                 | Rationale                                                                                                 |
 | :------------------- | :----------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
@@ -90,7 +90,7 @@ A production-grade, full-stack event planning and community web application buil
 
 ---
 
-## 📐 Normalized Database Schema Design (3NF)
+## Normalized Database Schema Design (3NF)
 
 The relational database strictly adheres to Third Normal Form (3NF) with foreign key constraints, cascade rules, and composite indexes:
 
@@ -112,7 +112,7 @@ emp_allocation_log (allocation_id [PK], emp_id, project_name, allocated_role, al
 
 ---
 
-## 🚀 Setup & Local Execution Instructions
+## Setup & Local Execution Instructions
 
 ### Prerequisites
 
@@ -178,14 +178,15 @@ SMTP_PASS=
 SMTP_FROM="EventHub" <noreply@eventhub.local>
 ```
 
-#### 📧 How to Obtain & Configure SMTP Credentials (Optional)
+#### How to Obtain & Configure SMTP Credentials (Optional)
 
 Email delivery is used for the **Email Verification** flow. You can configure any of the following options in `backend/.env`:
 
 ##### Option A: Gmail SMTP (For Real Email Delivery)
+
 1. Go to your **[Google Account Security](https://myaccount.google.com/security)** page.
 2. Ensure **2-Step Verification** is enabled on your account.
-3. Search for **App passwords** in the top search bar (or navigate to *2-Step Verification* -> *App Passwords*).
+3. Search for **App passwords** in the top search bar (or navigate to _2-Step Verification_ -> _App Passwords_).
 4. Enter an App Name (e.g. `EventHub`) and click **Create**.
 5. Copy the generated **16-character password** (e.g. `abcd efgh ijkl mnop`).
 6. Set the values in `backend/.env`:
@@ -199,9 +200,10 @@ Email delivery is used for the **Email Verification** flow. You can configure an
    ```
 
 ##### Option B: Mailtrap (Recommended for Safe Sandbox Testing)
+
 1. Create a free account at **[Mailtrap.io](https://mailtrap.io/)**.
 2. Navigate to **Email Testing** -> **Inboxes** -> **My Inbox**.
-3. Under **Show Credentials**, select **Nodemailer** in the *Integrations* dropdown.
+3. Under **Show Credentials**, select **Nodemailer** in the _Integrations_ dropdown.
 4. Copy the credentials into `backend/.env`:
    ```env
    SMTP_HOST=smtp.mailtrap.io
@@ -214,6 +216,7 @@ Email delivery is used for the **Email Verification** flow. You can configure an
 5. All verification emails will be captured in your virtual Mailtrap inbox.
 
 ##### Option C: Mock Transport (Zero Setup / Default)
+
 - If `SMTP_USER` and `SMTP_PASS` are left empty, the application automatically uses Nodemailer's built-in stream transport without external network calls. Verification links and tokens will continue to function seamlessly in development and automated tests.
 
 ---
@@ -264,7 +267,7 @@ npm run dev:frontend
 
 ---
 
-### 🌐 Accessing the Application
+### Accessing the Application
 
 - **Frontend Web App**: [http://localhost:5173](http://localhost:5173)
 - **Backend API Base**: [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
@@ -272,7 +275,7 @@ npm run dev:frontend
 
 ---
 
-### 👥 Pre-seeded Demo Accounts for Testing
+### Pre-seeded Demo Accounts for Testing
 
 | Account                | Email               | Password       | Status / Permissions                      |
 | :--------------------- | :------------------ | :------------- | :---------------------------------------- |
@@ -284,7 +287,7 @@ _(Quick one-click demo login buttons are available directly on the login screen 
 
 ---
 
-## 🧪 Running Automated Test Suites
+## Running Automated Test Suites
 
 ```bash
 # Run all backend and frontend test suites
@@ -299,7 +302,7 @@ npm run test:frontend
 
 ---
 
-## 📚 RESTful API Specification (OpenAPI 3.0 / Swagger)
+## RESTful API Specification (OpenAPI 3.0 / Swagger)
 
 Interactive API documentation with live testing is available at [http://localhost:5000/api-docs](http://localhost:5000/api-docs).
 
@@ -357,7 +360,7 @@ Interactive API documentation with live testing is available at [http://localhos
 
 ---
 
-## 💡 Engineering Decisions & Architecture Rationale
+## Engineering Decisions & Architecture Rationale
 
 1. **Knex.js Query Builder over ORMs**:
    - Strictly adhering to the assessment guidelines avoiding heavyweight ORMs. Knex provides explicit SQL visibility, eliminates N+1 query overhead via multi-joins and correlated subqueries, and manages database migrations deterministically.
@@ -374,7 +377,7 @@ Interactive API documentation with live testing is available at [http://localhos
 
 ---
 
-## 📋 Assumptions & Business Logic Policies
+## Assumptions & Business Logic Policies
 
 1. **Event Privacy Model**:
    - **Public**: Open and discoverable by all visitors.
