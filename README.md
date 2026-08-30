@@ -1,6 +1,6 @@
 # EventHub — Full-Stack Event Planning & Community Platform
 
-A production-grade, full-stack event planning and community web application built according to the Technical Assessment specifications. The platform features secure JWT + 2FA authentication, complete event CRUD lifecycle, category & tag classification, interactive RSVP management with real-time capacity enforcement, server-side search, filtering, and pagination, structured logging, Knex.js query builder (**strictly no ORMs**), MySQL 8.0 database with Docker/Podman Compose, interactive Swagger API documentation, comprehensive test suites, and solutions for the Bonus SQL Analytics challenge.
+A production-grade, full-stack event planning and community web application built according to the Technical Assessment specifications. The platform features secure JWT + 2FA authentication, complete event CRUD lifecycle, category & tag classification, interactive RSVP management with capacity enforcement, server-side search, filtering, and pagination, structured logging, Knex.js query builder (**strictly no ORMs**), MySQL 8.0 database with Docker/Podman Compose, interactive Swagger API documentation, comprehensive test suites, and solutions for the Bonus SQL Analytics challenge.
 
 ---
 
