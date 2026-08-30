@@ -1,6 +1,6 @@
-import db from '../config/knex';
-import { TagService } from './tag.service';
-import { DB_TABLES, ERROR_CODES, PAGINATION_DEFAULTS } from '../constants';
+import db from "../config/knex";
+import { DB_TABLES, ERROR_CODES, PAGINATION_DEFAULTS } from "../constants";
+import { TagService } from "./tag.service";
 
 export interface EventQueryParams {
   page?: number;
@@ -8,19 +8,19 @@ export interface EventQueryParams {
   search?: string;
   tag?: string;
   tag_id?: number;
-  event_type?: 'all' | 'public' | 'private';
-  timeframe?: 'all' | 'upcoming' | 'past';
-  sort_by?: 'date' | 'popularity' | 'created_at';
-  sort_order?: 'asc' | 'desc';
+  event_type?: "all" | "public" | "private";
+  timeframe?: "all" | "upcoming" | "past";
+  sort_by?: "date" | "popularity" | "created_at";
+  sort_order?: "asc" | "desc";
   creator_id?: number;
-  my_rsvps?: 'all' | 'yes' | 'maybe' | 'no';
+  my_rsvps?: "all" | "yes" | "maybe" | "no";
 }
 
 export interface CreateEventInput {
   title: string;
   description: string;
   location: string;
-  event_type: 'public' | 'private';
+  event_type: "public" | "private";
   is_true_private?: boolean;
   start_time: string;
   end_time?: string | null;
@@ -31,30 +31,37 @@ export interface CreateEventInput {
 }
 
 export class EventService {
-  static async getEvents(params: EventQueryParams, currentUserId?: number, isVerified: boolean = false) {
+  static async getEvents(
+    params: EventQueryParams,
+    currentUserId?: number,
+    isVerified: boolean = false,
+  ) {
     const page = Math.max(1, Number(params.page || PAGINATION_DEFAULTS.PAGE));
-    const limit = Math.min(PAGINATION_DEFAULTS.MAX_LIMIT, Math.max(1, Number(params.limit || PAGINATION_DEFAULTS.LIMIT)));
+    const limit = Math.min(
+      PAGINATION_DEFAULTS.MAX_LIMIT,
+      Math.max(1, Number(params.limit || PAGINATION_DEFAULTS.LIMIT)),
+    );
     const offset = (page - 1) * limit;
 
     const baseQuery = db(DB_TABLES.EVENTS)
-      .leftJoin(DB_TABLES.USERS, 'events.creator_id', 'users.id')
+      .leftJoin(DB_TABLES.USERS, "events.creator_id", "users.id")
       .select(
-        'events.id',
-        'events.title',
-        'events.description',
-        'events.location',
-        'events.event_type',
-        'events.is_true_private',
-        'events.start_time',
-        'events.end_time',
-        'events.capacity',
-        'events.banner_url',
-        'events.created_at',
-        'events.updated_at',
-        'users.id as creator_id',
-        'users.name as creator_name',
-        'users.email as creator_email',
-        'users.avatar_url as creator_avatar'
+        "events.id",
+        "events.title",
+        "events.description",
+        "events.location",
+        "events.event_type",
+        "events.is_true_private",
+        "events.start_time",
+        "events.end_time",
+        "events.capacity",
+        "events.banner_url",
+        "events.created_at",
+        "events.updated_at",
+        "users.id as creator_id",
+        "users.name as creator_name",
+        "users.email as creator_email",
+        "users.avatar_url as creator_avatar",
       );
 
     // True Private events policy:
@@ -63,22 +70,22 @@ export class EventService {
     if (!currentUserId || !isVerified) {
       baseQuery.where((builder) => {
         builder
-          .where('events.is_true_private', false)
-          .orWhereNull('events.is_true_private');
+          .where("events.is_true_private", false)
+          .orWhereNull("events.is_true_private");
       });
     }
 
     // Filter by Event Type (if explicitly specified)
-    if (params.event_type && params.event_type !== 'all') {
-      baseQuery.where('events.event_type', params.event_type);
+    if (params.event_type && params.event_type !== "all") {
+      baseQuery.where("events.event_type", params.event_type);
     }
 
     // Filter by Timeframe (upcoming vs past)
     const nowDate = new Date();
-    if (params.timeframe === 'upcoming') {
-      baseQuery.where('events.start_time', '>=', nowDate);
-    } else if (params.timeframe === 'past') {
-      baseQuery.where('events.start_time', '<', nowDate);
+    if (params.timeframe === "upcoming") {
+      baseQuery.where("events.start_time", ">=", nowDate);
+    } else if (params.timeframe === "past") {
+      baseQuery.where("events.start_time", "<", nowDate);
     }
 
     // Search by title, description, or location
@@ -86,80 +93,90 @@ export class EventService {
       const searchTerm = `%${params.search.trim()}%`;
       baseQuery.where((builder) => {
         builder
-          .where('events.title', 'like', searchTerm)
-          .orWhere('events.description', 'like', searchTerm)
-          .orWhere('events.location', 'like', searchTerm);
+          .where("events.title", "like", searchTerm)
+          .orWhere("events.description", "like", searchTerm)
+          .orWhere("events.location", "like", searchTerm);
       });
     }
 
     // Filter by creator
     if (params.creator_id) {
-      baseQuery.where('events.creator_id', params.creator_id);
+      baseQuery.where("events.creator_id", params.creator_id);
     }
 
     // Filter by tag
     if (params.tag_id) {
       baseQuery.whereExists(function () {
-        this.select('*')
+        this.select("*")
           .from(DB_TABLES.EVENT_TAGS)
-          .whereRaw('event_tags.event_id = events.id')
-          .where('event_tags.tag_id', params.tag_id);
+          .whereRaw("event_tags.event_id = events.id")
+          .where("event_tags.tag_id", params.tag_id);
       });
     } else if (params.tag && params.tag.trim()) {
       baseQuery.whereExists(function () {
-        this.select('*')
+        this.select("*")
           .from(DB_TABLES.EVENT_TAGS)
-          .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
-          .whereRaw('event_tags.event_id = events.id')
-          .whereRaw('LOWER(tags.name) = ?', [params.tag!.trim().toLowerCase()]);
+          .join(DB_TABLES.TAGS, "event_tags.tag_id", "tags.id")
+          .whereRaw("event_tags.event_id = events.id")
+          .whereRaw("LOWER(tags.name) = ?", [params.tag!.trim().toLowerCase()]);
       });
     }
 
     // Filter by user's RSVPs
     if (params.my_rsvps && currentUserId) {
       baseQuery.whereExists(function () {
-        const sub = this.select('*')
+        const sub = this.select("*")
           .from(DB_TABLES.RSVPS)
-          .whereRaw('rsvps.event_id = events.id')
-          .where('rsvps.user_id', currentUserId);
-        if (params.my_rsvps !== 'all') {
-          sub.where('rsvps.status', params.my_rsvps);
+          .whereRaw("rsvps.event_id = events.id")
+          .where("rsvps.user_id", currentUserId);
+        if (params.my_rsvps !== "all") {
+          sub.where("rsvps.status", params.my_rsvps);
         }
       });
     }
 
     // Count total before pagination
-    const countQuery = db(DB_TABLES.EVENTS)
-      .modify((qb) => {
-        // Clone where conditions
-        (baseQuery as any)._statements.forEach((st: any) => {
-          if (st.grouping === 'where') {
-            qb.where(st);
-          }
-        });
+    const countQuery = db(DB_TABLES.EVENTS).modify((qb) => {
+      // Clone where conditions
+      (baseQuery as any)._statements.forEach((st: any) => {
+        if (st.grouping === "where") {
+          qb.where(st);
+        }
       });
-    
+    });
+
     // Perform counting directly using a subquery wrapper for safety
-    const totalResult = await db.from(baseQuery.clone().clearSelect().select('events.id').as('filtered_events')).count('* as count').first();
+    const totalResult = await db
+      .from(
+        baseQuery
+          .clone()
+          .clearSelect()
+          .select("events.id")
+          .as("filtered_events"),
+      )
+      .count("* as count")
+      .first();
     const total = Number(totalResult?.count || 0);
 
     // Sorting
-    const sortOrder = (params.sort_order || (params.timeframe === 'past' ? 'desc' : 'asc')).toLowerCase() as 'asc' | 'desc';
-    if (params.sort_by === 'popularity') {
+    const sortOrder = (
+      params.sort_order || (params.timeframe === "past" ? "desc" : "asc")
+    ).toLowerCase() as "asc" | "desc";
+    if (params.sort_by === "popularity") {
       // Sort by RSVP Yes count
       baseQuery
         .select(
           db.raw(
-            '(SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = events.id AND rsvps.status = "yes") as rsvp_yes_count'
-          )
+            '(SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = events.id AND rsvps.status = "yes") as rsvp_yes_count',
+          ),
         )
-        .orderBy('rsvp_yes_count', sortOrder)
-        .orderBy('events.start_time', 'asc');
-    } else if (params.sort_by === 'created_at') {
-      baseQuery.orderBy('events.created_at', sortOrder);
+        .orderBy("rsvp_yes_count", sortOrder)
+        .orderBy("events.start_time", "asc");
+    } else if (params.sort_by === "created_at") {
+      baseQuery.orderBy("events.created_at", sortOrder);
     } else {
       // Default: sort by start_time
-      baseQuery.orderBy('events.start_time', sortOrder);
+      baseQuery.orderBy("events.start_time", sortOrder);
     }
 
     // Pagination
@@ -168,15 +185,23 @@ export class EventService {
     // Fetch tags and RSVP stats for each event
     const eventIds = events.map((e) => e.id);
     let eventTagsMap: Record<number, any[]> = {};
-    let rsvpStatsMap: Record<number, { yes: number; maybe: number; no: number; total: number }> = {};
+    let rsvpStatsMap: Record<
+      number,
+      { yes: number; maybe: number; no: number; total: number }
+    > = {};
     let userRsvpMap: Record<number, string> = {};
 
     if (eventIds.length > 0) {
       // Fetch tags
       const tags = await db(DB_TABLES.EVENT_TAGS)
-        .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
-        .whereIn('event_tags.event_id', eventIds)
-        .select('event_tags.event_id', 'tags.id', 'tags.name', 'tags.color_hex');
+        .join(DB_TABLES.TAGS, "event_tags.tag_id", "tags.id")
+        .whereIn("event_tags.event_id", eventIds)
+        .select(
+          "event_tags.event_id",
+          "tags.id",
+          "tags.name",
+          "tags.color_hex",
+        );
 
       tags.forEach((t: any) => {
         const eId = Number(t.event_id);
@@ -190,10 +215,10 @@ export class EventService {
 
       // Fetch RSVP counts
       const rsvpCounts = await db(DB_TABLES.RSVPS)
-        .whereIn('event_id', eventIds)
-        .select('event_id', 'status')
-        .count('* as count')
-        .groupBy('event_id', 'status');
+        .whereIn("event_id", eventIds)
+        .select("event_id", "status")
+        .count("* as count")
+        .groupBy("event_id", "status");
 
       rsvpCounts.forEach((r: any) => {
         const eId = Number(r.event_id);
@@ -201,18 +226,18 @@ export class EventService {
           rsvpStatsMap[eId] = { yes: 0, maybe: 0, no: 0, total: 0 };
         }
         const count = Number(r.count);
-        if (r.status === 'yes') rsvpStatsMap[eId].yes = count;
-        if (r.status === 'maybe') rsvpStatsMap[eId].maybe = count;
-        if (r.status === 'no') rsvpStatsMap[eId].no = count;
+        if (r.status === "yes") rsvpStatsMap[eId].yes = count;
+        if (r.status === "maybe") rsvpStatsMap[eId].maybe = count;
+        if (r.status === "no") rsvpStatsMap[eId].no = count;
         rsvpStatsMap[eId].total += count;
       });
 
       // Fetch current user's RSVP status if logged in
       if (currentUserId) {
         const userRsvps = await db(DB_TABLES.RSVPS)
-          .whereIn('event_id', eventIds)
-          .where('user_id', currentUserId)
-          .select('event_id', 'status');
+          .whereIn("event_id", eventIds)
+          .where("user_id", currentUserId)
+          .select("event_id", "status");
 
         userRsvps.forEach((r: any) => {
           const eId = Number(r.event_id);
@@ -222,18 +247,24 @@ export class EventService {
     }
 
     const formattedEvents = events.map((e) => {
-      const parsedTime = typeof e.start_time === 'number' ? e.start_time : (!isNaN(Number(e.start_time)) && String(e.start_time).trim() !== '') ? Number(e.start_time) : e.start_time;
+      const parsedTime =
+        typeof e.start_time === "number"
+          ? e.start_time
+          : !isNaN(Number(e.start_time)) && String(e.start_time).trim() !== ""
+            ? Number(e.start_time)
+            : e.start_time;
       const isPast = new Date(parsedTime) < new Date();
-      const isRestricted = e.event_type === 'private' && (!currentUserId || !isVerified);
+      const isRestricted =
+        e.event_type === "private" && (!currentUserId || !isVerified);
 
       return {
         id: e.id,
         title: e.title,
         description: isRestricted
-          ? '[Protected: Event details are visible to verified community members only]'
+          ? "[Protected: Event details are visible to verified community members only]"
           : e.description,
         location: isRestricted
-          ? '[Protected: Location visible to verified members only]'
+          ? "[Protected: Location visible to verified members only]"
           : e.location,
         eventType: e.event_type,
         isTruePrivate: Boolean(e.is_true_private),
@@ -248,8 +279,8 @@ export class EventService {
         creator: isRestricted
           ? {
               id: e.creator_id,
-              name: 'Private Organizer',
-              email: '[hidden]',
+              name: "Private Organizer",
+              email: "[hidden]",
               avatarUrl: null,
             }
           : {
@@ -261,9 +292,11 @@ export class EventService {
         tags: eventTagsMap[e.id] || [],
         rsvpStats: isRestricted
           ? { yes: 0, maybe: 0, no: 0, total: 0 }
-          : (rsvpStatsMap[e.id] || { yes: 0, maybe: 0, no: 0, total: 0 }),
+          : rsvpStatsMap[e.id] || { yes: 0, maybe: 0, no: 0, total: 0 },
         userRsvp: userRsvpMap[e.id] || null,
-        isCreator: currentUserId ? Number(e.creator_id) === Number(currentUserId) : false,
+        isCreator: currentUserId
+          ? Number(e.creator_id) === Number(currentUserId)
+          : false,
       };
     });
 
@@ -282,32 +315,36 @@ export class EventService {
     };
   }
 
-  static async getEventById(id: number, currentUserId?: number, isVerified: boolean = false) {
+  static async getEventById(
+    id: number,
+    currentUserId?: number,
+    isVerified: boolean = false,
+  ) {
     const event = await db(DB_TABLES.EVENTS)
-      .leftJoin(DB_TABLES.USERS, 'events.creator_id', 'users.id')
-      .where('events.id', id)
+      .leftJoin(DB_TABLES.USERS, "events.creator_id", "users.id")
+      .where("events.id", id)
       .select(
-        'events.id',
-        'events.title',
-        'events.description',
-        'events.location',
-        'events.event_type',
-        'events.is_true_private',
-        'events.start_time',
-        'events.end_time',
-        'events.capacity',
-        'events.banner_url',
-        'events.created_at',
-        'events.updated_at',
-        'users.id as creator_id',
-        'users.name as creator_name',
-        'users.email as creator_email',
-        'users.avatar_url as creator_avatar'
+        "events.id",
+        "events.title",
+        "events.description",
+        "events.location",
+        "events.event_type",
+        "events.is_true_private",
+        "events.start_time",
+        "events.end_time",
+        "events.capacity",
+        "events.banner_url",
+        "events.created_at",
+        "events.updated_at",
+        "users.id as creator_id",
+        "users.name as creator_name",
+        "users.email as creator_email",
+        "users.avatar_url as creator_avatar",
       )
       .first();
 
     if (!event) {
-      const error: any = new Error('Event not found.');
+      const error: any = new Error("Event not found.");
       error.statusCode = 404;
       error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
@@ -315,35 +352,38 @@ export class EventService {
 
     // Logic 2: True Private event is strictly forbidden for unauthenticated or unverified visitors
     if (Boolean(event.is_true_private) && (!currentUserId || !isVerified)) {
-      const error: any = new Error('This event is strictly private. Please verify your email address to view details.');
+      const error: any = new Error(
+        "This event is strictly private. Please verify your email address to view details.",
+      );
       error.statusCode = 403;
       error.code = ERROR_CODES.PRIVATE_EVENT_FORBIDDEN;
       throw error;
     }
 
     // Logic 1: Standard Private event masks sensitive details (location, description, creator, attendees, rsvpStats) for unauthenticated or unverified visitors
-    const isRestrictedVisitor = event.event_type === 'private' && (!currentUserId || !isVerified);
+    const isRestrictedVisitor =
+      event.event_type === "private" && (!currentUserId || !isVerified);
 
     // Fetch tags
     const tags = await db(DB_TABLES.EVENT_TAGS)
-      .join(DB_TABLES.TAGS, 'event_tags.tag_id', 'tags.id')
-      .where('event_tags.event_id', id)
-      .select('tags.id', 'tags.name', 'tags.color_hex');
+      .join(DB_TABLES.TAGS, "event_tags.tag_id", "tags.id")
+      .where("event_tags.event_id", id)
+      .select("tags.id", "tags.name", "tags.color_hex");
 
     // Fetch RSVP stats (only if not a restricted private visitor)
     const rsvpStats = { yes: 0, maybe: 0, no: 0, total: 0 };
     if (!isRestrictedVisitor) {
       const rsvpCounts = await db(DB_TABLES.RSVPS)
-        .where('event_id', id)
-        .select('status')
-        .count('* as count')
-        .groupBy('status');
+        .where("event_id", id)
+        .select("status")
+        .count("* as count")
+        .groupBy("status");
 
       rsvpCounts.forEach((r) => {
         const count = Number(r.count);
-        if (r.status === 'yes') rsvpStats.yes = count;
-        if (r.status === 'maybe') rsvpStats.maybe = count;
-        if (r.status === 'no') rsvpStats.no = count;
+        if (r.status === "yes") rsvpStats.yes = count;
+        if (r.status === "maybe") rsvpStats.maybe = count;
+        if (r.status === "no") rsvpStats.no = count;
         rsvpStats.total += count;
       });
     }
@@ -352,16 +392,16 @@ export class EventService {
     let attendees: any[] = [];
     if (!isRestrictedVisitor) {
       attendees = await db(DB_TABLES.RSVPS)
-        .join(DB_TABLES.USERS, 'rsvps.user_id', 'users.id')
-        .where('rsvps.event_id', id)
+        .join(DB_TABLES.USERS, "rsvps.user_id", "users.id")
+        .where("rsvps.event_id", id)
         .select(
-          'users.id',
-          'users.name',
-          'users.avatar_url',
-          'rsvps.status',
-          'rsvps.updated_at'
+          "users.id",
+          "users.name",
+          "users.avatar_url",
+          "rsvps.status",
+          "rsvps.updated_at",
         )
-        .orderBy('rsvps.updated_at', 'desc')
+        .orderBy("rsvps.updated_at", "desc")
         .limit(PAGINATION_DEFAULTS.ATTENDEES_LIMIT);
     }
 
@@ -376,17 +416,23 @@ export class EventService {
       }
     }
 
-    const parsedTime = typeof event.start_time === 'number' ? event.start_time : (!isNaN(Number(event.start_time)) && String(event.start_time).trim() !== '') ? Number(event.start_time) : event.start_time;
+    const parsedTime =
+      typeof event.start_time === "number"
+        ? event.start_time
+        : !isNaN(Number(event.start_time)) &&
+            String(event.start_time).trim() !== ""
+          ? Number(event.start_time)
+          : event.start_time;
     const isPast = new Date(parsedTime) < new Date();
 
     return {
       id: event.id,
       title: event.title,
       description: isRestrictedVisitor
-        ? '[Protected: Event details are visible to verified community members only]'
+        ? "[Protected: Event details are visible to verified community members only]"
         : event.description,
       location: isRestrictedVisitor
-        ? '[Protected: Location visible to verified members only]'
+        ? "[Protected: Location visible to verified members only]"
         : event.location,
       eventType: event.event_type,
       isTruePrivate: Boolean(event.is_true_private),
@@ -401,8 +447,8 @@ export class EventService {
       creator: isRestrictedVisitor
         ? {
             id: event.creator_id,
-            name: 'Private Organizer',
-            email: '[hidden]',
+            name: "Private Organizer",
+            email: "[hidden]",
             avatarUrl: null,
           }
         : {
@@ -411,7 +457,11 @@ export class EventService {
             email: event.creator_email,
             avatarUrl: event.creator_avatar,
           },
-      tags: tags.map((t) => ({ id: t.id, name: t.name, colorHex: t.color_hex })),
+      tags: tags.map((t) => ({
+        id: t.id,
+        name: t.name,
+        colorHex: t.color_hex,
+      })),
       rsvpStats,
       attendees: attendees.map((a) => ({
         id: a.id,
@@ -421,7 +471,9 @@ export class EventService {
         updatedAt: a.updated_at,
       })),
       userRsvp,
-      isCreator: currentUserId ? Number(event.creator_id) === Number(currentUserId) : false,
+      isCreator: currentUserId
+        ? Number(event.creator_id) === Number(currentUserId)
+        : false,
     };
   }
 
@@ -438,7 +490,8 @@ export class EventService {
       }
     }
 
-    const isTruePrivate = data.event_type === 'private' ? Boolean(data.is_true_private) : false;
+    const isTruePrivate =
+      data.event_type === "private" ? Boolean(data.is_true_private) : false;
 
     return await db.transaction(async (trx) => {
       const [eventIdRaw] = await trx(DB_TABLES.EVENTS).insert({
@@ -454,7 +507,10 @@ export class EventService {
         banner_url: data.banner_url || null,
       });
 
-      const eventId = typeof eventIdRaw === 'object' ? (eventIdRaw as any).id || 1 : eventIdRaw;
+      const eventId =
+        typeof eventIdRaw === "object"
+          ? (eventIdRaw as any).id || 1
+          : eventIdRaw;
 
       if (finalTagIds.length > 0) {
         const tagRows = finalTagIds.map((tagId) => ({
@@ -468,24 +524,30 @@ export class EventService {
       await trx(DB_TABLES.RSVPS).insert({
         event_id: eventId,
         user_id: creatorId,
-        status: 'yes',
+        status: "yes",
       });
 
       return eventId;
     });
   }
 
-  static async updateEvent(id: number, data: Partial<CreateEventInput>, currentUserId: number) {
+  static async updateEvent(
+    id: number,
+    data: Partial<CreateEventInput>,
+    currentUserId: number,
+  ) {
     const existing = await db(DB_TABLES.EVENTS).where({ id }).first();
     if (!existing) {
-      const error: any = new Error('Event not found.');
+      const error: any = new Error("Event not found.");
       error.statusCode = 404;
       error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
     if (Number(existing.creator_id) !== Number(currentUserId)) {
-      const error: any = new Error('Forbidden: Only the event creator can edit this event.');
+      const error: any = new Error(
+        "Forbidden: Only the event creator can edit this event.",
+      );
       error.statusCode = 403;
       error.code = ERROR_CODES.FORBIDDEN;
       throw error;
@@ -493,22 +555,29 @@ export class EventService {
 
     const updateFields: any = {};
     if (data.title !== undefined) updateFields.title = data.title.trim();
-    if (data.description !== undefined) updateFields.description = data.description.trim();
-    if (data.location !== undefined) updateFields.location = data.location.trim();
+    if (data.description !== undefined)
+      updateFields.description = data.description.trim();
+    if (data.location !== undefined)
+      updateFields.location = data.location.trim();
     if (data.event_type !== undefined) {
       updateFields.event_type = data.event_type;
-      if (data.event_type === 'public') {
+      if (data.event_type === "public") {
         updateFields.is_true_private = false;
       }
     }
     if (data.is_true_private !== undefined) {
       const targetType = data.event_type || existing.event_type;
-      updateFields.is_true_private = targetType === 'private' ? Boolean(data.is_true_private) : false;
+      updateFields.is_true_private =
+        targetType === "private" ? Boolean(data.is_true_private) : false;
     }
-    if (data.start_time !== undefined) updateFields.start_time = new Date(data.start_time);
-    if (data.end_time !== undefined) updateFields.end_time = data.end_time ? new Date(data.end_time) : null;
-    if (data.capacity !== undefined) updateFields.capacity = data.capacity || null;
-    if (data.banner_url !== undefined) updateFields.banner_url = data.banner_url || null;
+    if (data.start_time !== undefined)
+      updateFields.start_time = new Date(data.start_time);
+    if (data.end_time !== undefined)
+      updateFields.end_time = data.end_time ? new Date(data.end_time) : null;
+    if (data.capacity !== undefined)
+      updateFields.capacity = data.capacity || null;
+    if (data.banner_url !== undefined)
+      updateFields.banner_url = data.banner_url || null;
     updateFields.updated_at = new Date();
 
     await db.transaction(async (trx) => {
@@ -546,66 +615,80 @@ export class EventService {
   static async deleteEvent(id: number, currentUserId: number) {
     const existing = await db(DB_TABLES.EVENTS).where({ id }).first();
     if (!existing) {
-      const error: any = new Error('Event not found.');
+      const error: any = new Error("Event not found.");
       error.statusCode = 404;
       error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
     if (Number(existing.creator_id) !== Number(currentUserId)) {
-      const error: any = new Error('Forbidden: Only the event creator can delete this event.');
+      const error: any = new Error(
+        "Forbidden: Only the event creator can delete this event.",
+      );
       error.statusCode = 403;
       error.code = ERROR_CODES.FORBIDDEN;
       throw error;
     }
 
     await db(DB_TABLES.EVENTS).where({ id }).del();
-    return { message: 'Event successfully deleted.' };
+    return { message: "Event successfully deleted." };
   }
 
   static async bulkDeleteEvents(eventIds: number[], currentUserId: number) {
     if (!eventIds || eventIds.length === 0) {
-      const error: any = new Error('No event IDs provided for deletion.');
+      const error: any = new Error("No event IDs provided for deletion.");
       error.statusCode = 400;
       error.code = ERROR_CODES.VALIDATION_ERROR;
       throw error;
     }
 
-    const events = await db(DB_TABLES.EVENTS).whereIn('id', eventIds);
+    const events = await db(DB_TABLES.EVENTS).whereIn("id", eventIds);
     if (events.length === 0) {
-      const error: any = new Error('No events found matching the provided IDs.');
+      const error: any = new Error(
+        "No events found matching the provided IDs.",
+      );
       error.statusCode = 404;
       error.code = ERROR_CODES.EVENT_NOT_FOUND;
       throw error;
     }
 
-    const unauthorized = events.filter((e) => Number(e.creator_id) !== Number(currentUserId));
+    const unauthorized = events.filter(
+      (e) => Number(e.creator_id) !== Number(currentUserId),
+    );
     if (unauthorized.length > 0) {
-      const error: any = new Error('Forbidden: You can only delete events that you created.');
+      const error: any = new Error(
+        "Forbidden: You can only delete events that you created.",
+      );
       error.statusCode = 403;
       error.code = ERROR_CODES.FORBIDDEN;
       throw error;
     }
 
     const deletedCount = await db(DB_TABLES.EVENTS)
-      .whereIn('id', eventIds)
-      .andWhere('creator_id', currentUserId)
+      .whereIn("id", eventIds)
+      .andWhere("creator_id", currentUserId)
       .del();
 
     return {
       deletedCount,
       deletedIds: events.map((e) => e.id),
-      message: `Successfully deleted ${deletedCount} event${deletedCount === 1 ? '' : 's'}.`,
+      message: `Successfully deleted ${deletedCount} event${deletedCount === 1 ? "" : "s"}.`,
     };
   }
 
   static async getEventMetrics() {
     const now = new Date();
-    const [totalEvents] = await db(DB_TABLES.EVENTS).count('* as count');
-    const [upcomingEvents] = await db(DB_TABLES.EVENTS).where('start_time', '>=', now).count('* as count');
-    const [pastEvents] = await db(DB_TABLES.EVENTS).where('start_time', '<', now).count('* as count');
-    const [totalRsvps] = await db(DB_TABLES.RSVPS).where('status', 'yes').count('* as count');
-    const [totalTags] = await db(DB_TABLES.TAGS).count('* as count');
+    const [totalEvents] = await db(DB_TABLES.EVENTS).count("* as count");
+    const [upcomingEvents] = await db(DB_TABLES.EVENTS)
+      .where("start_time", ">=", now)
+      .count("* as count");
+    const [pastEvents] = await db(DB_TABLES.EVENTS)
+      .where("start_time", "<", now)
+      .count("* as count");
+    const [totalRsvps] = await db(DB_TABLES.RSVPS)
+      .where("status", "yes")
+      .count("* as count");
+    const [totalTags] = await db(DB_TABLES.TAGS).count("* as count");
 
     return {
       totalEvents: Number(totalEvents?.count || 0),
