@@ -48,6 +48,28 @@ describe('LocationHoverCard Component', () => {
     );
   });
 
+  it('opens on click/tap in mobile mode and closes on outside click', async () => {
+    renderComponent({
+      location: 'Mobile Friendly Convention Center',
+    });
+
+    const trigger = screen.getByText('Mobile Friendly Convention Center');
+
+    // Click trigger to open
+    act(() => {
+      fireEvent.click(trigger);
+    });
+
+    expect(await screen.findByText('Venue Location')).toBeInTheDocument();
+
+    // Click outside to close
+    act(() => {
+      fireEvent.mouseDown(document.body);
+    });
+
+    expect(screen.queryByText('Venue Location')).not.toBeInTheDocument();
+  });
+
   it('renders truncated shared Google Maps link and displays full URL on hover', async () => {
     const mapUrl = 'https://maps.app.goo.gl/wrgoXz1zWgPPfmDv6';
     const { container } = renderComponent({

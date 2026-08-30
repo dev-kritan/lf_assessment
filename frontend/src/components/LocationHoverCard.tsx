@@ -19,6 +19,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastOpenedAtRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toastContext = useContext(ToastContext);
@@ -30,15 +31,72 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       closeTimeoutRef.current = null;
     }
     if (!isRestricted && location) {
+      lastOpenedAtRef.current = Date.now();
       setIsOpen(true);
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    // Only close if mouse genuinely moved outside the entire container boundary
+    if (
+      containerRef.current &&
+      e.relatedTarget &&
+      containerRef.current.contains(e.relatedTarget as Node)
+    ) {
+      return;
+    }
+
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
     closeTimeoutRef.current = setTimeout(() => {
       setIsOpen(false);
-    }, 200);
+    }, 300);
   };
+
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isRestricted && location) {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+
+      // Prevent mobile tap burst collision (mouseenter immediately followed by click in the same tap)
+      const now = Date.now();
+      if (!isOpen || now - lastOpenedAtRef.current > 400) {
+        setIsOpen((prev) => {
+          const next = !prev;
+          if (next) lastOpenedAtRef.current = Date.now();
+          return next;
+        });
+      }
+    }
+  };
+
+  // Close when clicking or tapping outside on mobile or desktop
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     return () => {
@@ -80,10 +138,12 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="flex flex-col min-w-0 max-w-full">
+        <div
+          className="flex flex-col min-w-0 max-w-full group/detail cursor-pointer"
+          onClick={handleToggleClick}
+        >
           <span
-            className="text-sm font-bold text-slate-900 dark:text-white truncate block max-w-[180px] sm:max-w-[220px] md:max-w-[260px]"
-            title={parsed.displayText}
+            className="text-sm font-bold text-slate-900 dark:text-white group-hover/detail:text-indigo-600 dark:group-hover/detail:text-indigo-400 transition-colors truncate block max-w-[180px] sm:max-w-[220px] md:max-w-[260px]"
           >
             {parsed.displayText}
           </span>
@@ -103,7 +163,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         {/* Floating Glassmorphic Hover Card for Detail Page */}
         {isOpen && (
           <div
-            className="absolute left-0 top-full mt-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
+            className="absolute left-0 top-full mt-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800/80">
@@ -115,7 +175,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
                 type="button"
                 onClick={handleCopy}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                title="Copy Address / URL"
+                aria-label="Copy Address / URL"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
@@ -152,7 +212,10 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="flex items-center gap-2 max-w-full group/loc cursor-pointer">
+      <div
+        className="flex items-center gap-2 max-w-full group/loc cursor-pointer"
+        onClick={handleToggleClick}
+      >
         <MapPin className="w-4 h-4 text-rose-500 flex-shrink-0 transition-transform group-hover/loc:scale-110" />
         <span className="truncate text-xs text-slate-600 dark:text-slate-300 group-hover/loc:text-indigo-600 dark:group-hover/loc:text-indigo-400 transition-colors">
           {parsed.displayText}
@@ -165,7 +228,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       {/* Modern Interactive Glassmorphic Hover Card */}
       {isOpen && (
         <div
-          className="absolute left-0 bottom-full mb-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
+          className="absolute left-0 bottom-full mb-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-bottom-3 before:left-0 before:right-0 before:h-3"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

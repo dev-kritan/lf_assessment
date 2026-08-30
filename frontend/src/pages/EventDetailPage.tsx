@@ -437,7 +437,7 @@ export const EventDetailPage: React.FC = () => {
               </div>
 
               {/* Location */}
-              <div className="flex items-start gap-3.5 min-w-0 overflow-hidden pr-2">
+              <div className="flex items-start gap-3.5 min-w-0 pr-2">
                 <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-5 h-5" />
                 </div>

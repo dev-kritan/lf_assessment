@@ -47,7 +47,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isPast = event.isPast;
 
   return (
-    <div className={`group relative rounded-3xl overflow-hidden glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
+    <div className={`group relative rounded-3xl overflow-visible hover:z-30 glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
       isSelected
         ? 'ring-2 ring-indigo-500 border-indigo-500 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/30'
         : isPast 
@@ -55,7 +55,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         : 'border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-500/40 dark:hover:border-indigo-400/40'
     }`}>
       {/* Banner / Header Visual */}
-      <div className="relative h-48 w-full overflow-hidden bg-slate-800">
+      <div className="relative h-48 w-full overflow-hidden rounded-t-3xl bg-slate-800">
         <Link to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)} className="block w-full h-full">
           <img
             src={event.bannerUrl || DEFAULT_ASSETS.EVENT_CARD_BANNER}
