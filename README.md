@@ -1,66 +1,98 @@
-# EventHub — Full-Stack Event Planning Application
+# EventHub — Full-Stack Event Planning & Community Platform
 
-A production-grade, full-stack event planning web application built according to the Technical Assessment specifications. The project features secure JWT + 2FA authentication, complete event CRUD lifecycle, category & tag classification, RSVP management with real-time capacity enforcement, server-side search, filtering, and pagination, structured logging, Knex.js query builder (**strictly no ORMs**), MySQL database with Docker Compose, interactive Swagger API documentation, unit test suites, and solutions for the Bonus SQL Analytics challenge.
+A production-grade, full-stack event planning and community web application built according to the Technical Assessment specifications. The platform features secure JWT + 2FA authentication, complete event CRUD lifecycle, category & tag classification, interactive RSVP management with real-time capacity enforcement, server-side search, filtering, and pagination, structured logging, Knex.js query builder (**strictly no ORMs**), MySQL 8.0 database with Docker/Podman Compose, interactive Swagger API documentation, comprehensive test suites, and solutions for the Bonus SQL Analytics challenge.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. Event Management
-- **Create Events**: Rich inputs for title, description, start/end dates, location, max capacity, banner cover image, and category tags.
-- **Edit & Delete Events**: Protected by creator-only authorization checks with real-time validation.
-- **Browse & Filter**: Dedicated views for **Upcoming** and **Past** events.
-- **Event Privacy**: Support for **Public** (open to everyone) and **Private** (exclusive to signed-in community members) events.
-- **Search & Sorting**: Instant server-side search across title, description, or venue location; sorting by Date (`start_time`), RSVP Popularity (`rsvp_count`), or Recently Created (`created_at`).
-- **Event Details View**: Deep-dive page with date countdown, interactive Google Maps link, creator profile, full description, capacity indicator, and live attendee list.
+### 1. Event Management Lifecycle
 
-### 2. Tags & Categories
-- **Multi-tag Assignment**: Assign multiple tags to events (e.g. `Conference`, `Workshop`, `Meetup`, `Birthday`, `Tech`, `Design`, `Networking`).
-- **Dynamic Custom Tag Creation**: Create custom tags with unique color hex codes directly from the event creation modal.
-- **Interactive Tag Filtering**: Filter events by clicking tag chips with active counts.
+- **Create & Publish Events**: Rich inputs for title, description, start/end dates with date-ordering validation, venue location, max capacity, banner cover images (with random Unsplash generator), and multi-tag categorization.
+- **Event Privacy & Confidentiality Levels**:
+  - **Public Events**: Discoverable by all visitors and guests.
+  - **Private Events**: Visible in listings with confidential schedule/location indicators for signed-in members.
+  - **True Private Events**: Restricted exclusively to verified community members with locked information cards and protected attendee rosters.
+- **Edit & Delete Events**: Protected by creator-only authorization checks with real-time validation and confirmation dialogs.
+- **Search, Sorting & Timeframe Filtering**:
+  - Instant server-side search across title, description, and venue location with debounced input.
+  - Dedicated timeframe navigation: **Upcoming** vs **Past** events.
+  - Multi-criteria sorting: by **Date** (`start_time`), **RSVP Popularity** (`rsvp_count`), or **Recently Created** (`created_at`).
+- **Deep-Dive Event Detail View**: Interactive schedule breakdown, external Google Maps navigation links, creator profile badge, full description, capacity indicator, and live attendee roster.
 
-### 3. Authentication & Security
-- **JWT Authentication**: Short-lived access tokens (15m) with secure refresh token rotation in database (7d).
-- **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) compatible with Google Authenticator, Authy, and 1Password with QR code setup.
-- **Email Verification Flow**: Tokenized email confirmation endpoint and UI verification badge.
-- **Creator Authorization**: Strict backend and frontend ownership validation so only the creator can edit or delete an event.
+### 2. Authentication, 2FA & Verification Security
+
+- **JWT Authentication & Token Rotation**: Short-lived access tokens (15m) with cryptographically hashed refresh tokens rotated and stored in the database (7d) for immediate revocation on logout.
+- **Two-Factor Authentication (2FA)**: Standard RFC 6238 Time-based One-Time Password (TOTP) compatible with Google Authenticator, Authy, and 1Password with QR code setup and 6-digit challenge verification on login.
+- **Email Verification Guard Flow**:
+  - Tokenized email confirmation endpoint with single-use verification links.
+  - Action Guards: Unverified users attempting to create events, RSVP ("Going", "Maybe", "No"), or access protected features are smoothly redirected to the Profile page with the **Email Verification Card** highlighted (`ring-4`, glowing shadow, pulsing action banner) and automatically scrolled into view.
+  - In-app "Send Verification Link" / "Resend Verification Link" controls with immediate UI feedback.
 - **Security Headers & Hashing**: Salted password hashing via `bcryptjs` (10 rounds), Helmet security headers, CORS origin whitelisting, and rate limiting.
 
-### 4. Interactive RSVP System
-- **RSVP Options**: Users can respond with **Going (Yes)**, **Interested (Maybe)**, or **Can't Go (No)**.
-- **Capacity Limits**: Real-time enforcement prevents excess "Yes" RSVPs when an event reaches maximum capacity while still allowing "Maybe" responses.
-- **Live Attendee Tracking**: Real-time attendee counter and attendee avatar list with response statuses.
-- **My Events & RSVPs Dashboard**: Dedicated dashboard tab tracking all events created by the user and all events the user has RSVP'd to.
-- **Celebration Effects**: Interactive confetti animation on confirmed RSVPs.
+### 3. Interactive RSVP System
 
-### 5. Bonus Section: Employee Designation & Allocation SQL Analytics
-- **Integrated SQL Analytics Runner**: Interactive playground for **Q1**, **Q2**, and **Q4** executing against the live MySQL dataset.
-- **Window Functions**: Implementation of `ROW_NUMBER()`, `LAG()`, `LEAD()`, correlated subqueries, and deterministic tie-breaking.
-- **In-App Modal Viewers**: View the full 167-line SQL script and markdown answers guide directly inside the application with one-click copy and download options.
+- **RSVP Status Options**: Users can respond with **Going (Yes)**, **Interested (Maybe)**, or **Can't Go (No)**.
+- **Capacity Limits Enforcement**: Real-time server and client enforcement prevents excess "Yes" RSVPs when an event reaches maximum capacity while continuing to allow "Maybe" and "No" responses.
+- **Intent-Preserving Auto-RSVP**: When an unauthenticated visitor clicks an RSVP button, they are seamlessly redirected to login with their intended action preserved (`?auto_rsvp=yes`), automatically completing the RSVP upon successful authentication.
+- **Live Attendee Tracking**: Filterable community attendee roster (All, Going, Maybe, No) with user avatars and response timestamps.
+- **Celebration Feedback**: Interactive confetti animation on confirmed "Going" RSVPs.
+
+### 4. Tag & Category Management System
+
+- **Custom Color-Coded Tags**: Assign and create custom tags with hex color codes and curated color swatches.
+- **Tag Usage Safety Checks**: Tag edit and delete dialogs (`TagEditModal`, `TagDeleteModal`) with live usage inspection (`/tags/:id/usage`) preventing accidental removal of active tags.
+- **Overflow Tag Popover**: Clean badge rendering with expandable popover (`TagsPopover`) for events with numerous tags.
+- **Duplicate Prevention**: Case-insensitive tag matching ensuring consistent category reuse.
+
+### 5. Metrics & Analytics Drawer
+
+- **Overview Stat Cards**: Dynamic counters for Total Events, Upcoming Events, Past Events, and Total RSVPs with count badges.
+- **Interactive Sliding Analytics Drawer**: In-depth analytical breakdown featuring timeframe distribution, capacity utilization metrics, category frequency charts, and quick-filter navigation.
+
+### 6. Bulk Operations & Management Dashboard
+
+- **My Events & RSVPs Dashboard**: Dual-tab dashboard tracking all events created by the user and all events the user has RSVP'd to.
+- **Bulk Event Deletion**: Multi-select checkboxes on created events allowing bulk removal via a safety confirmation dialog.
+- **Bulk RSVP Removal**: Multi-select selection for withdrawing multiple event RSVPs in a single operation.
+
+### 7. Server-Side Pagination & URL State Synchronization
+
+- **Configurable Page Limits**: Select between `3`, `6`, `9`, `12`, or `24` items per page.pez
+- **URL Query State Persistence**: Filter, search, sorting, page number, limit, and active tab selections are synchronized in URL search params (`?timeframe=upcoming&sort_by=popularity&page=1&limit=6&search=meetup`), preserving exact view state on page refresh and back-navigation.
+
+### 8. Theme Engine
+
+- **Theme Mode Switcher**: Supports **System Auto**, **Dark Mode**, and **Light Mode** with immediate CSS variable adaptation and `localStorage` persistence.
+
+### 9. Bonus Challenge: SQL Analytics & Playground
+
+- **Live SQL Analytics Runner**: Interactive playground executing **Q1** (Current Designation), **Q2** (Timeline with `LAG`/`LEAD`), and **Q4** (Designation at Project Allocation) against the live MySQL dataset with query execution time benchmarking.
+- **In-App Modal Code Viewers**: Built-in modal viewers for the complete SQL solution script and analytical markdown documentation with one-click clipboard copying and dynamic browser Blob downloads.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Rationale |
-| :--- | :--- | :--- |
-| **Frontend** | **React 18 + TypeScript (Vite)** | High-performance build tooling, strict type safety, responsive UI, component reusability. |
-| **Styling** | **Tailwind CSS + CSS Design System** | Curated palette, dark/light theme support, glassmorphism, responsive micro-animations. |
-| **Backend** | **Node.js + Express with TypeScript** | Robust RESTful API architecture, modular service/controller layers, typed middleware. |
-| **Query Builder** | **Knex.js (Strictly No ORMs)** | Direct SQL query control, transaction management, migration scripts, and seeders without ORM overhead. |
-| **Database** | **MySQL 8.0** | Normalized 3NF relational database schema with foreign key integrity and indexes. |
-| **Containerization** | **Docker Compose** | One-command local database service provisioning with persistent volumes and healthchecks. |
-| **Validation** | **Zod** | Type-safe schema validation on both incoming request payloads and query filters. |
-| **Security** | **JWT, bcryptjs, Speakeasy, Helmet, CORS** | Salted password hashing, TOTP 2FA, HTTP-only refresh tokens, secure response headers. |
-| **Logging** | **Winston + Morgan** | Multi-transport structured JSON logger (error logs, combined logs, colored console output). |
-| **API Docs** | **Swagger UI / OpenAPI 3.0** | Interactive documentation accessible live at `/api-docs`. |
-| **Testing** | **Jest + Supertest + Vitest** | Automated backend integration tests and frontend component unit tests. |
+| Layer                | Technology                                 | Rationale                                                                                                 |
+| :------------------- | :----------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| **Frontend**         | **React 18 + TypeScript (Vite)**           | Fast development cycle, strict type safety, responsive component architecture.                            |
+| **Styling**          | **Tailwind CSS + CSS Design Tokens**       | Curated palette, dark/light theme switching, glassmorphism cards, micro-animations.                       |
+| **Backend**          | **Node.js + Express with TypeScript**      | Scalable RESTful API architecture, modular service/controller layers, typed middleware.                   |
+| **Query Builder**    | **Knex.js (Strictly No ORMs)**             | Direct SQL query control, transaction management, migration scripts, and seeders without ORM overhead.    |
+| **Database**         | **MySQL 8.0**                              | Normalized 3NF relational database schema with foreign key integrity and indexes.                         |
+| **Containerization** | **Docker / Podman Compose**                | Reproducible local database service provisioning with persistent volumes and healthchecks.                |
+| **Validation**       | **Zod**                                    | Type-safe schema validation on incoming request payloads and query parameters.                            |
+| **Security**         | **JWT, bcryptjs, Speakeasy, Helmet, CORS** | Salted password hashing, TOTP 2FA, HTTP-only refresh tokens, secure response headers.                     |
+| **Logging**          | **Winston + Morgan**                       | Structured JSON logging with multi-transport loggers (error logs, combined logs, colored console output). |
+| **API Docs**         | **Swagger UI / OpenAPI 3.0**               | Interactive documentation accessible live at `/api-docs`.                                                 |
+| **Testing**          | **Jest + Supertest + Vitest**              | Automated backend integration test suite and frontend unit/integration test suite.                        |
 
 ---
 
-## 📐 Normalized Database Schema Design
+## 📐 Normalized Database Schema Design (3NF)
 
-The relational database adheres strictly to Third Normal Form (3NF):
+The relational database strictly adheres to Third Normal Form (3NF) with foreign key constraints, cascade rules, and composite indexes:
 
 ```
 users (id, name, email, password_hash, is_email_verified, two_factor_enabled, two_factor_secret, avatar_url, created_at, updated_at)
@@ -83,9 +115,10 @@ emp_allocation_log (allocation_id [PK], emp_id, project_name, allocated_role, al
 ## 🚀 Setup & Local Execution Instructions
 
 ### Prerequisites
+
 - **Node.js**: v18+ (tested on Node v20/v22/v24)
 - **npm**: v9+
-- **Docker & Docker Compose** (for running the MySQL container)
+- **Docker** or **Podman** with Compose (for running the MySQL container)
 
 ---
 
@@ -111,7 +144,8 @@ Create the backend environment configuration file from the example template:
 cp backend/.env.example backend/.env
 ```
 
-*Default environment variables configured in `backend/.env`:*
+_Default environment variables configured in `backend/.env`:_
+
 ```env
 PORT=5000
 NODE_ENV=development
@@ -133,17 +167,18 @@ COOKIE_SECRET=super-secret-cookie-signing-key
 
 ---
 
-### Step 3: Start MySQL Database via Docker Compose
+### Step 3: Start MySQL Database via Docker/Podman Compose
 
 ```bash
-# Start MySQL 8 container in background
+# Start MySQL 8 container in background (Docker or Podman)
 docker compose up -d
+# or: podman compose up -d
 
 # Verify container status is healthy
 docker compose ps
 ```
 
-*Note: The MySQL container is mapped to port `3306` with database `event_planner_db`, user `eventuser`, and password `eventpassword`.*
+_Note: The container maps to port `3306` with database `event_planner_db`, user `eventuser`, and password `eventpassword`._
 
 ---
 
@@ -167,11 +202,12 @@ npm run dev
 ```
 
 Alternatively, you can run them in separate terminals:
+
 ```bash
-# Terminal 1: Backend
+# Terminal 1: Backend API
 npm run dev:backend
 
-# Terminal 2: Frontend
+# Terminal 2: Frontend Client
 npm run dev:frontend
 ```
 
@@ -179,21 +215,21 @@ npm run dev:frontend
 
 ### 🌐 Accessing the Application
 
-- **Frontend Application**: [http://localhost:5173](http://localhost:5173)
+- **Frontend Web App**: [http://localhost:5173](http://localhost:5173)
 - **Backend API Base**: [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
 - **Interactive Swagger Documentation**: [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
 
 ---
 
-### 👥 Pre-seeded Demo Accounts for Instant Testing
+### 👥 Pre-seeded Demo Accounts for Testing
 
-| Account | Email | Password | Role / Access |
-| :--- | :--- | :--- | :--- |
-| **Alice (Organizer)** | `alice@example.com` | `Password123!` | Event Host & Creator (Verified) |
-| **Bob (Attendee)** | `bob@example.com` | `Password123!` | Active Community Member (Verified) |
-| **Carol (New User)** | `carol@example.com` | `Password123!` | Unverified User |
+| Account                | Email               | Password       | Status / Permissions                      |
+| :--------------------- | :------------------ | :------------- | :---------------------------------------- |
+| **Alice (Organizer)**  | `alice@example.com` | `Password123!` | Verified Event Host & Creator             |
+| **Bob (Attendee)**     | `bob@example.com`   | `Password123!` | Verified Community Member                 |
+| **Carol (Unverified)** | `carol@example.com` | `Password123!` | Unverified User (Tests Verification Flow) |
 
-*(Quick one-click demo login buttons are also available directly on the login screen for instant evaluation.)*
+_(Quick one-click demo login buttons are available directly on the login screen for rapid evaluation.)_
 
 ---
 
@@ -206,48 +242,63 @@ npm test
 # Run backend integration tests only (Jest + Supertest)
 npm run test:backend
 
-# Run frontend unit tests only (Vitest)
+# Run frontend unit & component tests only (Vitest + React Testing Library)
 npm run test:frontend
 ```
 
 ---
 
-## 📚 API Documentation (Swagger / OpenAPI 3.0)
+## 📚 RESTful API Specification (OpenAPI 3.0 / Swagger)
 
-Interactive documentation is served live at [http://localhost:5000/api-docs](http://localhost:5000/api-docs).
+Interactive API documentation with live testing is available at [http://localhost:5000/api-docs](http://localhost:5000/api-docs).
 
-### Key Endpoints:
+### API Endpoints Summary:
 
 #### Authentication & Profile
+
 - `POST /api/v1/auth/register` — Register a new user account
-- `POST /api/v1/auth/login` — Sign in and obtain access + refresh tokens (supports 2FA challenge)
-- `POST /api/v1/auth/refresh-token` — Rotate and obtain fresh access token
-- `POST /api/v1/auth/logout` — Revoke active refresh token and clear auth session
-- `GET /api/v1/auth/profile` — Get current user profile (authenticated)
-- `POST /api/v1/auth/verify-email` — Verify user email address with token
-- `POST /api/v1/auth/request-verification` — Send new email verification token
+- `POST /api/v1/auth/login` — Sign in with email and password (supports 2FA challenge)
+- `POST /api/v1/auth/refresh-token` — Rotate and issue a fresh access token
+- `POST /api/v1/auth/logout` — Revoke active refresh token and invalidate auth session
+- `GET /api/v1/auth/profile` — Get authenticated user profile & security status
+- `POST /api/v1/auth/verify-email` — Verify user email address with verification token
+- `POST /api/v1/auth/request-verification` — Send new email verification link to authenticated user
+- `POST /api/v1/auth/resend-verification` — Resend verification link to specified email address
 
-#### Two-Factor Authentication (2FA)
-- `POST /api/v1/2fa/setup` — Generate TOTP secret and QR code Data URL
-- `POST /api/v1/2fa/enable` — Verify 6-digit TOTP code and enable 2FA
-- `POST /api/v1/2fa/disable` — Verify 6-digit TOTP code and disable 2FA
+#### Two-Factor Authentication (TOTP 2FA)
 
-#### Events & Categories
-- `GET /api/v1/events` — List events with server-side pagination, search, tag filters, and timeframe
+- `POST /api/v1/auth/2fa/setup` — Generate TOTP secret and QR code Data URL
+- `POST /api/v1/auth/2fa/enable` — Verify 6-digit TOTP code and enable 2FA
+- `POST /api/v1/auth/2fa/disable` — Verify 6-digit TOTP code and disable 2FA
+
+#### Events Management
+
+- `GET /api/v1/events` — List events with server-side pagination, search, tag filters, sorting, and timeframe
 - `GET /api/v1/events/metrics` — Aggregate metrics (total events, upcoming, past, total RSVPs)
-- `GET /api/v1/events/:id` — Get full event details, creator, tags, and attendee breakdown
-- `POST /api/v1/events` — Create new event (authenticated)
-- `PUT /api/v1/events/:id` — Update event (creator authorization required)
-- `DELETE /api/v1/events/:id` — Delete event (creator authorization required)
-- `GET /api/v1/tags` — List all available tags with usage counts
-- `POST /api/v1/tags` — Create a new custom tag with color
+- `GET /api/v1/events/:id` — Get full event details, creator info, tags, and attendee list
+- `POST /api/v1/events` — Create new event (verified authenticated user required)
+- `PUT /api/v1/events/:id` — Update event details (creator authorization required)
+- `DELETE /api/v1/events/:id` — Delete single event (creator authorization required)
+- `POST /api/v1/events/bulk-delete` — Bulk delete multiple events owned by user
 
-#### RSVPs & Attendees
-- `GET /api/v1/events/:id/attendees` — List all attendee avatars and RSVP responses for an event
-- `POST /api/v1/events/:id/rsvps` — Set user RSVP status (`yes`, `maybe`, `no`)
-- `GET /api/v1/rsvps/me` — Get all events the authenticated user has RSVP'd to
+#### Category & Tag Management
+
+- `GET /api/v1/tags` — List all available tags with usage counts and search
+- `POST /api/v1/tags` — Create a new custom tag with color hex
+- `PUT /api/v1/tags/:id` — Update tag name and color hex
+- `DELETE /api/v1/tags/:id` — Delete unused tag
+- `GET /api/v1/tags/:id/usage` — Inspect events currently using a specific tag
+
+#### RSVPs & Attendance
+
+- `GET /api/v1/events/:id/attendees` — List attendee avatars and RSVP responses for an event
+- `POST /api/v1/events/:id/rsvps` — Set user RSVP response (`yes`, `maybe`, `no`) with capacity checks
+- `DELETE /api/v1/rsvps/events/:id` — Remove user RSVP for an event
+- `GET /api/v1/rsvps/me` — Get all events the authenticated user has RSVP'd to with pagination
+- `POST /api/v1/rsvps/bulk-delete` — Bulk remove user RSVPs across multiple events
 
 #### Bonus Challenge SQL Analytics
+
 - `GET /api/v1/bonus/data` — Fetch raw dataset from `emp_designation_log` and `emp_allocation_log`
 - `GET /api/v1/bonus/q1` — Execute Q1 SQL query (Current Designation per employee)
 - `GET /api/v1/bonus/q2` — Execute Q2 SQL query (Timeline with `LAG` and `LEAD`)
@@ -258,31 +309,31 @@ Interactive documentation is served live at [http://localhost:5000/api-docs](htt
 ## 💡 Engineering Decisions & Architecture Rationale
 
 1. **Knex.js Query Builder over ORMs**:
-   - Strictly followed the assessment requirement avoiding heavyweight ORMs (TypeORM, Prisma). Knex gives explicit query visibility, avoids N+1 query traps through clean multi-join and subquery strategies, and facilitates deterministic migration and seed scripts.
-2. **Short-Lived JWT + Refresh Token Rotation in Database**:
-   - Access tokens expire in 15 minutes to minimize exposure in case of client-side compromise. Refresh tokens are cryptographically hashed and persisted with expiration dates in the database, allowing immediate token revocation on logout and preventing replay attacks.
+   - Strictly adhering to the assessment guidelines avoiding heavyweight ORMs. Knex provides explicit SQL visibility, eliminates N+1 query overhead via multi-joins and correlated subqueries, and manages database migrations deterministically.
+2. **Short-Lived JWT + Database Refresh Token Rotation**:
+   - Access tokens expire in 15 minutes to limit exposure. Refresh tokens are cryptographically hashed and persisted in MySQL with expiration dates, enabling immediate token revocation on logout and preventing replay attacks.
 3. **RFC 6238 TOTP Two-Factor Authentication**:
-   - Utilizes standard RFC 6238 TOTP algorithms via `speakeasy` and `qrcode`, making it universally compatible with Google Authenticator, Authy, and iOS Keychain. When 2FA is enabled, the login endpoint responds with a secure temporary challenge token requiring 6-digit TOTP verification before issuing session tokens.
-4. **Zod Validation & Centralized Error Formatting**:
-   - Standardized error schema (`{ success: false, error: { message, code, details } }`) provides predictable frontend error handling and inline form validation feedback for both body payloads and query parameters.
+   - Implements standard RFC 6238 TOTP algorithms via `speakeasy` and `qrcode`, ensuring compatibility with standard authenticator applications without external service dependencies.
+4. **Zod Type-Safe Validation & Standardized API Responses**:
+   - Standardized API payload contracts (`{ success: boolean, data?: T, error?: { message, code, details }, message?: string }`) providing uniform error handling, inline form feedback, and query parsing.
 5. **Database Indexing & Normalization (3NF)**:
-   - Created composite indexes on `(emp_id, effective_date)` for designation queries, foreign keys (`creator_id`, `event_id`, `tag_id`, `user_id`), and filter columns (`start_time`, `event_type`, `is_true_private`) to optimize large-scale query performance.
-6. **In-App Interactive Modal Viewers**:
-   - Built dedicated in-app modal viewers for SQL code and markdown documentation to eliminate browser download flashes and deliver a seamless reading and code copying experience.
+   - Optimized composite indexes on `(emp_id, effective_date, txn_id)` for analytical queries, foreign keys (`creator_id`, `event_id`, `tag_id`, `user_id`), and filter columns (`start_time`, `event_type`, `is_true_private`) to guarantee sub-millisecond query execution.
+6. **Dynamic In-Memory Blob Generation**:
+   - Markdown solutions and SQL script exports in the Bonus Section are generated dynamically in-memory via browser `Blob` objects, eliminating server-side file dependencies and static file drift.
 
 ---
 
-## 📋 Assumptions Made During Development
+## 📋 Assumptions & Business Logic Policies
 
-1. **Public vs. Private Event Access**:
-   - Public events are discoverable by unauthenticated guests to maximize community engagement. Private events are visible only to registered and signed-in members of the application.
+1. **Event Privacy Model**:
+   - **Public**: Open and discoverable by all visitors.
+   - **Private**: Discoverable with confidential details unlocked upon signing in.
+   - **True Private**: Completely restricted to verified community members; confidential placeholders shown to unverified/guest visitors.
 2. **RSVP Capacity Enforcement**:
-   - When an event reaches maximum capacity (`capacity`), further **"Going" (Yes)** RSVPs are blocked with an informative message, while users can still indicate **"Interested" (Maybe)** or **"Can't Go" (No)**. Users who previously RSVP'd "Yes" are always permitted to update or cancel their response.
-3. **Past Event Policy**:
-   - Past events remain searchable and visible for historical reference, but attendee lists and past details are preserved as immutable archive records.
-4. **Tie-Breaking in Designation Logs (Bonus Q1 & Q4)**:
-   - If an employee has multiple designation changes recorded on the exact same `effective_date`, `txn_id DESC` is utilized as the deterministic tie-breaker representing the latest system transaction.
+   - When an event reaches maximum capacity (`capacity`), further **"Going" (Yes)** responses are blocked with an alert, while **"Maybe"** and **"No"** responses remain open. Existing "Yes" attendees may update or withdraw their RSVP anytime.
+3. **Email Verification Access Guard**:
+   - Verified email status is required to publish events and submit RSVPs. Unverified users attempting these actions are automatically redirected to their Profile page with the verification card highlighted.
+4. **Deterministic Tie-Breaking in Bonus SQL (Q1 & Q4)**:
+   - When an employee has multiple designation changes on the same `effective_date`, `txn_id DESC` is utilized as the deterministic tie-breaker representing the latest system transaction.
 5. **Project Allocations Preceding Recorded Designation (Bonus Q4)**:
-   - If a project allocation start date precedes any recorded designation in `emp_designation_log`, a `LEFT JOIN` preserves the allocation row without data loss, returning `NULL` for `designation_at_allocation` and looking up `emp_name` via subquery.
-6. **2FA Enrollment Flow**:
-   - 2FA is optional on user registration. Users can enroll and enable 2FA anytime from their profile page by scanning a generated QR code and confirming a valid TOTP code.
+   - When a project allocation start date precedes any recorded designation in `emp_designation_log`, a `LEFT JOIN` preserves the allocation row without data loss, returning `NULL` for `designation_at_allocation` and retrieving `emp_name` via subquery.
