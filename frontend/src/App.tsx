@@ -1,6 +1,6 @@
-import { Calendar, Database, Layers, ShieldCheck } from "lucide-react";
-import React, { useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { Calendar } from "lucide-react";
 import { eventsApi } from "./api/events.api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { EventFormModal } from "./components/EventFormModal";
@@ -20,6 +20,16 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 
 import { APP_ROUTES } from "./constants";
+
+export const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 
 export const AppContent: React.FC = () => {
   const [isGlobalCreateModalOpen, setIsGlobalCreateModalOpen] = useState(false);
@@ -110,6 +120,7 @@ export const App: React.FC = () => {
         <ToastProvider>
           <AuthProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <AppContent />
             </BrowserRouter>
           </AuthProvider>
