@@ -58,7 +58,7 @@ A production-grade, full-stack event planning and community web application buil
 
 ### 7. Server-Side Pagination & URL State Synchronization
 
-- **Configurable Page Limits**: Select between `3`, `6`, `9`, `12`, or `24` items per page.pez
+- **Configurable Page Limits**: Select between `3`, `6`, `9`, `12`, or `24` items per page.
 - **URL Query State Persistence**: Filter, search, sorting, page number, limit, and active tab selections are synchronized in URL search params (`?timeframe=upcoming&sort_by=popularity&page=1&limit=6&search=meetup`), preserving exact view state on page refresh and back-navigation.
 
 ### 8. Theme Engine
@@ -151,6 +151,7 @@ PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 
+# Database configuration (MySQL 8)
 DB_CLIENT=mysql2
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -158,12 +159,62 @@ DB_USER=eventuser
 DB_PASSWORD=eventpassword
 DB_NAME=event_planner_db
 
+# Authentication & Security
 JWT_SECRET=super-secret-jwt-access-token-key-32-chars-long
 JWT_EXPIRES_IN=15m
 REFRESH_TOKEN_SECRET=super-secret-jwt-refresh-token-key-32-chars-long
 REFRESH_TOKEN_EXPIRES_IN=7d
 COOKIE_SECRET=super-secret-cookie-signing-key
+
+# Application details
+APP_NAME=EventPlanner
+
+# Email & SMTP (Optional - defaults to mock/logged transport if omitted)
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM="EventHub" <noreply@eventhub.local>
 ```
+
+#### 📧 How to Obtain & Configure SMTP Credentials (Optional)
+
+Email delivery is used for the **Email Verification** flow. You can configure any of the following options in `backend/.env`:
+
+##### Option A: Gmail SMTP (For Real Email Delivery)
+1. Go to your **[Google Account Security](https://myaccount.google.com/security)** page.
+2. Ensure **2-Step Verification** is enabled on your account.
+3. Search for **App passwords** in the top search bar (or navigate to *2-Step Verification* -> *App Passwords*).
+4. Enter an App Name (e.g. `EventHub`) and click **Create**.
+5. Copy the generated **16-character password** (e.g. `abcd efgh ijkl mnop`).
+6. Set the values in `backend/.env`:
+   ```env
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=abcd efgh ijkl mnop
+   SMTP_FROM="EventHub" <your-email@gmail.com>
+   ```
+
+##### Option B: Mailtrap (Recommended for Safe Sandbox Testing)
+1. Create a free account at **[Mailtrap.io](https://mailtrap.io/)**.
+2. Navigate to **Email Testing** -> **Inboxes** -> **My Inbox**.
+3. Under **Show Credentials**, select **Nodemailer** in the *Integrations* dropdown.
+4. Copy the credentials into `backend/.env`:
+   ```env
+   SMTP_HOST=smtp.mailtrap.io
+   SMTP_PORT=2525
+   SMTP_SECURE=false
+   SMTP_USER=your_mailtrap_username
+   SMTP_PASS=your_mailtrap_password
+   SMTP_FROM="EventHub" <noreply@eventhub.local>
+   ```
+5. All verification emails will be captured in your virtual Mailtrap inbox.
+
+##### Option C: Mock Transport (Zero Setup / Default)
+- If `SMTP_USER` and `SMTP_PASS` are left empty, the application automatically uses Nodemailer's built-in stream transport without external network calls. Verification links and tokens will continue to function seamlessly in development and automated tests.
 
 ---
 
@@ -318,8 +369,8 @@ Interactive API documentation with live testing is available at [http://localhos
    - Standardized API payload contracts (`{ success: boolean, data?: T, error?: { message, code, details }, message?: string }`) providing uniform error handling, inline form feedback, and query parsing.
 5. **Database Indexing & Normalization (3NF)**:
    - Optimized composite indexes on `(emp_id, effective_date, txn_id)` for analytical queries, foreign keys (`creator_id`, `event_id`, `tag_id`, `user_id`), and filter columns (`start_time`, `event_type`, `is_true_private`) to guarantee sub-millisecond query execution.
-6. **Dynamic In-Memory Blob Generation**:
-   - Markdown solutions and SQL script exports in the Bonus Section are generated dynamically in-memory via browser `Blob` objects, eliminating server-side file dependencies and static file drift.
+6. **Embedded Bonus Solutions & Zero-Dependency File Export**:
+   - Markdown solutions and SQL script exports in the Bonus Section are embedded directly in the frontend component layer and downloaded on-demand via browser in-memory `Blob` objects, eliminating server-side file dependencies and static file drift.
 
 ---
 
