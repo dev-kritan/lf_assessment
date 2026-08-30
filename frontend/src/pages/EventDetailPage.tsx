@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Globe, 
-  Lock, 
-  Edit3, 
-  Trash2, 
+import React, { useState, useEffect } from "react";
+import {
+  useParams,
+  Link,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Users,
+  Globe,
+  Lock,
+  Edit3,
+  Trash2,
   ExternalLink,
   ShieldCheck,
   Loader2,
@@ -16,17 +22,17 @@ import {
   LogIn,
   AlertTriangle,
   RefreshCw,
-} from 'lucide-react';
-import { EventItem } from '../types';
-import { eventsApi } from '../api/events.api';
-import { RsvpButtonGroup } from '../components/RsvpButtonGroup';
-import { EventFormModal } from '../components/EventFormModal';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useToast } from '../contexts/ToastContext';
-import { useAuth } from '../contexts/AuthContext';
-import { format, parseISO } from 'date-fns';
-import { TagsPopover } from '../components/TagsPopover';
-import { APP_ROUTES, DEFAULT_ASSETS, getDicebearAvatarUrl } from '../constants';
+} from "lucide-react";
+import { EventItem } from "../types";
+import { eventsApi } from "../api/events.api";
+import { RsvpButtonGroup } from "../components/RsvpButtonGroup";
+import { EventFormModal } from "../components/EventFormModal";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useToast } from "../contexts/ToastContext";
+import { useAuth } from "../contexts/AuthContext";
+import { format, parseISO } from "date-fns";
+import { TagsPopover } from "../components/TagsPopover";
+import { APP_ROUTES, DEFAULT_ASSETS, getDicebearAvatarUrl } from "../constants";
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +45,9 @@ export const EventDetailPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [attendeeFilter, setAttendeeFilter] = useState<'all' | 'yes' | 'maybe' | 'no'>('all');
+  const [attendeeFilter, setAttendeeFilter] = useState<
+    "all" | "yes" | "maybe" | "no"
+  >("all");
 
   const { user, isAuthenticated } = useAuth();
   const { success, error } = useToast();
@@ -58,12 +66,17 @@ export const EventDetailPage: React.FC = () => {
         setEvent(res.data);
       }
     } catch (err: any) {
-      if (err.response?.status === 403 || err.response?.data?.error?.code === 'PRIVATE_EVENT_FORBIDDEN') {
+      if (
+        err.response?.status === 403 ||
+        err.response?.data?.error?.code === "PRIVATE_EVENT_FORBIDDEN"
+      ) {
         setIsForbidden(true);
       } else if (err.response?.status === 404) {
         setEvent(null);
       } else {
-        const msg = err.response?.data?.error?.message || 'Failed to load event details. Please check your connection.';
+        const msg =
+          err.response?.data?.error?.message ||
+          "Failed to load event details. Please check your connection.";
         setFetchError(msg);
         if (!isBackground) {
           error(msg);
@@ -98,10 +111,12 @@ export const EventDetailPage: React.FC = () => {
       setIsDeleting(true);
       const res = await eventsApi.deleteEvent(event.id);
       if (res.success) {
-        success('Event deleted successfully');
+        success("Event deleted successfully");
         const isFromMyEvents =
           searchParams.get("tab") !== null || searchParams.has("rsvp_status");
-        const targetBase = isFromMyEvents ? APP_ROUTES.MY_EVENTS : APP_ROUTES.HOME;
+        const targetBase = isFromMyEvents
+          ? APP_ROUTES.MY_EVENTS
+          : APP_ROUTES.HOME;
         const queryString = searchParams.toString();
         if (queryString) {
           navigate(`${targetBase}?${queryString}`);
@@ -110,7 +125,7 @@ export const EventDetailPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      error(err.response?.data?.error?.message || 'Failed to delete event');
+      error(err.response?.data?.error?.message || "Failed to delete event");
     } finally {
       setIsDeleting(false);
     }
@@ -120,7 +135,9 @@ export const EventDetailPage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-        <p className="text-sm font-semibold text-slate-500">Loading event details...</p>
+        <p className="text-sm font-semibold text-slate-500">
+          Loading event details...
+        </p>
       </div>
     );
   }
@@ -131,7 +148,9 @@ export const EventDetailPage: React.FC = () => {
         <div className="w-16 h-16 rounded-3xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 shadow-inner ring-4 ring-rose-500/10">
           <AlertTriangle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Unable to Load Event</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+          Unable to Load Event
+        </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 mb-8 leading-relaxed">
           {fetchError}
         </p>
@@ -165,12 +184,12 @@ export const EventDetailPage: React.FC = () => {
           <Lock className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-          {isUnverifiedUser ? 'Email Verification Required' : 'Private Event'}
+          {isUnverifiedUser ? "Email Verification Required" : "Private Event"}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 mb-8 leading-relaxed">
           {isUnverifiedUser
-            ? 'This gathering is True Private and restricted to verified community members. Please verify your email address to access details and RSVP.'
-            : 'This gathering is private and restricted to signed-in community members. Sign in to view full event details and RSVP.'}
+            ? "This gathering is True Private and restricted to verified community members. Please verify your email address to access details and RSVP."
+            : "This gathering is private and restricted to signed-in community members. Sign in to view full event details and RSVP."}
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           {isUnverifiedUser ? (
@@ -206,8 +225,12 @@ export const EventDetailPage: React.FC = () => {
   if (!event) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Event Not Found</h2>
-        <p className="text-slate-500 mt-2 mb-6">The event you are looking for does not exist or has been removed.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Event Not Found
+        </h2>
+        <p className="text-slate-500 mt-2 mb-6">
+          The event you are looking for does not exist or has been removed.
+        </p>
         <button
           type="button"
           onClick={handleBack}
@@ -222,7 +245,7 @@ export const EventDetailPage: React.FC = () => {
   const startDate = parseISO(event.startTime);
   const endDate = event.endTime ? parseISO(event.endTime) : null;
   const isPast = event.isPast;
-  const pageParam = searchParams.get('page');
+  const pageParam = searchParams.get("page");
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20">
@@ -255,19 +278,23 @@ export const EventDetailPage: React.FC = () => {
           <div className="absolute top-4 left-4 flex items-center gap-2">
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
-                event.eventType === 'public'
-                  ? 'bg-emerald-500/90 text-white'
+                event.eventType === "public"
+                  ? "bg-emerald-500/90 text-white"
                   : event.isTruePrivate
-                  ? 'bg-purple-600/90 text-white'
-                  : 'bg-indigo-600/90 text-white'
+                    ? "bg-purple-600/90 text-white"
+                    : "bg-indigo-600/90 text-white"
               }`}
             >
-              {event.eventType === 'public' ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-              {event.eventType === 'public'
-                ? 'Public Event'
+              {event.eventType === "public" ? (
+                <Globe className="w-3.5 h-3.5" />
+              ) : (
+                <Lock className="w-3.5 h-3.5" />
+              )}
+              {event.eventType === "public"
+                ? "Public Event"
                 : event.isTruePrivate
-                ? 'True Private Event'
-                : 'Private Event'}
+                  ? "True Private Event"
+                  : "Private Event"}
             </span>
 
             {isPast && (
@@ -325,43 +352,46 @@ export const EventDetailPage: React.FC = () => {
       </div>
 
       {/* Private Event Notice for Unauthenticated or Unverified Visitors */}
-      {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) && (
-        <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
-              <Lock className="w-5 h-5" />
+      {event.eventType === "private" &&
+        (!isAuthenticated || (user && !user.isEmailVerified)) && (
+          <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  {isAuthenticated && user && !user.isEmailVerified
+                    ? "Email Verification Required"
+                    : "Private Community Event"}
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  {isAuthenticated && user && !user.isEmailVerified
+                    ? "Please verify your email address to unlock event schedule, location, full details, organizer info, and community RSVPs."
+                    : "Sign in to your account to unlock event schedule, location, full details, organizer info, and community RSVPs."}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-                {isAuthenticated && user && !user.isEmailVerified ? 'Email Verification Required' : 'Private Community Event'}
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                {isAuthenticated && user && !user.isEmailVerified
-                  ? 'Please verify your email address to unlock event schedule, location, full details, organizer info, and community RSVPs.'
-                  : 'Sign in to your account to unlock event schedule, location, full details, organizer info, and community RSVPs.'}
-              </p>
-            </div>
+            {isAuthenticated && user && !user.isEmailVerified ? (
+              <Link
+                to={APP_ROUTES.PROFILE}
+                state={{ highlightEmailVerification: true }}
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0 flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Verify Email in Profile
+              </Link>
+            ) : (
+              <Link
+                to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0 flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Sign In to Unlock
+              </Link>
+            )}
           </div>
-          {isAuthenticated && user && !user.isEmailVerified ? (
-            <Link
-              to={APP_ROUTES.PROFILE}
-              state={{ highlightEmailVerification: true }}
-              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0 flex items-center gap-1.5"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Verify Email in Profile
-            </Link>
-          ) : (
-            <Link
-              to={`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(location.pathname + location.search)}`}
-              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0 flex items-center gap-1.5"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              Sign In to Unlock
-            </Link>
-          )}
-        </div>
-      )}
+        )}
 
       {/* Grid Layout: Details & Sidebar */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -369,7 +399,9 @@ export const EventDetailPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Key Facts Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Event Schedule & Location</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
+              Event Schedule & Location
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Date & Time */}
               <div className="flex items-start gap-3.5">
@@ -377,20 +409,27 @@ export const EventDetailPage: React.FC = () => {
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Date & Time</p>
-                  {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) ? (
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Date & Time
+                  </p>
+                  {event.eventType === "private" &&
+                  (!isAuthenticated || (user && !user.isEmailVerified)) ? (
                     <>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">Private Schedule</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">Restricted to verified members</p>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">
+                        Private Schedule
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        Restricted to verified members
+                      </p>
                     </>
                   ) : (
                     <>
                       <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-                        {format(startDate, 'EEEE, MMMM dd, yyyy')}
+                        {format(startDate, "EEEE, MMMM dd, yyyy")}
                       </p>
                       <p className="text-xs text-slate-600 dark:text-slate-300">
-                        {format(startDate, 'h:mm a')}
-                        {endDate && ` – ${format(endDate, 'h:mm a')}`}
+                        {format(startDate, "h:mm a")}
+                        {endDate && ` – ${format(endDate, "h:mm a")}`}
                       </p>
                     </>
                   )}
@@ -403,15 +442,24 @@ export const EventDetailPage: React.FC = () => {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Location</p>
-                  {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) ? (
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Location
+                  </p>
+                  {event.eventType === "private" &&
+                  (!isAuthenticated || (user && !user.isEmailVerified)) ? (
                     <>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">Private Location</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">Restricted to verified members</p>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">
+                        Private Location
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        Restricted to verified members
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{event.location}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
+                        {event.location}
+                      </p>
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
                         target="_blank"
@@ -429,15 +477,20 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Description Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">About this Event</h2>
-            {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) ? (
+            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+              About this Event
+            </h2>
+            {event.eventType === "private" &&
+            (!isAuthenticated || (user && !user.isEmailVerified)) ? (
               <div className="py-6 text-center bg-slate-50/50 dark:bg-slate-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4">
                 <Lock className="w-6 h-6 text-indigo-500 mx-auto mb-2 opacity-80" />
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Protected Event Details</p>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Protected Event Details
+                </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                   {isAuthenticated && user && !user.isEmailVerified
-                    ? 'Full event description is restricted to verified community members. Please verify your email to unlock.'
-                    : 'Full event description is restricted to verified community members. Please sign in to unlock.'}
+                    ? "Full event description is restricted to verified community members. Please verify your email to unlock."
+                    : "Full event description is restricted to verified community members. Please sign in to unlock."}
                 </p>
               </div>
             ) : (
@@ -455,14 +508,18 @@ export const EventDetailPage: React.FC = () => {
                   Categories & Tags
                 </h2>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                  {event.tags.length} {event.tags.length === 1 ? 'tag' : 'tags'}
+                  {event.tags.length} {event.tags.length === 1 ? "tag" : "tags"}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
                 {event.tags.map((t) => (
                   <span
                     key={t.id}
-                    style={{ backgroundColor: `${t.colorHex}18`, color: t.colorHex, borderColor: `${t.colorHex}35` }}
+                    style={{
+                      backgroundColor: `${t.colorHex}18`,
+                      color: t.colorHex,
+                      borderColor: `${t.colorHex}35`,
+                    }}
                     className="px-3 py-1 rounded-xl text-xs font-bold border transition-all hover:scale-105"
                   >
                     #{t.name}
@@ -474,7 +531,8 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Attendees List Card */}
           <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) ? (
+            {event.eventType === "private" &&
+            (!isAuthenticated || (user && !user.isEmailVerified)) ? (
               <div className="py-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center mb-3">
                   <Lock className="w-6 h-6" />
@@ -484,8 +542,8 @@ export const EventDetailPage: React.FC = () => {
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 mb-5 max-w-sm mx-auto leading-relaxed">
                   {isAuthenticated && user && !user.isEmailVerified
-                    ? 'Attendee responses and community participation are accessible only to verified community members.'
-                    : 'Attendee responses and community participation are accessible only to signed-in, verified members.'}
+                    ? "Attendee responses and community participation are accessible only to verified community members."
+                    : "Attendee responses and community participation are accessible only to signed-in, verified members."}
                 </p>
                 {isAuthenticated && user && !user.isEmailVerified ? (
                   <Link
@@ -515,7 +573,8 @@ export const EventDetailPage: React.FC = () => {
                       Community Responses ({event.attendees?.length || 0})
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {event.rsvpStats.yes} going • {event.rsvpStats.maybe} interested • {event.rsvpStats.no} declined
+                      {event.rsvpStats.yes} going • {event.rsvpStats.maybe}{" "}
+                      interested • {event.rsvpStats.no} declined
                     </p>
                   </div>
 
@@ -523,44 +582,44 @@ export const EventDetailPage: React.FC = () => {
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 self-start sm:self-auto text-xs font-semibold">
                     <button
                       type="button"
-                      onClick={() => setAttendeeFilter('all')}
+                      onClick={() => setAttendeeFilter("all")}
                       className={`px-2.5 py-1 rounded-lg transition-all ${
-                        attendeeFilter === 'all'
-                          ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold'
-                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        attendeeFilter === "all"
+                          ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
                       All ({event.attendees?.length || 0})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAttendeeFilter('yes')}
+                      onClick={() => setAttendeeFilter("yes")}
                       className={`px-2.5 py-1 rounded-lg transition-all ${
-                        attendeeFilter === 'yes'
-                          ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                          : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'
+                        attendeeFilter === "yes"
+                          ? "bg-emerald-600 text-white shadow-sm font-bold"
+                          : "text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400"
                       }`}
                     >
                       Going ({event.rsvpStats.yes})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAttendeeFilter('maybe')}
+                      onClick={() => setAttendeeFilter("maybe")}
                       className={`px-2.5 py-1 rounded-lg transition-all ${
-                        attendeeFilter === 'maybe'
-                          ? 'bg-amber-500 text-white shadow-sm font-bold'
-                          : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                        attendeeFilter === "maybe"
+                          ? "bg-amber-500 text-white shadow-sm font-bold"
+                          : "text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
                       }`}
                     >
                       Maybe ({event.rsvpStats.maybe})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAttendeeFilter('no')}
+                      onClick={() => setAttendeeFilter("no")}
                       className={`px-2.5 py-1 rounded-lg transition-all ${
-                        attendeeFilter === 'no'
-                          ? 'bg-rose-600 text-white shadow-sm font-bold'
-                          : 'text-slate-500 hover:text-rose-600 dark:hover:text-rose-400'
+                        attendeeFilter === "no"
+                          ? "bg-rose-600 text-white shadow-sm font-bold"
+                          : "text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
                       }`}
                     >
                       No ({event.rsvpStats.no})
@@ -570,10 +629,12 @@ export const EventDetailPage: React.FC = () => {
 
                 {/* Attendee Roster Grid */}
                 {(() => {
-                  const filteredAttendees = (event.attendees || []).filter((a) => {
-                    if (attendeeFilter === 'all') return true;
-                    return a.status === attendeeFilter;
-                  });
+                  const filteredAttendees = (event.attendees || []).filter(
+                    (a) => {
+                      if (attendeeFilter === "all") return true;
+                      return a.status === attendeeFilter;
+                    },
+                  );
 
                   if (!event.attendees || event.attendees.length === 0) {
                     return (
@@ -599,19 +660,24 @@ export const EventDetailPage: React.FC = () => {
                           className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800"
                         >
                           <img
-                            src={attendee.avatarUrl || getDicebearAvatarUrl(attendee.name)}
+                            src={
+                              attendee.avatarUrl ||
+                              getDicebearAvatarUrl(attendee.name)
+                            }
                             alt={attendee.name}
                             className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 flex-shrink-0"
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{attendee.name}</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {attendee.name}
+                            </p>
                             <span
                               className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border mt-0.5 ${
-                                attendee.status === 'yes'
-                                  ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60'
-                                  : attendee.status === 'maybe'
-                                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60'
-                                  : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60'
+                                attendee.status === "yes"
+                                  ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60"
+                                  : attendee.status === "maybe"
+                                    ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60"
+                                    : "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60"
                               }`}
                             >
                               {attendee.status}
@@ -630,7 +696,8 @@ export const EventDetailPage: React.FC = () => {
         {/* Right Sidebar: RSVP Widget & Organizer Card */}
         <div className="space-y-6">
           {/* RSVP Widget: Full interactive for public events or verified private events; Locked card for unverified/guest private events */}
-          {event.eventType === 'public' || (isAuthenticated && user?.isEmailVerified) ? (
+          {event.eventType === "public" ||
+          (isAuthenticated && user?.isEmailVerified) ? (
             <RsvpButtonGroup
               eventId={event.id}
               initialStatus={event.userRsvp}
@@ -642,7 +709,9 @@ export const EventDetailPage: React.FC = () => {
                   if (!prev) return null;
                   let updatedAttendees = [...(prev.attendees || [])];
                   if (user) {
-                    const existingIdx = updatedAttendees.findIndex((a) => a.id === user.id);
+                    const existingIdx = updatedAttendees.findIndex(
+                      (a) => a.id === user.id,
+                    );
                     if (existingIdx >= 0) {
                       updatedAttendees[existingIdx] = {
                         ...updatedAttendees[existingIdx],
@@ -683,8 +752,8 @@ export const EventDetailPage: React.FC = () => {
 
               <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
                 {isAuthenticated && user && !user.isEmailVerified
-                  ? 'RSVP participation and attendee roster are restricted to verified community members. Please verify your email to respond.'
-                  : 'RSVP participation and attendee roster are restricted to verified community members.'}
+                  ? "RSVP participation and attendee roster are restricted to verified community members. Please verify your email to respond."
+                  : "RSVP participation and attendee roster are restricted to verified community members."}
               </p>
 
               {isAuthenticated && user && !user.isEmailVerified ? (
@@ -710,21 +779,31 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Organizer Card */}
           <div className="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Event Organizer</h3>
-            {event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified)) ? (
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+              Event Organizer
+            </h3>
+            {event.eventType === "private" &&
+            (!isAuthenticated || (user && !user.isEmailVerified)) ? (
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0">
                   <Lock className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Community Member</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Verified members only</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    Community Member
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Verified members only
+                  </p>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <img
-                  src={event.creator.avatarUrl || getDicebearAvatarUrl(event.creator.name)}
+                  src={
+                    event.creator.avatarUrl ||
+                    getDicebearAvatarUrl(event.creator.name)
+                  }
                   alt={event.creator.name}
                   className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-500/20"
                 />
@@ -737,7 +816,9 @@ export const EventDetailPage: React.FC = () => {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{event.creator.email}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {event.creator.email}
+                  </p>
                 </div>
               </div>
             )}
