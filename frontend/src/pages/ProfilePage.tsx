@@ -34,6 +34,12 @@ export const ProfilePage: React.FC = () => {
   const emailCardRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    if (location.state?.highlightEmailVerification) {
+      setIsEmailCardHighlighted(true);
+    }
+  }, [location.state]);
+
+  React.useEffect(() => {
     if (isEmailCardHighlighted && emailCardRef.current) {
       emailCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { VerifyEmailPage } from '../pages/VerifyEmailPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
@@ -683,6 +683,90 @@ describe('Email Verification Pages & Components', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('event-list-root')).toBeInTheDocument();
+    });
+  });
+
+  it('EventDetailPage "Verify Email in Profile" button routes to /profile with highlightEmailVerification state', async () => {
+    let locationState: any = null;
+    const LocationWatcher = () => {
+      const location = useLocation();
+      locationState = location.state;
+      return <div>Profile Page Watcher</div>;
+    };
+
+    const unverifiedUser = {
+      id: 9,
+      name: 'Unverified Bob',
+      email: 'bob@example.com',
+      isEmailVerified: false,
+      twoFactorEnabled: false,
+    };
+
+    const mockPrivateEvent: EventItem = {
+      id: 101,
+      title: 'Secret Strategy Meeting',
+      description: '[Protected]',
+      location: '[Protected]',
+      eventType: 'private',
+      isTruePrivate: false,
+      startTime: '2026-09-01T10:00:00.000Z',
+      capacity: 20,
+      bannerUrl: null,
+      createdAt: '2026-08-29T10:00:00.000Z',
+      updatedAt: '2026-08-29T10:00:00.000Z',
+      isPast: false,
+      isRestricted: true,
+      creator: { id: 5, name: 'Organizer', email: 'org@example.com' },
+      tags: [],
+      rsvpStats: { yes: 0, maybe: 0, no: 0, total: 0 },
+      attendees: [],
+      userRsvp: null,
+      isCreator: false,
+    };
+
+    vi.mocked(eventsApi.getEventById).mockResolvedValueOnce({
+      success: true,
+      data: mockPrivateEvent,
+      message: 'Event retrieved successfully',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/events/101']}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthContext.Provider
+              value={{
+                user: unverifiedUser,
+                isAuthenticated: true,
+                isLoading: false,
+                login: vi.fn(),
+                register: vi.fn(),
+                logout: vi.fn(),
+                refreshProfile: vi.fn(),
+                setUser: vi.fn(),
+              }}
+            >
+              <Routes>
+                <Route path="/events/:id" element={<EventDetailPage />} />
+                <Route path="/profile" element={<LocationWatcher />} />
+              </Routes>
+            </AuthContext.Provider>
+          </ToastProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Secret Strategy Meeting')).toBeInTheDocument();
+    });
+
+    const verifyLinks = screen.getAllByRole('link', { name: /Verify Email in Profile/i });
+    expect(verifyLinks.length).toBeGreaterThan(0);
+    fireEvent.click(verifyLinks[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile Page Watcher')).toBeInTheDocument();
+      expect(locationState).toEqual({ highlightEmailVerification: true });
     });
   });
 });

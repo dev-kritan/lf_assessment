@@ -13,6 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { RsvpStats } from "../types";
 import { triggerRsvpConfetti } from "../utils/confetti.util";
+import { APP_ROUTES } from "../constants";
 
 export interface RsvpButtonGroupProps {
   eventId: number;
@@ -84,6 +85,7 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
 
     if (user && !user.isEmailVerified) {
       error("Email verification required: Please verify your email address in your profile to RSVP.");
+      navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
       return;
     }
 
@@ -218,7 +220,7 @@ export const RsvpButtonGroup: React.FC<RsvpButtonGroupProps> = ({
             <span>Email verification required to RSVP. </span>
             <button
               type="button"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } })}
               className="underline font-bold text-amber-900 dark:text-amber-200 hover:opacity-80"
             >
               Verify in Profile

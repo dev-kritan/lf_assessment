@@ -355,6 +355,7 @@ export const CreateEventPage: React.FC = () => {
               </button>
               <Link
                 to={APP_ROUTES.PROFILE}
+                state={{ highlightEmailVerification: true }}
                 className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold hover:bg-amber-100/50 transition-colors"
               >
                 Go to Profile

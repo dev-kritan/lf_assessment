@@ -176,6 +176,7 @@ export const EventDetailPage: React.FC = () => {
           {isUnverifiedUser ? (
             <Link
               to={APP_ROUTES.PROFILE}
+              state={{ highlightEmailVerification: true }}
               className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
@@ -344,6 +345,7 @@ export const EventDetailPage: React.FC = () => {
           {isAuthenticated && user && !user.isEmailVerified ? (
             <Link
               to={APP_ROUTES.PROFILE}
+              state={{ highlightEmailVerification: true }}
               className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex-shrink-0 flex items-center gap-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -488,6 +490,7 @@ export const EventDetailPage: React.FC = () => {
                 {isAuthenticated && user && !user.isEmailVerified ? (
                   <Link
                     to={APP_ROUTES.PROFILE}
+                    state={{ highlightEmailVerification: true }}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 active:scale-95"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -687,6 +690,7 @@ export const EventDetailPage: React.FC = () => {
               {isAuthenticated && user && !user.isEmailVerified ? (
                 <Link
                   to={APP_ROUTES.PROFILE}
+                  state={{ highlightEmailVerification: true }}
                   className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />

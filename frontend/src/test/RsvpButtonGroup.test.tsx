@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { RsvpButtonGroup } from '../components/RsvpButtonGroup';
 import { AuthContext } from '../contexts/AuthContext';
 import { ToastProvider } from '../contexts/ToastContext';
@@ -86,4 +86,96 @@ describe('RsvpButtonGroup Component', () => {
 
     expect(screen.getByText(/Capacity reached/i)).toBeInTheDocument();
   });
+
+  it('redirects unverified user to /profile with highlightEmailVerification state when clicking RSVP button', async () => {
+    let locationState: any = null;
+    const LocationWatcher = () => {
+      const location = useLocation();
+      locationState = location.state;
+      return <div>Profile Page Watcher</div>;
+    };
+
+    const unverifiedAuth = {
+      ...mockAuthValue,
+      user: { id: 2, name: 'Bob', email: 'bob@example.com', isEmailVerified: false, twoFactorEnabled: false },
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/events/1']}>
+        <ToastProvider>
+          <AuthContext.Provider value={unverifiedAuth}>
+            <Routes>
+              <Route
+                path="/events/:id"
+                element={
+                  <RsvpButtonGroup
+                    eventId={1}
+                    stats={mockStats}
+                    capacity={50}
+                    initialStatus={null}
+                  />
+                }
+              />
+              <Route path="/profile" element={<LocationWatcher />} />
+            </Routes>
+          </AuthContext.Provider>
+        </ToastProvider>
+      </MemoryRouter>
+    );
+
+    const goingBtn = screen.getByRole('button', { name: /going/i });
+    fireEvent.click(goingBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile Page Watcher')).toBeInTheDocument();
+      expect(locationState).toEqual({ highlightEmailVerification: true });
+      expect(screen.getByText(/Please verify your email address in your profile to RSVP/i)).toBeInTheDocument();
+    });
+  });
+
+  it('redirects unverified user to /profile with highlightEmailVerification state when clicking Verify in Profile', async () => {
+    let locationState: any = null;
+    const LocationWatcher = () => {
+      const location = useLocation();
+      locationState = location.state;
+      return <div>Profile Page Watcher</div>;
+    };
+
+    const unverifiedAuth = {
+      ...mockAuthValue,
+      user: { id: 2, name: 'Bob', email: 'bob@example.com', isEmailVerified: false, twoFactorEnabled: false },
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/events/1']}>
+        <ToastProvider>
+          <AuthContext.Provider value={unverifiedAuth}>
+            <Routes>
+              <Route
+                path="/events/:id"
+                element={
+                  <RsvpButtonGroup
+                    eventId={1}
+                    stats={mockStats}
+                    capacity={50}
+                    initialStatus={null}
+                  />
+                }
+              />
+              <Route path="/profile" element={<LocationWatcher />} />
+            </Routes>
+          </AuthContext.Provider>
+        </ToastProvider>
+      </MemoryRouter>
+    );
+
+    const verifyBtn = screen.getByRole('button', { name: /Verify in Profile/i });
+    fireEvent.click(verifyBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile Page Watcher')).toBeInTheDocument();
+      expect(locationState).toEqual({ highlightEmailVerification: true });
+    });
+  });
 });
+
