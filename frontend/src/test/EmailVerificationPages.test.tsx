@@ -323,8 +323,9 @@ describe('Email Verification Pages & Components', () => {
       </MemoryRouter>
     );
 
-    const createBtn = screen.getByRole('button', { name: /^Create Event$/i });
-    fireEvent.click(createBtn);
+    const createBtns = screen.getAllByRole('button', { name: /^Create Event$/i });
+    expect(createBtns.length).toBeGreaterThanOrEqual(2); // desktop + mobile icon button
+    fireEvent.click(createBtns[0]);
 
     // Assert modal was NOT opened
     expect(onOpenCreateModal).not.toHaveBeenCalled();

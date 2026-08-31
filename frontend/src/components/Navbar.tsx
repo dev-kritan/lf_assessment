@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Calendar,
+  Plus,
   PlusCircle,
   Sun,
   Moon,
@@ -310,8 +311,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             )}
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Mobile Actions: Create Event Icon Button, Theme Toggle, Hamburger Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2 md:hidden">
+            <button
+              onClick={handleCreateEventClick}
+              aria-label="Create Event"
+              title="Create Event"
+              className="p-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/60 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+
             <button
               onClick={toggleTheme}
               aria-label={getThemeTitle()}
