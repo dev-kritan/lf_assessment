@@ -30,6 +30,7 @@ services:
       retries: 10
 
   backend:
+    image: lf_assessment-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -59,6 +60,7 @@ services:
       - event_network
 
   frontend:
+    image: lf_assessment-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile

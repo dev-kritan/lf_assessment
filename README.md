@@ -137,14 +137,14 @@ npm run install:all
 
 ### Step 2: Configure Environment Variables
 
-Create the backend environment configuration file from the example template:
+Create the single root environment configuration file from the template:
 
 ```bash
-# Copy example env file
-cp backend/.env.example backend/.env
+# Copy example env file to root .env
+cp .env.example .env
 ```
 
-_Default environment variables configured in `backend/.env`:_
+_Default environment variables configured in `/.env`:_
 
 ```env
 PORT=5000
@@ -181,7 +181,7 @@ SMTP_FROM="EventHub" <noreply@eventhub.local>
 
 #### How to Obtain & Configure SMTP Credentials (Optional)
 
-Email delivery is used for the **Email Verification** flow. You can configure any of the following options in `backend/.env`:
+Email delivery is used for the **Email Verification** flow. You can configure any of the following options in `/.env`:
 
 ##### Option A: Gmail SMTP (For Real Email Delivery)
 
@@ -190,7 +190,7 @@ Email delivery is used for the **Email Verification** flow. You can configure an
 3. Search for **App passwords** in the top search bar (or navigate to _2-Step Verification_ -> _App Passwords_).
 4. Enter an App Name (e.g. `EventHub`) and click **Create**.
 5. Copy the generated **16-character password** (e.g. `abcd efgh ijkl mnop`).
-6. Set the values in `backend/.env`:
+6. Set the values in `/.env`:
    ```env
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=587
@@ -205,7 +205,7 @@ Email delivery is used for the **Email Verification** flow. You can configure an
 1. Create a free account at **[Mailtrap.io](https://mailtrap.io/)**.
 2. Navigate to **Email Testing** -> **Inboxes** -> **My Inbox**.
 3. Under **Show Credentials**, select **Nodemailer** in the _Integrations_ dropdown.
-4. Copy the credentials into `backend/.env`:
+4. Copy the credentials into `/.env`:
    ```env
    SMTP_HOST=smtp.mailtrap.io
    SMTP_PORT=2525
@@ -249,7 +249,9 @@ npm run seed
 
 ---
 
-### Step 5: Start the Development Servers
+### Step 5: Start the Application
+
+#### Option A: Local Development Server (Recommended for Fast Hot-Reloading)
 
 ```bash
 # Start both Backend API (:5000) and Frontend Vite (:5173) concurrently:
@@ -266,6 +268,15 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
+#### Option B: Full-Stack Docker Containerization
+
+To run all 3 services (`mysql`, `backend`, `frontend`) entirely inside Docker/Podman:
+
+```bash
+docker compose up -d
+# or: podman compose up -d
+```
+
 ---
 
 ### Accessing the Application
@@ -273,6 +284,24 @@ npm run dev:frontend
 - **Frontend Web App**: [http://localhost:5173](http://localhost:5173)
 - **Backend API Base**: [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
 - **Interactive Swagger Documentation**: [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
+
+---
+
+### Convenient Root NPM Scripts
+
+| Command                | Description                                                               |
+| :--------------------- | :------------------------------------------------------------------------ |
+| `npm run install:all`  | Installs all dependencies across root, backend, and frontend              |
+| `npm run dev`          | Starts backend (:5000) and frontend (:5173) concurrently                  |
+| `npm run db:mysql:up`  | Starts only the MySQL 8 database service in Docker                        |
+| `npm run db:up`        | Starts MySQL container in background daemon mode                          |
+| `npm run db:down`      | Stops and tears down database container                                   |
+| `npm run migrate`      | Executes Knex database migrations (creates all tables)                    |
+| `npm run seed`         | Populates database with demo users, events, tags, RSVPs, and bonus tables |
+| `npm test`             | Runs both backend and frontend automated test suites                      |
+| `npm run test:backend` | Runs backend Jest + Supertest integration tests                           |
+| `npm run test:frontend`| Runs frontend Vitest + React Testing Library tests                        |
+| `npm run build`        | Builds production bundles for backend and frontend                        |
 
 ---
 
