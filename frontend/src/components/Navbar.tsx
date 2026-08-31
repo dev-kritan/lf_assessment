@@ -138,82 +138,90 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
   return (
     <nav className="sticky top-0 z-40 w-full glass border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="flex items-center justify-between h-16 gap-2">
           {/* Logo */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 min-w-0">
             <Link
               to={APP_ROUTES.HOME}
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                <Calendar className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+              <span className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 truncate">
                 EventHub
               </span>
             </Link>
 
             {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1">
               <Link
                 to={APP_ROUTES.HOME}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex gap-x-2 items-center ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex gap-x-2 items-center ${
                   isActive(APP_ROUTES.HOME)
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
-                <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-                <p>Browse Events</p>
+                <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                <span>
+                  Browse<span className="hidden xl:inline"> Events</span>
+                </span>
               </Link>
 
               {isAuthenticated && (
                 <Link
                   to={APP_ROUTES.MY_EVENTS}
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                     isActive(APP_ROUTES.MY_EVENTS)
                       ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
                       : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                   }`}
                 >
-                  <BookmarkCheck className="w-4 h-4" />
-                  My Events & RSVPs
+                  <BookmarkCheck className="w-4 h-4 shrink-0" />
+                  <span>
+                    <span className="hidden xl:inline">My Events & </span>RSVPs
+                  </span>
                 </Link>
               )}
 
               <Link
                 to={APP_ROUTES.BONUS_CHALLENGE}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   isActive(APP_ROUTES.BONUS_CHALLENGE)
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
-                <Database className="w-4 h-4" />
-                <span>SQL Challenge</span>
+                <Database className="w-4 h-4 shrink-0" />
+                <span>
+                  SQL<span className="hidden xl:inline"> Challenge</span>
+                </span>
               </Link>
 
               <a
                 href={apiDocsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors flex gap-x-2 items-center"
+                className="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors flex gap-x-2 items-center"
               >
-                <FileText className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                <p>API Docs (Swagger)</p>
+                <FileText className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
+                <span>
+                  API Docs<span className="hidden xl:inline"> (Swagger)</span>
+                </span>
               </a>
             </div>
           </div>
 
           {/* Right Action Controls */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3">
             {/* Theme Mode Toggle (Auto/Dark/Light) */}
             <button
               onClick={toggleTheme}
               aria-label={getThemeTitle()}
               title={getThemeTitle()}
-              className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
             >
               {getThemeIcon()}
             </button>
@@ -221,10 +229,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             {/* Create Event CTA */}
             <button
               onClick={handleCreateEventClick}
-              className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 xl:gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-3 xl:px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all shrink-0"
             >
-              <PlusCircle className="w-4 h-4" />
-              Create Event
+              <PlusCircle className="w-4 h-4 shrink-0" />
+              <span>
+                <span className="hidden xl:inline">Create </span>Event
+              </span>
             </button>
 
             {/* User Profile / Auth State */}
@@ -326,7 +336,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           </div>
 
           {/* Mobile Actions: Create Event Icon Button, Theme Toggle, Hamburger Button */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:hidden">
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden">
             <button
               onClick={handleCreateEventClick}
               aria-label="Create Event"
@@ -362,7 +372,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass border-t border-slate-200 dark:border-slate-800 px-4 pt-3 pb-6 space-y-2">
+        <div className="lg:hidden glass border-t border-slate-200 dark:border-slate-800 px-4 pt-3 pb-6 space-y-2 animate-slide-down">
           <Link
             to={APP_ROUTES.HOME}
             onClick={() => setMobileMenuOpen(false)}

@@ -72,19 +72,19 @@ export const BonusChallengePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24 animate-fade-in space-y-8">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 py-6 sm:py-10 pb-24 animate-fade-in space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg bg-gradient-to-r from-emerald-500/5 via-indigo-500/5 to-purple-500/5">
+      <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg bg-gradient-to-r from-emerald-500/5 via-indigo-500/5 to-purple-500/5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 mb-3 border border-emerald-200 dark:border-emerald-800">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 mb-2.5 sm:mb-3 border border-emerald-200 dark:border-emerald-800">
               <Database className="w-3.5 h-3.5" />
               Assessment Bonus Section • SQL Analytics
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
               Employee Designation & Project Allocation Queries
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
               Interactive execution, deep architectural reasoning, and detailed
               breakdown of window functions, timeline tracking, and
               point-in-time joins for Questions Q1, Q2, and Q4.
@@ -94,10 +94,10 @@ export const BonusChallengePage: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md overflow-x-auto">
+      <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md overflow-x-auto scrollbar-none max-w-full">
         <button
           onClick={() => setActiveTab("q1")}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "q1"
               ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"

@@ -984,26 +984,26 @@ export const MyEventsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-1 sm:pt-10 sm:pb-1 animate-fade-in">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pt-6 sm:pt-10 pb-1 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5">
-            <BookmarkCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2 sm:gap-2.5">
+            <BookmarkCheck className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" />
             My Events & RSVPs
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Manage your created events and track all gatherings you have RSVP's
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Manage your created events and track all gatherings you have RSVP'd
             to.
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md max-w-md mb-6">
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md w-full sm:max-w-md mb-6">
         <button
           onClick={() => handleTabChange("created")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
             activeTab === "created"
               ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1019,7 +1019,7 @@ export const MyEventsPage: React.FC = () => {
 
         <button
           onClick={() => handleTabChange("rsvps")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
             activeTab === "rsvps"
               ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1036,54 +1036,56 @@ export const MyEventsPage: React.FC = () => {
 
       {/* RSVP Quick Status Filter Pills (Active only on RSVPs tab) */}
       {activeTab === "rsvps" && (
-        <div className="flex flex-wrap items-center gap-2 mb-6 animate-fade-in">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
-            <ListFilter className="w-3.5 h-3.5" />
-            Filter by RSVP:
-          </span>
-          {[
-            { id: "all", label: "All", count: rsvpCounts.all },
-            {
-              id: "yes",
-              label: "Going",
-              count: rsvpCounts.yes,
-              icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />,
-            },
-            {
-              id: "maybe",
-              label: "Interested",
-              count: rsvpCounts.maybe,
-              icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" />,
-            },
-            {
-              id: "no",
-              label: "Declined",
-              count: rsvpCounts.no,
-              icon: <XCircle className="w-3.5 h-3.5 text-rose-500" />,
-            },
-          ].map((pill) => (
-            <button
-              key={pill.id}
-              onClick={() => handleRsvpStatusFilterChange(pill.id as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                rsvpStatusFilter === pill.id
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-              }`}
-            >
-              {pill.icon}
-              <span>{pill.label}</span>
-              <CountBadge
-                count={pill.count}
-                isActive={rsvpStatusFilter === pill.id}
-                className={
+        <div className="overflow-x-auto scrollbar-none pb-2 mb-4 animate-fade-in">
+          <div className="flex items-center gap-2 w-max sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1 shrink-0">
+              <ListFilter className="w-3.5 h-3.5" />
+              Filter by RSVP:
+            </span>
+            {[
+              { id: "all", label: "All", count: rsvpCounts.all },
+              {
+                id: "yes",
+                label: "Going",
+                count: rsvpCounts.yes,
+                icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />,
+              },
+              {
+                id: "maybe",
+                label: "Interested",
+                count: rsvpCounts.maybe,
+                icon: <HelpCircle className="w-3.5 h-3.5 text-amber-500" />,
+              },
+              {
+                id: "no",
+                label: "Declined",
+                count: rsvpCounts.no,
+                icon: <XCircle className="w-3.5 h-3.5 text-rose-500" />,
+              },
+            ].map((pill) => (
+              <button
+                key={pill.id}
+                onClick={() => handleRsvpStatusFilterChange(pill.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
                   rsvpStatusFilter === pill.id
-                    ? "bg-white/20 text-white dark:bg-white/20 dark:text-white"
-                    : undefined
-                }
-              />
-            </button>
-          ))}
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                }`}
+              >
+                {pill.icon}
+                <span>{pill.label}</span>
+                <CountBadge
+                  count={pill.count}
+                  isActive={rsvpStatusFilter === pill.id}
+                  className={
+                    rsvpStatusFilter === pill.id
+                      ? "bg-white/20 text-white dark:bg-white/20 dark:text-white"
+                      : undefined
+                  }
+                />
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1252,7 +1254,7 @@ export const MyEventsPage: React.FC = () => {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8"
                   : "space-y-4"
               }
             >
@@ -1416,7 +1418,7 @@ export const MyEventsPage: React.FC = () => {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8"
                   : "space-y-4"
               }
             >

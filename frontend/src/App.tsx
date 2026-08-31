@@ -120,8 +120,8 @@ export const AppContent: React.FC = () => {
 
       {/* Modern Footer */}
       <footer className="glass border-t border-slate-200/80 dark:border-slate-800/80 py-3.5 sm:py-4 transition-colors mt-auto relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-pink-500 flex items-center justify-center text-white shadow-sm">
                 <Calendar className="w-4 h-4" />

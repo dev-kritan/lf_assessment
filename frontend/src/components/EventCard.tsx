@@ -163,15 +163,15 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       {/* Content Body */}
-      <div className="p-6 flex-1 flex flex-col justify-between">
+      <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
         <div>
           {/* Tags */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+          <div className="flex flex-wrap items-center gap-1.5 mb-2.5 sm:mb-3">
             {event.tags.slice(0, 3).map((t) => (
               <span
                 key={t.id}
                 style={{ backgroundColor: `${t.colorHex}18`, color: t.colorHex }}
-                className="px-2.5 py-0.5 rounded-md text-xs font-semibold"
+                className="px-2 sm:px-2.5 py-0.5 rounded-md text-[11px] sm:text-xs font-semibold"
               >
                 #{t.name}
               </span>
@@ -185,29 +185,29 @@ export const EventCard: React.FC<EventCardProps> = ({
             state={navState}
             onClick={handleCardClick}
           >
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
               {event.title}
             </h3>
           </Link>
 
           {/* Description Excerpt */}
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
             {isRestrictedPrivate
               ? 'Private event details restricted to verified members.'
               : event.description}
           </p>
 
           {/* Meta Info */}
-          <div className="mt-4 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-              <span>
+          <div className="mt-3 sm:mt-4 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 min-w-0">
+              <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span className="truncate">
                 {isRestrictedPrivate
                   ? 'Private Schedule • Verified Members Only'
                   : format(startDate, 'EEE, MMM d, yyyy • h:mm a')}
               </span>
             </div>
-            <div className="flex items-center gap-2 max-w-full">
+            <div className="flex items-center gap-2 max-w-full min-w-0">
               <LocationHoverCard
                 location={event.location}
                 isRestricted={Boolean(isRestrictedPrivate)}
@@ -218,12 +218,12 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
 
         {/* Footer info: RSVP & Creator */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <img
               src={event.creator.avatarUrl || getDicebearAvatarUrl(event.creator.name)}
               alt={event.creator.name}
-              className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700"
+              className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 shrink-0"
             />
             <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
               {isRestrictedPrivate ? 'Private Organizer' : event.creator.name}
@@ -232,12 +232,12 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           {/* RSVP Attendees Counter */}
           {isRestrictedPrivate ? (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-900/60">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-900/60 shrink-0">
               <Lock className="w-3 h-3" />
               <span>Members Only</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shrink-0">
               <Users className="w-3.5 h-3.5 text-emerald-500" />
               <span>{event.rsvpStats.yes} going</span>
               {event.capacity && (

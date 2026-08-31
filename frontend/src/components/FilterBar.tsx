@@ -124,28 +124,32 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           )}
         </div>
 
-        {/* Dropdowns: Event Type & Sort By */}
-        <div className="flex items-center gap-2">
+        {/* Dropdowns: Event Type & Sort By & View Toggle */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
           {/* Event Type Filter */}
-          <CustomSelect
-            value={selectedType}
-            onChange={onTypeChange}
-            options={eventTypeOptions}
-            buttonClassName="py-3"
-            ariaLabel="Event Type Filter"
-          />
+          <div className="flex-1 sm:flex-initial min-w-0">
+            <CustomSelect
+              value={selectedType}
+              onChange={onTypeChange}
+              options={eventTypeOptions}
+              buttonClassName="py-2.5 sm:py-3 w-full justify-between"
+              ariaLabel="Event Type Filter"
+            />
+          </div>
 
           {/* Sort By Filter */}
-          <CustomSelect
-            value={sortBy}
-            onChange={onSortChange}
-            options={sortOptions}
-            buttonClassName="py-3"
-            ariaLabel="Sort By Filter"
-          />
+          <div className="flex-1 sm:flex-initial min-w-0">
+            <CustomSelect
+              value={sortBy}
+              onChange={onSortChange}
+              options={sortOptions}
+              buttonClassName="py-2.5 sm:py-3 w-full justify-between"
+              ariaLabel="Sort By Filter"
+            />
+          </div>
 
           {/* View Toggle */}
-          <div className="hidden sm:flex items-center p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="hidden sm:flex items-center p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
             <button
               onClick={() => onViewModeChange("grid")}
               aria-label="Grid View"
@@ -173,37 +177,39 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       </div>
 
       {/* Middle Bar: Timeframe Tabs (All, Upcoming, Past) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md">
-          {(["all", "upcoming", "past"] as const).map((tf) => {
-            const count = timeframeCounts ? timeframeCounts[tf] : undefined;
-            return (
-              <button
-                key={tf}
-                onClick={() => onTimeframeChange(tf)}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all flex items-center gap-2 ${
-                  selectedTimeframe === tf
-                    ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <span>
-                  {tf === "all"
-                    ? "All Events"
-                    : tf === "upcoming"
-                      ? "✨ Upcoming Events"
-                      : "🕰️ Past Events"}
-                </span>
-                <CountBadge count={count} isActive={selectedTimeframe === tf} />
-              </button>
-            );
-          })}
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 pt-2">
+        <div className="overflow-x-auto scrollbar-none max-w-full p-0.5">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md w-max">
+            {(["all", "upcoming", "past"] as const).map((tf) => {
+              const count = timeframeCounts ? timeframeCounts[tf] : undefined;
+              return (
+                <button
+                  key={tf}
+                  onClick={() => onTimeframeChange(tf)}
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 ${
+                    selectedTimeframe === tf
+                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <span>
+                    {tf === "all"
+                      ? "All Events"
+                      : tf === "upcoming"
+                        ? "✨ Upcoming Events"
+                        : "🕰️ Past Events"}
+                  </span>
+                  <CountBadge count={count} isActive={selectedTimeframe === tf} />
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer px-2"
+            className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer px-2 shrink-0"
           >
             <X className="w-3.5 h-3.5" />
             Reset all filters

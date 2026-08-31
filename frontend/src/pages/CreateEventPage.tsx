@@ -303,25 +303,25 @@ export const CreateEventPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24 animate-fade-in">
+    <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 pb-24 animate-fade-in">
       {/* Back to Events */}
       <Link
         to="/"
-        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-4 sm:mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Events
       </Link>
 
-      <div className="rounded-3xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
+      <div className="rounded-2xl sm:rounded-3xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
         {/* Header */}
-        <div className="p-6 sm:p-8 bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10 border-b border-slate-200/80 dark:border-slate-800/80">
+        <div className="p-5 sm:p-8 bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10 border-b border-slate-200/80 dark:border-slate-800/80">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/25">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Create New Event</h1>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Create New Event</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Plan, organize, and invite community members to your gathering
               </p>
@@ -331,7 +331,7 @@ export const CreateEventPage: React.FC = () => {
 
         {/* Unverified Email Warning Banner */}
         {user && !user.isEmailVerified && (
-          <div className="mx-6 sm:mx-8 mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mx-4 sm:mx-8 mt-4 sm:mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Lock className="w-4 h-4" />
@@ -365,7 +365,7 @@ export const CreateEventPage: React.FC = () => {
         )}
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-4 sm:space-y-6">
           {/* Event Title */}
           <div data-field="title">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">

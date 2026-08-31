@@ -593,34 +593,34 @@ export const EventListPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-11">
       {/* Hero / Header Section */}
-      <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-indigo-50/50 via-white to-transparent dark:from-indigo-950/20 dark:via-slate-950 dark:to-slate-950 border-b border-slate-200/60 dark:border-slate-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+      <section className="relative overflow-hidden pt-8 sm:pt-12 pb-10 sm:pb-14 bg-gradient-to-b from-indigo-50/50 via-white to-transparent dark:from-indigo-950/20 dark:via-slate-950 dark:to-slate-950 border-b border-slate-200/60 dark:border-slate-800/60">
+        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6 sm:gap-8">
             {/* Title & Description */}
-            <div className="max-w-2xl space-y-4">
+            <div className="max-w-2xl space-y-3 sm:space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
                 Community & Gatherings Platform
               </div>
-              <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                 Discover, Organize & Join{" "}
                 <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Unforgettable Events
                 </span>
               </h1>
-              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
+              <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-400">
                 Explore hackathons, workshops, conferences, and meetups. Filter
                 by date, tags, popularity, or RSVP.
               </p>
             </div>
 
-            {/* Quick Metrics Grid */}
+            {/* Quick Metrics Bento Grid */}
             {metrics && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full lg:w-auto min-w-0 sm:min-w-[320px]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-2 gap-2.5 sm:gap-3 w-full xl:w-80 2xl:w-96 shrink-0">
                 <StatCard
                   label="Upcoming Events"
                   value={metrics.upcomingEvents}
-                  icon={<Sparkles className="w-5 h-5" />}
+                  icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />}
                   colorClass="bg-gradient-to-tr from-emerald-600 to-emerald-500"
                   description="Next 30 days"
                   onClick={() => setActiveMetricDetail("upcoming")}
@@ -628,7 +628,7 @@ export const EventListPage: React.FC = () => {
                 <StatCard
                   label="Total RSVPs"
                   value={metrics.totalRsvps}
-                  icon={<Users className="w-5 h-5" />}
+                  icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />}
                   colorClass="bg-gradient-to-tr from-indigo-600 to-indigo-500"
                   description="Confirmed attendees"
                   onClick={() => setActiveMetricDetail("rsvps")}
@@ -636,7 +636,7 @@ export const EventListPage: React.FC = () => {
                 <StatCard
                   label="Categories"
                   value={metrics.totalTags}
-                  icon={<TagIcon className="w-5 h-5" />}
+                  icon={<TagIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
                   colorClass="bg-gradient-to-tr from-amber-600 to-amber-500"
                   description="Filterable tags"
                   onClick={() => setActiveMetricDetail("categories")}
@@ -644,7 +644,7 @@ export const EventListPage: React.FC = () => {
                 <StatCard
                   label="Past Events"
                   value={metrics.pastEvents}
-                  icon={<Flame className="w-5 h-5" />}
+                  icon={<Flame className="w-4 h-4 sm:w-5 sm:h-5" />}
                   colorClass="bg-gradient-to-tr from-purple-600 to-purple-500"
                   description="Archived history"
                   onClick={() => setActiveMetricDetail("past")}
@@ -656,7 +656,7 @@ export const EventListPage: React.FC = () => {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-1">
+      <main className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pt-6 sm:pt-8 pb-1">
         {/* Filter Controls */}
         <div ref={filterBarRef}>
           <FilterBar
@@ -787,7 +787,7 @@ export const EventListPage: React.FC = () => {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8"
                   : "space-y-4"
               }
             >

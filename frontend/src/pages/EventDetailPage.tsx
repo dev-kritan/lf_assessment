@@ -290,12 +290,12 @@ export const EventDetailPage: React.FC = () => {
   const pageParam = searchParams.get("page");
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20">
+    <div className="max-w-5xl 2xl:max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in pb-20">
       {/* Back Button */}
       <button
         type="button"
         onClick={handleBack}
-        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors group cursor-pointer"
+        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-4 sm:mb-6 transition-colors group cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
         <span>Back to {originInfo.title}</span>
@@ -307,19 +307,19 @@ export const EventDetailPage: React.FC = () => {
       </button>
 
       {/* Main Event Visual Header */}
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-        <div className="relative h-72 sm:h-96 w-full">
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+        <div className="relative min-h-[260px] sm:min-h-[340px] md:min-h-[380px] w-full">
           <img
             src={event.bannerUrl || DEFAULT_ASSETS.EVENT_BANNER}
             alt={event.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover absolute inset-0"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
           {/* Badges on Top */}
-          <div className="absolute top-4 left-4 flex items-center gap-2">
+          <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-wrap items-center gap-2 z-20">
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold backdrop-blur-md shadow-md ${
                 event.eventType === "public"
                   ? "bg-emerald-500/90 text-white"
                   : event.isTruePrivate
@@ -340,7 +340,7 @@ export const EventDetailPage: React.FC = () => {
             </span>
 
             {isPast && (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-900/90 text-slate-300 backdrop-blur-md shadow-md">
+              <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-900/90 text-slate-300 backdrop-blur-md shadow-md">
                 <Clock className="w-3.5 h-3.5" /> Past Event
               </span>
             )}
@@ -348,32 +348,32 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Admin Controls */}
           {event.isCreator && (
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+            <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20 flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white text-xs font-bold backdrop-blur-md hover:bg-white transition-all shadow-md"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white text-xs font-bold backdrop-blur-md hover:bg-white transition-all shadow-md"
               >
                 <Edit3 className="w-3.5 h-3.5 text-indigo-500" />
-                Edit
+                <span>Edit</span>
               </button>
               <button
                 onClick={() => setIsDeleteDialogOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold backdrop-blur-md transition-all shadow-md"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold backdrop-blur-md transition-all shadow-md"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Delete
+                <span>Delete</span>
               </button>
             </div>
           )}
 
           {/* Title & Tags inside Hero */}
-          <div className="absolute bottom-6 left-6 right-6 z-10">
-            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+          <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 z-10">
+            <div className="flex flex-wrap items-center gap-1.5 mb-2 sm:mb-2.5">
               {event.tags.slice(0, 5).map((t) => (
                 <span
                   key={t.id}
                   style={{ backgroundColor: t.colorHex }}
-                  className="px-3 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
+                  className="px-2.5 sm:px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-bold text-white shadow-sm"
                 >
                   #{t.name}
                 </span>
@@ -386,7 +386,7 @@ export const EventDetailPage: React.FC = () => {
                 chipClassName="px-2.5 py-0.5 rounded-full text-xs font-bold border"
               />
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight line-clamp-2">
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white leading-tight line-clamp-2 sm:line-clamp-3">
               {event.title}
             </h1>
           </div>
@@ -396,7 +396,7 @@ export const EventDetailPage: React.FC = () => {
       {/* Private Event Notice for Unauthenticated or Unverified Visitors */}
       {event.eventType === "private" &&
         (!isAuthenticated || (user && !user.isEmailVerified)) && (
-          <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md">
+          <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md lg:p-2 p-1">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
                 <Lock className="w-5 h-5" />

@@ -358,27 +358,27 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
       />
 
       {/* Container: Dialog on Mobile (< lg) / Sidebar Drawer on Desktop (lg+) */}
-      <div className="fixed inset-0 pointer-events-none flex lg:justify-end items-center lg:items-stretch justify-center p-4 lg:p-0">
+      <div className="fixed inset-0 pointer-events-none flex lg:justify-end items-center lg:items-stretch justify-center p-2.5 sm:p-4 lg:p-0">
         <div
           ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-label={currentConfig.title}
-          className="pointer-events-auto w-full max-w-lg lg:max-w-md lg:w-full lg:h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-2xl rounded-3xl lg:rounded-none lg:rounded-l-3xl max-h-[90vh] lg:max-h-full flex flex-col justify-between overflow-hidden animate-fade-in lg:animate-slide-left"
+          className="pointer-events-auto w-full max-w-lg lg:max-w-md 2xl:max-w-lg lg:w-full lg:h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-none lg:rounded-l-3xl max-h-[92dvh] lg:max-h-full flex flex-col justify-between overflow-hidden animate-fade-in lg:animate-slide-left"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/30 flex-shrink-0">
-            <div className="flex items-center gap-3.5">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 ${currentConfig.colorClass}`}>
+          <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3 sm:gap-4 bg-slate-50/50 dark:bg-slate-950/30 shrink-0">
+            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-md shrink-0 ${currentConfig.colorClass}`}>
                 {currentConfig.icon}
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
                     {currentConfig.title}
                   </h2>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                   {currentConfig.subtitle}
                 </p>
               </div>
@@ -386,16 +386,16 @@ export const MetricDetailDrawer: React.FC<MetricDetailDrawerProps> = ({
             <button
               onClick={onClose}
               aria-label="Close panel"
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Scrollable Content Body */}
-          <div className="p-6 overflow-y-auto space-y-6 flex-1 flex flex-col min-h-0">
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1 flex flex-col min-h-0">
             {/* KPI Highlight Card */}
-            <div className="glass-card rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between flex-shrink-0">
+            <div className="glass-card rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between shrink-0">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   {currentConfig.metricLabel}

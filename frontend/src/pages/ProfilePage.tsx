@@ -98,13 +98,13 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24 animate-fade-in space-y-8">
+    <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 pb-24 animate-fade-in space-y-6 sm:space-y-8">
       {/* Profile Header Card */}
-      <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg flex flex-col sm:flex-row items-center gap-6">
+      <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-lg flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
         <img
           src={user.avatarUrl || getDicebearAvatarUrl(user.name)}
           alt={user.name}
-          className="w-24 h-24 rounded-3xl object-cover ring-4 ring-indigo-500/20 shadow-lg"
+          className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl object-cover ring-4 ring-indigo-500/20 shadow-lg shrink-0"
         />
 
         <div className="text-center sm:text-left flex-1">
@@ -143,7 +143,7 @@ export const ProfilePage: React.FC = () => {
         </h2>
 
         {/* 2FA Setup Card */}
-        <div className="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+        <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="max-w-xl">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
