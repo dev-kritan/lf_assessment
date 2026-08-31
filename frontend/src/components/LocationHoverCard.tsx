@@ -163,7 +163,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         {/* Floating Glassmorphic Hover Card for Detail Page */}
         {isOpen && (
           <div
-            className="absolute left-0 top-full mt-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+            className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2.5 z-[999] w-[min(20rem,calc(100vw-2rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-top-1.5 before:left-1/2 before:-translate-x-1/2 sm:before:left-6 sm:before:translate-x-0 before:w-3 before:h-3 before:bg-white dark:before:bg-slate-900 before:border-t before:border-l before:border-slate-200 dark:before:border-slate-800 before:rotate-45"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800/80">
@@ -244,7 +244,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       {/* Modern Interactive Glassmorphic Hover Card */}
       {isOpen && (
         <div
-          className="absolute left-0 bottom-full mb-2 z-[999] w-72 sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-bottom-3 before:left-0 before:right-0 before:h-3"
+          className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2.5 z-[999] w-[min(20rem,calc(100vw-2.5rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto after:content-[''] after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 sm:after:left-6 sm:after:translate-x-0 after:w-3 after:h-3 after:bg-white dark:after:bg-slate-900 after:border-b after:border-r after:border-slate-200/90 dark:after:border-slate-800 after:rotate-45"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

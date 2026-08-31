@@ -396,7 +396,7 @@ export const EventDetailPage: React.FC = () => {
       {/* Private Event Notice for Unauthenticated or Unverified Visitors */}
       {event.eventType === "private" &&
         (!isAuthenticated || (user && !user.isEmailVerified)) && (
-          <div className="mt-6 p-4.5 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md lg:p-2 p-1">
+          <div className="mt-6 p-4.5 sm:p-6 rounded-3xl bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-pink-50/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md backdrop-blur-md">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
                 <Lock className="w-5 h-5" />
