@@ -605,7 +605,7 @@ export const EventListPage: React.FC = () => {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28">
         {/* Filter Controls */}
         <div ref={filterBarRef}>
           <FilterBar
