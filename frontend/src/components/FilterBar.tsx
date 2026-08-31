@@ -101,7 +101,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   ];
 
   return (
-    <div className="space-y-4 mb-8">
+    <div id="events-filter-bar" className="space-y-4 mb-8 scroll-mt-20 sm:scroll-mt-24">
       {/* Top Row: Search & View Toggle */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Search Bar */}

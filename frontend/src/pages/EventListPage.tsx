@@ -109,6 +109,8 @@ export const EventListPage: React.FC = () => {
   const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
   const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
 
+  const filterBarRef = useRef<HTMLDivElement>(null);
+
   const { isAuthenticated, user } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
@@ -431,7 +433,17 @@ export const EventListPage: React.FC = () => {
   const handlePageChange = (newPage: number) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
     updateUrlParams({ page: newPage, limit: pagination.limit });
-    window.scrollTo({ top: 320, behavior: "smooth" });
+
+    const filterBarEl =
+      filterBarRef.current || document.getElementById("events-filter-bar");
+    if (filterBarEl) {
+      const yOffset = -80; // 64px sticky navbar + 16px buffer
+      const y =
+        filterBarEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleLimitChange = (newLimit: number) => {
@@ -589,42 +601,44 @@ export const EventListPage: React.FC = () => {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Filter Controls */}
-        <FilterBar
-          search={search}
-          onSearchChange={setSearch}
-          selectedTimeframe={timeframe}
-          onTimeframeChange={(tf) => {
-            setTimeframe(tf);
-            setPagination((prev) => ({ ...prev, page: 1 }));
-            updateUrlParams({ timeframe: tf, page: 1 });
-          }}
-          selectedType={eventType}
-          onTypeChange={(type) => {
-            setEventType(type);
-            setPagination((prev) => ({ ...prev, page: 1 }));
-            updateUrlParams({ event_type: type, page: 1 });
-          }}
-          selectedTag={selectedTag}
-          onTagChange={(tag) => {
-            setSelectedTag(tag);
-            setPagination((prev) => ({ ...prev, page: 1 }));
-            updateUrlParams({ tag, page: 1 });
-          }}
-          sortBy={sortBy}
-          onSortChange={(sort) => {
-            setSortBy(sort);
-            setPagination((prev) => ({ ...prev, page: 1 }));
-            updateUrlParams({ sort_by: sort, page: 1 });
-          }}
-          tags={tags}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          onReset={handleResetFilters}
-          hasActiveFilters={hasActiveFilters}
-          onEditTag={handleEditTag}
-          onDeleteTag={handleDeleteTag}
-          timeframeCounts={timeframeCounts}
-        />
+        <div ref={filterBarRef}>
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            selectedTimeframe={timeframe}
+            onTimeframeChange={(tf) => {
+              setTimeframe(tf);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              updateUrlParams({ timeframe: tf, page: 1 });
+            }}
+            selectedType={eventType}
+            onTypeChange={(type) => {
+              setEventType(type);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              updateUrlParams({ event_type: type, page: 1 });
+            }}
+            selectedTag={selectedTag}
+            onTagChange={(tag) => {
+              setSelectedTag(tag);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              updateUrlParams({ tag, page: 1 });
+            }}
+            sortBy={sortBy}
+            onSortChange={(sort) => {
+              setSortBy(sort);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              updateUrlParams({ sort_by: sort, page: 1 });
+            }}
+            tags={tags}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            onReset={handleResetFilters}
+            hasActiveFilters={hasActiveFilters}
+            onEditTag={handleEditTag}
+            onDeleteTag={handleDeleteTag}
+            timeframeCounts={timeframeCounts}
+          />
+        </div>
 
         {/* Loading Spinner only on initial load when events is empty */}
         {!hasLoadedOnce && events.length === 0 ? (
