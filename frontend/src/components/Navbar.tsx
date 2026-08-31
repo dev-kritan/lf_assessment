@@ -15,6 +15,11 @@ import {
   Menu,
   X,
   CalendarCheck,
+  FileText,
+  ExternalLink,
+  LogIn,
+  UserPlus,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -65,13 +70,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
   const handleCreateEventClick = () => {
     if (!isAuthenticated) {
-      navigate(`${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`);
+      navigate(
+        `${APP_ROUTES.LOGIN}?redirect=${encodeURIComponent(APP_ROUTES.CREATE_EVENT)}`,
+      );
       return;
     }
 
     if (user && !user.isEmailVerified) {
-      error("Email verification required: Please verify your email address to create events.");
-      navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+      error(
+        "Email verification required: Please verify your email address to create events.",
+      );
+      navigate(APP_ROUTES.PROFILE, {
+        state: { highlightEmailVerification: true },
+      });
       return;
     }
 
@@ -145,13 +156,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             <div className="hidden md:flex items-center gap-1">
               <Link
                 to={APP_ROUTES.HOME}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex gap-x-2 items-center ${
                   isActive(APP_ROUTES.HOME)
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
-                Browse Events
+                <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                <p>Browse Events</p>
               </Link>
 
               {isAuthenticated && (
@@ -176,6 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
+                <Database className="w-4 h-4" />
                 <span>SQL Challenge</span>
               </Link>
 
@@ -183,9 +196,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 href="http://localhost:5000/api-docs"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+                className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors flex gap-x-2 items-center"
               >
-                API Docs (Swagger)
+                <FileText className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <p>API Docs (Swagger)</p>
               </a>
             </div>
           </div>
@@ -231,9 +245,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 </button>
 
                 {profileDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-56 rounded-2xl glass-card shadow-2xl py-2 z-50 border border-slate-200/80 dark:border-slate-800/80 animate-fade-in"
-                  >
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl glass-card shadow-2xl py-2 z-50 border border-slate-200/80 dark:border-slate-800/80 animate-fade-in">
                     <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {user.name}
@@ -352,9 +364,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           <Link
             to={APP_ROUTES.HOME}
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium transition-colors ${
+              isActive(APP_ROUTES.HOME)
+                ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
           >
-            Browse Events
+            <Calendar className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+            <span>Browse Events</span>
           </Link>
 
           <button
@@ -362,36 +379,51 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
               setMobileMenuOpen(false);
               handleCreateEventClick();
             }}
-            className="w-full text-left block px-3 py-2 rounded-lg text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
           >
-            Create Event
+            <PlusCircle className="w-5 h-5" />
+            <span>Create Event</span>
           </button>
 
           {isAuthenticated && (
             <Link
               to={APP_ROUTES.MY_EVENTS}
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive(APP_ROUTES.MY_EVENTS)
+                  ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
             >
-              My Events & RSVPs
+              <BookmarkCheck className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+              <span>My Events & RSVPs</span>
             </Link>
           )}
 
           <Link
             to={APP_ROUTES.BONUS_CHALLENGE}
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium transition-colors ${
+              isActive(APP_ROUTES.BONUS_CHALLENGE)
+                ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
           >
-            Bonus SQL Challenge
+            <BookOpen className="w-4 h-4 text-amber-500" />
+            <span>Strategy & Reasoning</span>
           </Link>
 
           <a
             href="http://localhost:5000/api-docs"
             target="_blank"
             rel="noreferrer"
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            Swagger API Docs
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+              <span>Swagger API Docs</span>
+            </div>
+            <ExternalLink className="w-4 h-4 text-slate-400" />
           </a>
 
           <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -400,18 +432,24 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 <Link
                   to={APP_ROUTES.PROFILE}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                    isActive(APP_ROUTES.PROFILE)
+                      ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                      : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  Profile & Security
+                  <UserIcon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                  <span>Profile & Security</span>
                 </Link>
                 <button
                   onClick={() => {
                     handleLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-base font-medium text-rose-600 dark:text-rose-400"
+                  className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                 >
-                  Sign Out
+                  <LogOut className="w-5 h-5" />
+                  <span>Sign Out</span>
                 </button>
               </div>
             ) : (
@@ -419,16 +457,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                 <Link
                   to={loginUrl}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl font-semibold bg-indigo-600 text-white"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
                 >
-                  Sign In
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
                 </Link>
                 <Link
                   to={registerUrl}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl font-semibold border border-slate-300 dark:border-slate-700"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors"
                 >
-                  Sign Up
+                  <UserPlus className="w-4 h-4" />
+                  <span>Sign Up</span>
                 </Link>
               </div>
             )}
