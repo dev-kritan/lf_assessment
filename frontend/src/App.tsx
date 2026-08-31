@@ -34,11 +34,17 @@ const NotFoundPage = lazy(() =>
 import { APP_ROUTES } from "./constants";
 
 export const ScrollToTop: React.FC = () => {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const savedPos =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem(`scroll_pos_${pathname}${search}`)
+        : null;
+    if (!savedPos || Number(savedPos) <= 0) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, search]);
 
   return null;
 };

@@ -15,7 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { eventsApi } from "../api/events.api";
 import { rsvpApi } from "../api/rsvp.api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -32,6 +32,8 @@ import { EventItem, PaginationMeta, Tag } from "../types";
 
 export const MyEventsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const isRestoredRef = useRef(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
@@ -583,6 +585,68 @@ export const MyEventsPage: React.FC = () => {
     fetchRsvpEvents,
     fetchCreatedCounts,
     fetchRsvpCounts,
+  ]);
+
+  // Keep scroll position updated for current path and search parameters
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (typeof window !== "undefined" && window.scrollY > 0) {
+            sessionStorage.setItem(
+              `scroll_pos_${location.pathname}${location.search}`,
+              String(window.scrollY),
+            );
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [location.pathname, location.search]);
+
+  // Reset restoration flag when user explicitly changes query params / tabs
+  useEffect(() => {
+    isRestoredRef.current = false;
+  }, [location.pathname, location.search]);
+
+  // Restore scroll position after events load
+  useEffect(() => {
+    const isFetching =
+      activeTab === "created" ? isCreatedFetching : isRsvpFetching;
+    const currentEvents =
+      activeTab === "created" ? createdEvents : rsvpEvents;
+
+    if (!isFetching && currentEvents.length > 0 && !isRestoredRef.current) {
+      const savedScroll = sessionStorage.getItem(
+        `scroll_pos_${location.pathname}${location.search}`,
+      );
+      if (savedScroll) {
+        const top = Number(savedScroll);
+        if (top > 0) {
+          isRestoredRef.current = true;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+            });
+          });
+        }
+      }
+    }
+  }, [
+    activeTab,
+    isCreatedFetching,
+    isRsvpFetching,
+    createdEvents,
+    rsvpEvents,
+    location.pathname,
+    location.search,
   ]);
 
   // Tab switching

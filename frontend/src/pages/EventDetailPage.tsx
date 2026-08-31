@@ -93,16 +93,64 @@ export const EventDetailPage: React.FC = () => {
     fetchEvent();
   }, [id, isAuthenticated]);
 
-  const handleBack = () => {
-    const isFromMyEvents =
-      searchParams.get("tab") !== null || searchParams.has("rsvp_status");
-    const targetBase = isFromMyEvents ? APP_ROUTES.MY_EVENTS : APP_ROUTES.HOME;
-    const queryString = searchParams.toString();
-    if (queryString) {
-      navigate(`${targetBase}?${queryString}`);
-    } else {
-      navigate(targetBase);
+  const locationState = location.state as {
+    from?: string;
+    fromTitle?: string;
+  } | null;
+
+  const getOriginInfo = () => {
+    if (locationState?.fromTitle) {
+      return {
+        title: locationState.fromTitle,
+        path:
+          locationState.from ||
+          (locationState.fromTitle.includes("RSVP") ||
+          locationState.fromTitle.includes("My")
+            ? APP_ROUTES.MY_EVENTS
+            : APP_ROUTES.HOME),
+      };
     }
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "rsvps" || searchParams.has("rsvp_status")) {
+      return {
+        title: "My RSVPs",
+        path: `${APP_ROUTES.MY_EVENTS}?${searchParams.toString()}`,
+      };
+    }
+    if (tabParam === "created") {
+      return {
+        title: "My Events",
+        path: `${APP_ROUTES.MY_EVENTS}?${searchParams.toString()}`,
+      };
+    }
+    const fromParam = searchParams.get("from");
+    if (fromParam === "my-rsvps") {
+      return {
+        title: "My RSVPs",
+        path: `${APP_ROUTES.MY_EVENTS}?${searchParams.toString()}`,
+      };
+    }
+    if (fromParam === "my-events") {
+      return {
+        title: "My Events",
+        path: `${APP_ROUTES.MY_EVENTS}?${searchParams.toString()}`,
+      };
+    }
+    const queryString = searchParams.toString();
+    return {
+      title: "Events",
+      path: queryString ? `${APP_ROUTES.HOME}?${queryString}` : APP_ROUTES.HOME,
+    };
+  };
+
+  const originInfo = getOriginInfo();
+
+  const handleBack = () => {
+    if (locationState?.from) {
+      navigate(locationState.from);
+      return;
+    }
+    navigate(originInfo.path);
   };
 
   const handleDelete = async () => {
@@ -112,16 +160,10 @@ export const EventDetailPage: React.FC = () => {
       const res = await eventsApi.deleteEvent(event.id);
       if (res.success) {
         success("Event deleted successfully");
-        const isFromMyEvents =
-          searchParams.get("tab") !== null || searchParams.has("rsvp_status");
-        const targetBase = isFromMyEvents
-          ? APP_ROUTES.MY_EVENTS
-          : APP_ROUTES.HOME;
-        const queryString = searchParams.toString();
-        if (queryString) {
-          navigate(`${targetBase}?${queryString}`);
+        if (locationState?.from) {
+          navigate(locationState.from);
         } else {
-          navigate(targetBase);
+          navigate(originInfo.path);
         }
       }
     } catch (err: any) {
@@ -168,7 +210,7 @@ export const EventDetailPage: React.FC = () => {
             onClick={handleBack}
             className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors cursor-pointer"
           >
-            Return to Events
+            Return to {originInfo.title}
           </button>
         </div>
       </div>
@@ -215,7 +257,7 @@ export const EventDetailPage: React.FC = () => {
             onClick={handleBack}
             className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors cursor-pointer"
           >
-            Browse Public Events
+            Return to {originInfo.title}
           </button>
         </div>
       </div>
@@ -236,7 +278,7 @@ export const EventDetailPage: React.FC = () => {
           onClick={handleBack}
           className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors cursor-pointer"
         >
-          Return to Events
+          Return to {originInfo.title}
         </button>
       </div>
     );
@@ -256,7 +298,7 @@ export const EventDetailPage: React.FC = () => {
         className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors group cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-        <span>Back to Events</span>
+        <span>Back to {originInfo.title}</span>
         {pageParam && Number(pageParam) > 1 && (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
             Page {pageParam}

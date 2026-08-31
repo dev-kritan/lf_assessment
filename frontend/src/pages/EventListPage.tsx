@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { eventsApi } from "../api/events.api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EventCard } from "../components/EventCard";
@@ -31,6 +31,8 @@ import { EventItem, PaginationMeta, Tag } from "../types";
 
 export const EventListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const isRestoredRef = useRef(false);
 
   // Read initial query params from URL
   const initialPage = Math.max(
@@ -382,6 +384,55 @@ export const EventListPage: React.FC = () => {
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  // Keep scroll position updated for current search parameters
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (typeof window !== "undefined" && window.scrollY > 0) {
+            sessionStorage.setItem(
+              `scroll_pos_${location.pathname}${location.search}`,
+              String(window.scrollY),
+            );
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [location.pathname, location.search]);
+
+  // Reset restoration flag when user explicitly changes query params
+  useEffect(() => {
+    isRestoredRef.current = false;
+  }, [location.pathname, location.search]);
+
+  // Restore scroll position after events load
+  useEffect(() => {
+    if (!isFetching && events.length > 0 && !isRestoredRef.current) {
+      const savedScroll = sessionStorage.getItem(
+        `scroll_pos_${location.pathname}${location.search}`,
+      );
+      if (savedScroll) {
+        const top = Number(savedScroll);
+        if (top > 0) {
+          isRestoredRef.current = true;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+            });
+          });
+        }
+      }
+    }
+  }, [events, isFetching, location.pathname, location.search]);
 
   // Smoothly attach new/updated event without UI flash or layout shift
   const handleEventSaved = useCallback(

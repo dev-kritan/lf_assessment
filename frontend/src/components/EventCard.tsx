@@ -43,8 +43,25 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isAuthenticated = authContext?.isAuthenticated ?? false;
   const user = authContext?.user;
   const isRestrictedPrivate = event.eventType === 'private' && (!isAuthenticated || (user && !user.isEmailVerified));
+  const isMyEvents = location.pathname === APP_ROUTES.MY_EVENTS;
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get('tab');
+  const fromTitle = isMyEvents
+    ? (currentTab === 'rsvps' ? 'My RSVPs' : 'My Events')
+    : 'Events';
+  const navState = {
+    from: location.pathname + location.search,
+    fromTitle,
+  };
+
   const startDate = parseISO(event.startTime);
   const isPast = event.isPast;
+
+  const handleCardClick = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(`scroll_pos_${location.pathname}${location.search}`, String(window.scrollY));
+    }
+  };
 
   return (
     <div className={`group relative rounded-3xl overflow-visible hover:z-30 glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
@@ -56,7 +73,12 @@ export const EventCard: React.FC<EventCardProps> = ({
     }`}>
       {/* Banner / Header Visual */}
       <div className="relative h-48 w-full overflow-hidden rounded-t-3xl bg-slate-800">
-        <Link to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)} className="block w-full h-full">
+        <Link
+          to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)}
+          state={navState}
+          onClick={handleCardClick}
+          className="block w-full h-full"
+        >
           <img
             src={event.bannerUrl || DEFAULT_ASSETS.EVENT_CARD_BANNER}
             alt={event.title}
@@ -158,7 +180,11 @@ export const EventCard: React.FC<EventCardProps> = ({
           </div>
 
           {/* Title */}
-          <Link to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)}>
+          <Link
+            to={APP_ROUTES.EVENT_DETAIL(event.id, location.search)}
+            state={navState}
+            onClick={handleCardClick}
+          >
             <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
               {event.title}
             </h3>
