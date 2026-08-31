@@ -268,14 +268,14 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-#### Option B: Full-Stack Docker Containerization
+<!-- #### Option B: Full-Stack Docker Containerization
 
 To run all 3 services (`mysql`, `backend`, `frontend`) entirely inside Docker/Podman:
 
 ```bash
 docker compose up -d
 # or: podman compose up -d
-```
+``` -->
 
 ---
 
