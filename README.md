@@ -307,11 +307,10 @@ docker compose up -d
 
 ### Pre-seeded Demo Accounts for Testing
 
-| Account                | Email               | Password       | Status / Permissions                      |
-| :--------------------- | :------------------ | :------------- | :---------------------------------------- |
-| **Alice (Organizer)**  | `alice@example.com` | `Password123!` | Verified Event Host & Creator             |
-| **Bob (Attendee)**     | `bob@example.com`   | `Password123!` | Verified Community Member                 |
-| **Carol (Unverified)** | `carol@example.com` | `Password123!` | Unverified User (Tests Verification Flow) |
+| Account               | Email               | Password       | Status / Permissions |
+| :-------------------- | :------------------ | :------------- | :------------------- |
+| **Alice (Organizer)** | `alice@example.com` | `Password123!` | Verified Atendee     |
+| **Bob (Attendee)**    | `bob@example.com`   | `Password123!` | Verified Attendee    |
 
 _(Quick one-click demo login buttons are available directly on the login screen for rapid evaluation.)_
 
