@@ -203,16 +203,16 @@ Email delivery is used for the **Email Verification** flow. You can configure an
 ##### Option B: Mailtrap (Recommended for Safe Sandbox Testing)
 
 1. Create a free account at **[Mailtrap.io](https://mailtrap.io/)**.
-2. Navigate to **Email Testing** -> **Inboxes** -> **My Inbox**.
-3. Under **Show Credentials**, select **Nodemailer** in the _Integrations_ dropdown.
+2. Navigate to **Sandboxes** -> **My Inbox** -> **Settings**.
+3. Under **SMTP, Email, API, POP3**, select **SMTP** in the _Integrations_ toggle buttons.
 4. Copy the credentials into `/.env`:
    ```env
-   SMTP_HOST=smtp.mailtrap.io
+   SMTP_HOST=sandbox.smtp.mailtrap.io
    SMTP_PORT=2525
    SMTP_SECURE=false
    SMTP_USER=your_mailtrap_username
    SMTP_PASS=your_mailtrap_password
-   SMTP_FROM="EventHub" <noreply@eventhub.local>
+   SMTP_FROM="EventHub"
    ```
 5. All verification emails will be captured in your virtual Mailtrap inbox.
 
@@ -289,19 +289,19 @@ docker compose up -d
 
 ### Convenient Root NPM Scripts
 
-| Command                | Description                                                               |
-| :--------------------- | :------------------------------------------------------------------------ |
-| `npm run install:all`  | Installs all dependencies across root, backend, and frontend              |
-| `npm run dev`          | Starts backend (:5000) and frontend (:5173) concurrently                  |
-| `npm run db:mysql:up`  | Starts only the MySQL 8 database service in Docker                        |
-| `npm run db:up`        | Starts MySQL container in background daemon mode                          |
-| `npm run db:down`      | Stops and tears down database container                                   |
-| `npm run migrate`      | Executes Knex database migrations (creates all tables)                    |
-| `npm run seed`         | Populates database with demo users, events, tags, RSVPs, and bonus tables |
-| `npm test`             | Runs both backend and frontend automated test suites                      |
-| `npm run test:backend` | Runs backend Jest + Supertest integration tests                           |
-| `npm run test:frontend`| Runs frontend Vitest + React Testing Library tests                        |
-| `npm run build`        | Builds production bundles for backend and frontend                        |
+| Command                 | Description                                                               |
+| :---------------------- | :------------------------------------------------------------------------ |
+| `npm run install:all`   | Installs all dependencies across root, backend, and frontend              |
+| `npm run dev`           | Starts backend (:5000) and frontend (:5173) concurrently                  |
+| `npm run db:mysql:up`   | Starts only the MySQL 8 database service in Docker                        |
+| `npm run db:up`         | Starts MySQL container in background daemon mode                          |
+| `npm run db:down`       | Stops and tears down database container                                   |
+| `npm run migrate`       | Executes Knex database migrations (creates all tables)                    |
+| `npm run seed`          | Populates database with demo users, events, tags, RSVPs, and bonus tables |
+| `npm test`              | Runs both backend and frontend automated test suites                      |
+| `npm run test:backend`  | Runs backend Jest + Supertest integration tests                           |
+| `npm run test:frontend` | Runs frontend Vitest + React Testing Library tests                        |
+| `npm run build`         | Builds production bundles for backend and frontend                        |
 
 ---
 
