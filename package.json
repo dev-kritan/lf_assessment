@@ -8,6 +8,7 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "db:mysql:up": "docker compose up mysql",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "migrate": "npm --prefix backend run migrate",

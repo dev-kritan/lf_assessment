@@ -2,11 +2,11 @@
   "name": "event-planner-backend",
   "version": "1.0.0",
   "description": "Express TypeScript backend for Event Planning Application with Knex.js",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "migrate": "knex migrate:latest --knexfile src/config/knexfile.ts",
     "migrate:rollback": "knex migrate:rollback --knexfile src/config/knexfile.ts",
     "seed": "knex seed:run --knexfile src/config/knexfile.ts",

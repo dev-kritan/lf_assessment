@@ -1,7 +1,20 @@
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// Resolve single root .env or fallback candidate locations
+const candidatePaths = [
+  path.resolve(process.cwd(), ".env"),
+  path.resolve(__dirname, "../../../.env"),
+  path.resolve(__dirname, "../../.env"),
+];
+
+for (const envPath of candidatePaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    break;
+  }
+}
 
 export const config = {
   port: parseInt(process.env.PORT || "5000", 10),
