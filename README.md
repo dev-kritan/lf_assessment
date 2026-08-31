@@ -149,25 +149,26 @@ _Default environment variables configured in `backend/.env`:_
 ```env
 PORT=5000
 NODE_ENV=development
-CLIENT_URL=http://localhost:5173
 
-# Database configuration (MySQL 8)
+# Application Configuration
+CLIENT_URL=http://localhost:5173
+APP_NAME=EventPlanner
+
+# Database Configuration (MySQL 8)
 DB_CLIENT=mysql2
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=eventuser
 DB_PASSWORD=eventpassword
 DB_NAME=event_planner_db
+MYSQL_ROOT_PASSWORD=rootpassword
 
 # Authentication & Security
-JWT_SECRET=super-secret-jwt-access-token-key-32-chars-long
+JWT_SECRET=super-secret-jwt-key-minimum-32-chars-length
 JWT_EXPIRES_IN=15m
-REFRESH_TOKEN_SECRET=super-secret-jwt-refresh-token-key-32-chars-long
+REFRESH_TOKEN_SECRET=super-secret-refresh-key-minimum-32-chars
 REFRESH_TOKEN_EXPIRES_IN=7d
-COOKIE_SECRET=super-secret-cookie-signing-key
-
-# Application details
-APP_NAME=EventPlanner
+COOKIE_SECRET=super-secret-cookie-key
 
 # Email & SMTP (Optional - defaults to mock/logged transport if omitted)
 SMTP_HOST=smtp.mailtrap.io
@@ -176,6 +177,20 @@ SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM="EventHub" <noreply@eventhub.local>
+
+# Database Configuration
+DB_USER=eventuser
+DB_PASSWORD=eventpassword
+DB_NAME=event_planner_db
+MYSQL_ROOT_PASSWORD=rootpassword
+
+# Application Configuration
+CLIENT_URL=http://localhost:5173
+
+# Authentication & Security
+COOKIE_SECRET=super-secret-cookie-key
+REFRESH_TOKEN_SECRET=super-secret-refresh-key-minimum-32-chars
+JWT_SECRET=super-secret-jwt-key-minimum-32-chars-length
 ```
 
 #### How to Obtain & Configure SMTP Credentials (Optional)
@@ -225,14 +240,14 @@ Email delivery is used for the **Email Verification** flow. You can configure an
 
 ```bash
 # Start MySQL 8 container in background (Docker or Podman)
-docker compose up -d
-# or: podman compose up -d
+docker compose up -d mysql
+# or: podman compose up -d mysql
 
 # Verify container status is healthy
 docker compose ps
 ```
 
-_Note: The container maps to port `3306` with database `event_planner_db`, user `eventuser`, and password `eventpassword`._
+_Note: The database service runs with database `event_planner_db`, user `eventuser`, password `eventpassword`, and root password `rootpassword` mapped locally to port `3306`._
 
 ---
 
