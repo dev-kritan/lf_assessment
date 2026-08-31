@@ -73,7 +73,18 @@ export class RsvpService {
     };
   }
 
-  static async getAttendees(eventId: number) {
+  static async getAttendees(eventId: number, currentUserId?: number, isVerified: boolean = false) {
+    const event = await db(DB_TABLES.EVENTS).where({ id: eventId }).first();
+    if (!event) {
+      const error: any = new Error('Event not found.');
+      error.statusCode = 404;
+      error.code = ERROR_CODES.EVENT_NOT_FOUND;
+      throw error;
+    }
+
+    const isCreator = currentUserId ? Number(event.creator_id) === Number(currentUserId) : false;
+    const isRestricted = event.event_type === 'private' && (!currentUserId || !isVerified) && !isCreator;
+
     const attendees = await db(DB_TABLES.RSVPS)
       .join(DB_TABLES.USERS, 'rsvps.user_id', 'users.id')
       .where('rsvps.event_id', eventId)
@@ -88,8 +99,8 @@ export class RsvpService {
 
     return attendees.map((a) => ({
       id: a.id,
-      name: a.name,
-      avatarUrl: a.avatar_url,
+      name: isRestricted ? 'Private Attendee' : a.name,
+      avatarUrl: isRestricted ? null : a.avatar_url,
       status: a.status,
       updatedAt: a.updated_at,
     }));

@@ -71,7 +71,9 @@ export class RsvpController {
       }
 
       const eventId = paramValidation.data.id;
-      const attendees = await RsvpService.getAttendees(eventId);
+      const currentUserId = req.user?.userId;
+      const isVerified = Boolean(req.user?.isEmailVerified);
+      const attendees = await RsvpService.getAttendees(eventId, currentUserId, isVerified);
       return sendSuccess(res, attendees, 'Attendees retrieved successfully');
     } catch (error) {
       next(error);

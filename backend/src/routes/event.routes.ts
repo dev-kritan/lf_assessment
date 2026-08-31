@@ -29,7 +29,7 @@ router.patch('/:id', authenticate, requireVerified, validate(updateEventSchema),
 router.delete('/:id', authenticate, requireVerified, EventController.deleteEvent);
 
 // Canonical Nested REST Subresources for Event RSVPs & Attendees (RSVP responses require verified user)
-router.get('/:id/attendees', RsvpController.getAttendees);
+router.get('/:id/attendees', optionalAuthenticate, RsvpController.getAttendees);
 router.post('/:id/rsvps', authenticate, requireVerified, validate(setRsvpSchema), RsvpController.setRsvp);
 router.post('/:id/rsvp', authenticate, requireVerified, validate(setRsvpSchema), RsvpController.setRsvp);
 router.delete('/:id/rsvps', authenticate, requireVerified, RsvpController.deleteRsvp);

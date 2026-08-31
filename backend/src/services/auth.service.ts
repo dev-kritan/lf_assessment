@@ -91,7 +91,7 @@ export class AuthService {
       },
       message:
         "Registration successful. A verification email has been sent to your inbox.",
-      verificationToken: rawVerificationToken, // Provided in response for easy testing / preview environments
+      verificationToken: config.nodeEnv === "test" ? rawVerificationToken : undefined,
     };
   }
 

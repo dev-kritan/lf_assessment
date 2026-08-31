@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { eventsApi } from "./api/events.api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { EventFormModal } from "./components/EventFormModal";
@@ -8,16 +8,28 @@ import { Navbar } from "./components/Navbar";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
-import { BonusChallengePage } from "./pages/BonusChallengePage";
-import { CreateEventPage } from "./pages/CreateEventPage";
-import { EventDetailPage } from "./pages/EventDetailPage";
 import { EventListPage } from "./pages/EventListPage";
-import { LoginPage } from "./pages/LoginPage";
+import { EventDetailPage } from "./pages/EventDetailPage";
 import { MyEventsPage } from "./pages/MyEventsPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
-import { ProfilePage } from "./pages/ProfilePage";
+import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+
+// Lazy-loaded secondary pages for optimized bundle size & initial load speed
+const CreateEventPage = lazy(() =>
+  import("./pages/CreateEventPage").then((m) => ({ default: m.CreateEventPage })),
+);
+const ProfilePage = lazy(() =>
+  import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+const VerifyEmailPage = lazy(() =>
+  import("./pages/VerifyEmailPage").then((m) => ({ default: m.VerifyEmailPage })),
+);
+const BonusChallengePage = lazy(() =>
+  import("./pages/BonusChallengePage").then((m) => ({ default: m.BonusChallengePage })),
+);
+const NotFoundPage = lazy(() =>
+  import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
+);
 
 import { APP_ROUTES } from "./constants";
 
@@ -51,30 +63,39 @@ export const AppContent: React.FC = () => {
 
       <main className="flex-1">
         <ErrorBoundary>
-          <Routes>
-            <Route path={APP_ROUTES.HOME} element={<EventListPage />} />
-            <Route
-              path={APP_ROUTES.EVENT_DETAIL_PATTERN}
-              element={<EventDetailPage />}
-            />
-            <Route
-              path={APP_ROUTES.CREATE_EVENT}
-              element={<CreateEventPage />}
-            />
-            <Route path={APP_ROUTES.MY_EVENTS} element={<MyEventsPage />} />
-            <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
-            <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
-            <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
-            <Route
-              path={APP_ROUTES.VERIFY_EMAIL}
-              element={<VerifyEmailPage />}
-            />
-            <Route
-              path={APP_ROUTES.BONUS_CHALLENGE}
-              element={<BonusChallengePage />}
-            />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                <span className="text-xs text-slate-400 font-medium">Loading view...</span>
+              </div>
+            }
+          >
+            <Routes>
+              <Route path={APP_ROUTES.HOME} element={<EventListPage />} />
+              <Route
+                path={APP_ROUTES.EVENT_DETAIL_PATTERN}
+                element={<EventDetailPage />}
+              />
+              <Route
+                path={APP_ROUTES.CREATE_EVENT}
+                element={<CreateEventPage />}
+              />
+              <Route path={APP_ROUTES.MY_EVENTS} element={<MyEventsPage />} />
+              <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
+              <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+              <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
+              <Route
+                path={APP_ROUTES.VERIFY_EMAIL}
+                element={<VerifyEmailPage />}
+              />
+              <Route
+                path={APP_ROUTES.BONUS_CHALLENGE}
+                element={<BonusChallengePage />}
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
 

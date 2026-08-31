@@ -15,6 +15,42 @@ import {
 
 const router = Router();
 
+// Rate limiter for login attempts (10 requests per 15 minutes per IP/email)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  keyGenerator: (req) => {
+    const email = req.body?.email ? String(req.body.email).toLowerCase().trim() : undefined;
+    return email ? `login_${email}` : req.ip || 'unknown';
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      message: 'Too many login attempts. Please try again after 15 minutes.',
+      code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
+    },
+  },
+  skip: (req) => process.env.NODE_ENV === 'test' && !req.headers['x-test-rate-limit'],
+});
+
+// Rate limiter for registration (10 requests per hour per IP)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      message: 'Too many accounts created from this IP address. Please try again later.',
+      code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
+    },
+  },
+  skip: (req) => process.env.NODE_ENV === 'test' && !req.headers['x-test-rate-limit'],
+});
+
 // Rate limiter for resend verification (3 requests per hour per email/IP)
 const resendVerificationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -35,8 +71,8 @@ const resendVerificationLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'test' && !req.headers['x-test-rate-limit'],
 });
 
-router.post('/register', validate(registerSchema), AuthController.register);
-router.post('/login', validate(loginSchema), AuthController.login);
+router.post('/register', registerLimiter, validate(registerSchema), AuthController.register);
+router.post('/login', loginLimiter, validate(loginSchema), AuthController.login);
 router.post('/refresh-token', validate(refreshTokenSchema), AuthController.refreshToken);
 router.post('/logout', AuthController.logout);
 router.get('/profile', authenticate, AuthController.getProfile);

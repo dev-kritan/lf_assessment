@@ -24,7 +24,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
-import { APP_ROUTES, getDicebearAvatarUrl } from "../constants";
+import { APP_ROUTES, getDicebearAvatarUrl, API_BASE_URL } from "../constants";
 
 interface NavbarProps {
   onOpenCreateModal?: () => void;
@@ -36,6 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const { success, error } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const apiDocsUrl = `${API_BASE_URL.replace(/\/api\/v1\/?$/, "")}/api-docs`;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -193,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
               </Link>
 
               <a
-                href="http://localhost:5000/api-docs"
+                href={apiDocsUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors flex gap-x-2 items-center"
@@ -414,7 +416,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           </Link>
 
           <a
-            href="http://localhost:5000/api-docs"
+            href={apiDocsUrl}
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-between px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
