@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
@@ -17,7 +17,17 @@ services:
     networks:
       - event_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-eventuser}", "-p${DB_PASSWORD:-eventpassword}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "${DB_USER:-eventuser}",
+          "-p${DB_PASSWORD:-eventpassword}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
