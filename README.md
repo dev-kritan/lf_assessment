@@ -4,6 +4,43 @@ A production-grade, full-stack event planning and community web application buil
 
 ---
 
+## Table of Contents
+
+- [Key Features](#key-features)
+  - [1. Event Management Lifecycle](#1-event-management-lifecycle)
+  - [2. Authentication, 2FA & Verification Security](#2-authentication-2fa--verification-security)
+  - [3. Interactive RSVP System](#3-interactive-rsvp-system)
+  - [4. Tag & Category Management System](#4-tag--category-management-system)
+  - [5. Metrics & Analytics Drawer](#5-metrics--analytics-drawer)
+  - [6. Bulk Operations & Management Dashboard](#6-bulk-operations--management-dashboard)
+  - [7. Server-Side Pagination & URL State Synchronization](#7-server-side-pagination--url-state-synchronization)
+  - [8. Theme Engine](#8-theme-engine)
+  - [9. Bonus Challenge: SQL Analytics & Playground](#9-bonus-challenge-sql-analytics--playground)
+- [Technology Stack](#technology-stack)
+- [Normalized Database Schema Design (3NF)](#normalized-database-schema-design-3nf)
+- [Setup & Local Execution Instructions](#setup--local-execution-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Clone Repository & Install Dependencies](#step-1-clone-repository--install-dependencies)
+  - [Step 2: Configure Environment Variables](#step-2-configure-environment-variables)
+  - [Step 3: Start MySQL Database via Docker/Podman Compose](#step-3-start-mysql-database-via-dockerpodman-compose)
+  - [Step 4: Run Database Migrations & Seed Sample Data](#step-4-run-database-migrations--seed-sample-data)
+  - [Step 5: Start the Application](#step-5-start-the-application)
+  - [Accessing the Application](#accessing-the-application)
+  - [Convenient Root NPM Scripts](#convenient-root-npm-scripts)
+  - [Pre-seeded Demo Accounts for Testing](#pre-seeded-demo-accounts-for-testing)
+- [Running Automated Test Suites](#running-automated-test-suites)
+- [RESTful API Specification (OpenAPI 3.0 / Swagger)](#restful-api-specification-openapi-30--swagger)
+  - [Authentication & Profile](#authentication--profile)
+  - [Two-Factor Authentication (TOTP 2FA)](#two-factor-authentication-totp-2fa)
+  - [Events Management](#events-management)
+  - [Category & Tag Management](#category--tag-management)
+  - [RSVPs & Attendance](#rsvps--attendance)
+  - [Bonus Challenge SQL Analytics](#bonus-challenge-sql-analytics)
+- [Engineering Decisions & Architecture Rationale](#engineering-decisions--architecture-rationale)
+- [Assumptions & Business Logic Policies](#assumptions--business-logic-policies)
+
+---
+
 ## Key Features
 
 ### 1. Event Management Lifecycle
