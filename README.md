@@ -163,6 +163,11 @@ DB_PASSWORD=eventpassword
 DB_NAME=event_planner_db
 MYSQL_ROOT_PASSWORD=rootpassword
 
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_PASSWORD=eventpassword
+MYSQL_USER=eventuser
+MYSQL_DATABASE=event_planner_db
+
 # Authentication & Security
 JWT_SECRET=super-secret-jwt-key-minimum-32-chars-length
 JWT_EXPIRES_IN=15m
