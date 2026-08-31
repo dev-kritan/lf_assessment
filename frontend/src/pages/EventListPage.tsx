@@ -547,7 +547,7 @@ export const EventListPage: React.FC = () => {
 
             {/* Quick Metrics Grid */}
             {metrics && (
-              <div className="grid grid-cols-2 gap-3 w-full lg:w-auto min-w-[320px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full lg:w-auto min-w-0 sm:min-w-[320px]">
                 <StatCard
                   label="Upcoming Events"
                   value={metrics.upcomingEvents}
