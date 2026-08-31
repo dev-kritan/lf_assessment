@@ -19,24 +19,29 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastOpenedAtRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toastContext = useContext(ToastContext);
   const parsed = parseLocation(location);
 
-  const handleMouseEnter = () => {
+  const handlePointerEnter = (e: React.PointerEvent) => {
+    // Touch devices synthesize pointerenter during tap gestures; ignore hover on touch devices!
+    const pType = e.pointerType || (e.nativeEvent as PointerEvent)?.pointerType;
+    if (pType === 'touch') return;
+
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
     if (!isRestricted && location) {
-      lastOpenedAtRef.current = Date.now();
       setIsOpen(true);
     }
   };
 
-  const handleMouseLeave = (e: React.MouseEvent) => {
+  const handlePointerLeave = (e: React.PointerEvent) => {
+    const pType = e.pointerType || (e.nativeEvent as PointerEvent)?.pointerType;
+    if (pType === 'touch') return;
+
     // Only close if mouse genuinely moved outside the entire container boundary
     if (
       containerRef.current &&
@@ -63,16 +68,7 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         clearTimeout(closeTimeoutRef.current);
         closeTimeoutRef.current = null;
       }
-
-      // Prevent mobile tap burst collision (mouseenter immediately followed by click in the same tap)
-      const now = Date.now();
-      if (!isOpen || now - lastOpenedAtRef.current > 400) {
-        setIsOpen((prev) => {
-          const next = !prev;
-          if (next) lastOpenedAtRef.current = Date.now();
-          return next;
-        });
-      }
+      setIsOpen((prev) => !prev);
     }
   };
 
@@ -135,15 +131,19 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       <div
         ref={containerRef}
         className={`relative inline-block max-w-full ${isOpen ? 'z-50' : 'z-auto'} ${className}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
       >
         <div
           className="flex flex-col min-w-0 max-w-full group/detail cursor-pointer"
           onClick={handleToggleClick}
         >
           <span
-            className="text-sm font-bold text-slate-900 dark:text-white group-hover/detail:text-indigo-600 dark:group-hover/detail:text-indigo-400 transition-colors truncate block max-w-[180px] sm:max-w-[220px] md:max-w-[260px]"
+            className={`text-sm font-bold truncate block max-w-[180px] sm:max-w-[220px] md:max-w-[260px] transition-colors ${
+              isOpen
+                ? 'text-indigo-600 dark:text-indigo-400'
+                : 'text-slate-900 dark:text-white group-hover/detail:text-indigo-600 dark:group-hover/detail:text-indigo-400'
+            }`}
           >
             {parsed.displayText}
           </span>
@@ -209,19 +209,35 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
     <div
       ref={containerRef}
       className={`relative inline-flex items-center max-w-full ${isOpen ? 'z-50' : 'z-auto'} ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
     >
       <div
         className="flex items-center gap-2 max-w-full group/loc cursor-pointer"
         onClick={handleToggleClick}
       >
-        <MapPin className="w-4 h-4 text-rose-500 flex-shrink-0 transition-transform group-hover/loc:scale-110" />
-        <span className="truncate text-xs text-slate-600 dark:text-slate-300 group-hover/loc:text-indigo-600 dark:group-hover/loc:text-indigo-400 transition-colors">
+        <MapPin
+          className={`w-4 h-4 flex-shrink-0 transition-transform group-hover/loc:scale-110 ${
+            isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-500'
+          }`}
+        />
+        <span
+          className={`truncate text-xs transition-colors ${
+            isOpen
+              ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
+              : 'text-slate-600 dark:text-slate-300 group-hover/loc:text-indigo-600 dark:group-hover/loc:text-indigo-400'
+          }`}
+        >
           {parsed.displayText}
         </span>
         {parsed.isMapUrl && (
-          <ExternalLink className="w-3 h-3 text-slate-400 group-hover/loc:text-indigo-500 flex-shrink-0 opacity-70" />
+          <ExternalLink
+            className={`w-3 h-3 flex-shrink-0 transition-colors ${
+              isOpen
+                ? 'text-indigo-600 dark:text-indigo-400 opacity-100'
+                : 'text-slate-400 group-hover/loc:text-indigo-500 opacity-70'
+            }`}
+          />
         )}
       </div>
 
