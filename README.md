@@ -177,20 +177,6 @@ SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM="EventHub" <noreply@eventhub.local>
-
-# Database Configuration
-DB_USER=eventuser
-DB_PASSWORD=eventpassword
-DB_NAME=event_planner_db
-MYSQL_ROOT_PASSWORD=rootpassword
-
-# Application Configuration
-CLIENT_URL=http://localhost:5173
-
-# Authentication & Security
-COOKIE_SECRET=super-secret-cookie-key
-REFRESH_TOKEN_SECRET=super-secret-refresh-key-minimum-32-chars
-JWT_SECRET=super-secret-jwt-key-minimum-32-chars-length
 ```
 
 #### How to Obtain & Configure SMTP Credentials (Optional)
