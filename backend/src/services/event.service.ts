@@ -159,29 +159,42 @@ export class EventService {
     const total = Number(totalResult?.count || 0);
 
     // Sorting
-    const sortOrder = (
-      params.sort_order || (params.timeframe === "past" ? "desc" : "asc")
-    ).toLowerCase() as "asc" | "desc";
+    let sortOrder: "asc" | "desc";
+    if (params.sort_order) {
+      sortOrder = params.sort_order.toLowerCase() as "asc" | "desc";
+    } else if (
+      params.sort_by === "popularity" ||
+      params.sort_by === "created_at"
+    ) {
+      sortOrder = "desc";
+    } else {
+      sortOrder = params.timeframe === "past" ? "desc" : "asc";
+    }
+
     if (params.sort_by === "popularity") {
       // Sort by RSVP Yes count
       baseQuery
         .select(
           db.raw(
-            '(SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = events.id AND rsvps.status = "yes") as rsvp_yes_count',
+            "(SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = events.id AND rsvps.status = 'yes') as rsvp_yes_count",
           ),
         )
         .orderBy("rsvp_yes_count", sortOrder)
-        .orderBy("events.start_time", "asc");
+        .orderBy("events.start_time", "asc")
+        .orderBy("events.id", "desc");
     } else if (params.sort_by === "created_at") {
-      baseQuery.orderBy("events.created_at", sortOrder);
+      baseQuery
+        .orderBy("events.created_at", sortOrder)
+        .orderBy("events.id", "desc");
     } else {
       // Default: sort by start_time
-      baseQuery.orderBy("events.start_time", sortOrder);
+      baseQuery
+        .orderBy("events.start_time", sortOrder)
+        .orderBy("events.id", "desc");
     }
 
     // Pagination
     const events = await baseQuery.limit(limit).offset(offset);
-    events.reverse();
 
     // Fetch tags and RSVP stats for each event
     const eventIds = events.map((e) => e.id);

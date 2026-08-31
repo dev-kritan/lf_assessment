@@ -144,7 +144,7 @@ export const queryEventsSchema = z.object({
   event_type: z.enum(['all', 'public', 'private']).default('all'),
   timeframe: z.enum(['all', 'upcoming', 'past']).default('all'),
   sort_by: z.enum(['date', 'popularity', 'created_at']).default('date'),
-  sort_order: z.enum(['asc', 'desc']).default('asc'),
+  sort_order: z.enum(['asc', 'desc']).optional(),
   creator_id: z.coerce.number().int().positive().optional(),
   my_rsvps: z.enum(['all', 'yes', 'maybe', 'no']).optional(),
 });

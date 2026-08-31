@@ -254,5 +254,44 @@ describe('Events Endpoints & Filtering', () => {
     const check1 = await request(app).get(`/api/v1/events/${id1}`);
     expect(check1.status).toBe(404);
   });
+
+  it('should sort events by popularity (RSVP Yes count) in descending order by default', async () => {
+    // Create an event with multiple RSVPs
+    const resPop = await request(app)
+      .post('/api/v1/events')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send({
+        title: 'Mega Popular Hackathon',
+        description: 'A very popular event',
+        location: 'Grand Ballroom',
+        event_type: 'public',
+        start_time: new Date(Date.now() + 86400000).toISOString(),
+      });
+    expect(resPop.status).toBe(201);
+    const popEventId = resPop.body.data.id;
+
+    // Bob also RSVPs 'yes' to it
+    await request(app)
+      .post(`/api/v1/events/${popEventId}/rsvps`)
+      .set('Authorization', `Bearer ${user2Token}`)
+      .send({ status: 'yes' });
+
+    // Fetch with sort_by=popularity as authenticated verified user
+    const listRes = await request(app)
+      .get('/api/v1/events?sort_by=popularity')
+      .set('Authorization', `Bearer ${user1Token}`);
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.success).toBe(true);
+    expect(listRes.body.data.length).toBeGreaterThan(0);
+
+    // Verify the list is in descending order of RSVP 'yes' counts
+    const events = listRes.body.data;
+    for (let i = 0; i < events.length - 1; i++) {
+      const currYes = events[i].rsvpStats?.yes ?? 0;
+      const nextYes = events[i + 1].rsvpStats?.yes ?? 0;
+      expect(currYes).toBeGreaterThanOrEqual(nextYes);
+    }
+  });
 });
+
 

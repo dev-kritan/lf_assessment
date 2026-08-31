@@ -342,6 +342,12 @@ export const EventListPage: React.FC = () => {
           event_type: eventType,
           tag: selectedTag || undefined,
           sort_by: sortBy,
+          sort_order:
+            sortBy === "date"
+              ? timeframe === "past"
+                ? "desc"
+                : "asc"
+              : "desc",
         });
 
         if (res.success) {
