@@ -22,12 +22,16 @@ export const Pagination: React.FC<PaginationProps> = ({
 }) => {
   const { page, totalPages, total, limit, hasPrevPage, hasNextPage } = meta;
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     let ticking = false;
 
-    const checkScrollPosition = () => {
+    const checkViewportAndScroll = () => {
       if (typeof window === "undefined") return;
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+
       const scrollY = window.scrollY || window.pageYOffset;
       const windowHeight = window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
@@ -37,20 +41,20 @@ export const Pagination: React.FC<PaginationProps> = ({
       ticking = false;
     };
 
-    const onScroll = () => {
+    const onScrollOrResize = () => {
       if (!ticking) {
-        window.requestAnimationFrame(checkScrollPosition);
+        window.requestAnimationFrame(checkViewportAndScroll);
         ticking = true;
       }
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    checkScrollPosition();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize, { passive: true });
+    checkViewportAndScroll();
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
     };
   }, []);
 
@@ -64,7 +68,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisible = 5;
+    const maxVisible = isMobile ? 3 : 5;
     let start = Math.max(1, page - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages, start + maxVisible - 1);
 
@@ -83,12 +87,12 @@ export const Pagination: React.FC<PaginationProps> = ({
       aria-label="Pagination Navigation"
       className={`sticky bottom-2 z-30 mx-auto mt-4 mb-1 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/90 flex items-center transition-all duration-300 ease-out animate-fade-in ${
         isAtBottom
-          ? "w-full max-w-7xl px-4 sm:px-6 py-2.5 rounded-xl sm:rounded-2xl justify-between shadow-md"
-          : "max-w-fit px-2.5 sm:px-4 py-2 rounded-2xl sm:rounded-full justify-between sm:justify-center gap-2 sm:gap-3.5 shadow-2xl shadow-slate-950/20"
+          ? "w-full max-w-7xl px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl justify-between shadow-md"
+          : "max-w-[calc(100vw-1.25rem)] sm:max-w-fit px-2 sm:px-4 py-1.5 sm:py-2 rounded-full justify-between sm:justify-center gap-1.5 sm:gap-3.5 shadow-2xl shadow-slate-950/20"
       }`}
     >
       {/* Count & Server Indicator */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 pl-1">
+      <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 pl-0.5 sm:pl-1">
         {total > 0 ? (
           <span className="whitespace-nowrap font-medium">
             <span className="hidden lg:inline">
@@ -116,7 +120,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1">
         {/* First Page Button */}
         {totalPages > 3 && (
           <button
@@ -124,7 +128,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             disabled={!hasPrevPage}
             aria-label="First page"
             title="First page"
-            className="hidden sm:flex p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+            className="hidden sm:flex p-1.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
           >
             <ChevronsLeft className="w-3.5 h-3.5" />
           </button>
@@ -136,19 +140,19 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={!hasPrevPage}
           aria-label="Previous page"
           title="Previous page"
-          className="p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+          className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
 
         {/* Numbered Page Buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {getPageNumbers().map((p) => (
             <button
               key={p}
               onClick={() => onPageChange(p)}
               aria-current={page === p ? "page" : undefined}
-              className={`min-w-[30px] h-7 sm:min-w-[32px] sm:h-8 px-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all ${
+              className={`min-w-[26px] h-7 sm:min-w-[32px] sm:h-8 px-1.5 sm:px-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
                 page === p
                   ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/30 scale-105"
                   : "border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -165,7 +169,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={!hasNextPage}
           aria-label="Next page"
           title="Next page"
-          className="p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+          className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -177,7 +181,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             disabled={!hasNextPage}
             aria-label="Last page"
             title="Last page"
-            className="hidden sm:flex p-1.5 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
+            className="hidden sm:flex p-1.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs"
           >
             <ChevronsRight className="w-3.5 h-3.5" />
           </button>
@@ -188,7 +192,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {onLimitChange && (
         <>
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 pr-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 pr-0.5 sm:pr-1">
             <span className="hidden md:inline">Per page:</span>
             <CustomSelect
               value={limit}
@@ -197,7 +201,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               size="sm"
               placement="top"
               align="right"
-              buttonClassName="!py-1 !px-2 !text-xs !rounded-lg sm:!rounded-xl"
+              buttonClassName="!py-0.5 !px-1.5 sm:!py-1 sm:!px-2 !text-[11px] sm:!text-xs !rounded-lg sm:!rounded-xl"
               ariaLabel="Select events per page"
             />
           </div>
