@@ -81,9 +81,9 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div
       aria-label="Pagination Navigation"
-      className={`sticky bottom-4 z-30 mx-auto mt-6 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/90 flex items-center transition-all duration-300 ease-out animate-fade-in ${
+      className={`sticky bottom-2 z-30 mx-auto mt-4 mb-1 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/90 flex items-center transition-all duration-300 ease-out animate-fade-in ${
         isAtBottom
-          ? "w-full max-w-7xl px-4 sm:px-6 py-3 rounded-2xl justify-between shadow-lg"
+          ? "w-full max-w-7xl px-4 sm:px-6 py-2.5 rounded-xl sm:rounded-2xl justify-between shadow-md"
           : "max-w-fit px-2.5 sm:px-4 py-2 rounded-2xl sm:rounded-full justify-between sm:justify-center gap-2 sm:gap-3.5 shadow-2xl shadow-slate-950/20"
       }`}
     >

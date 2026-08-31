@@ -540,7 +540,7 @@ export const EventListPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-11">
       {/* Hero / Header Section */}
       <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-indigo-50/50 via-white to-transparent dark:from-indigo-950/20 dark:via-slate-950 dark:to-slate-950 border-b border-slate-200/60 dark:border-slate-800/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -605,7 +605,7 @@ export const EventListPage: React.FC = () => {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-1">
         {/* Filter Controls */}
         <div ref={filterBarRef}>
           <FilterBar
@@ -702,8 +702,12 @@ export const EventListPage: React.FC = () => {
               <button
                 onClick={() => {
                   if (user && !user.isEmailVerified) {
-                    error("Email verification required: Please verify your email address to create events.");
-                    navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+                    error(
+                      "Email verification required: Please verify your email address to create events.",
+                    );
+                    navigate(APP_ROUTES.PROFILE, {
+                      state: { highlightEmailVerification: true },
+                    });
                     return;
                   }
                   setEventToEdit(null);
