@@ -35,6 +35,7 @@ export const MyEventsPage: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   // Read initial states from URL search params
   const initialTab = searchParams.get("tab") === "rsvps" ? "rsvps" : "created";
@@ -703,11 +704,25 @@ export const MyEventsPage: React.FC = () => {
     (activeTab === "rsvps" && rsvpStatusFilter !== "all")
   );
 
+  const scrollToFilterBar = () => {
+    const filterBarEl =
+      filterBarRef.current || document.getElementById("events-filter-bar");
+    if (filterBarEl) {
+      const yOffset = -80; // 64px sticky navbar + 16px buffer
+      const y =
+        filterBarEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // Pagination change handlers
   const handleCreatedPageChange = (newPage: number) => {
     setSelectedCreatedIds([]);
     setCreatedMeta((prev) => ({ ...prev, page: newPage }));
     updateUrlParams({ page: newPage });
+    scrollToFilterBar();
   };
 
   const handleCreatedLimitChange = (newLimit: number) => {
@@ -720,6 +735,7 @@ export const MyEventsPage: React.FC = () => {
     setSelectedRsvpIds([]);
     setRsvpMeta((prev) => ({ ...prev, page: newPage }));
     updateUrlParams({ page: newPage });
+    scrollToFilterBar();
   };
 
   const handleRsvpLimitChange = (newLimit: number) => {
@@ -1008,26 +1024,28 @@ export const MyEventsPage: React.FC = () => {
       )}
 
       {/* Server-Side Filter Bar with Timeframe Counts */}
-      <FilterBar
-        search={search}
-        onSearchChange={setSearch}
-        selectedTimeframe={timeframe}
-        onTimeframeChange={handleTimeframeChange}
-        selectedType={eventType}
-        onTypeChange={handleTypeChange}
-        selectedTag={selectedTag}
-        onTagChange={handleTagChange}
-        sortBy={sortBy}
-        onSortChange={handleSortChange}
-        tags={allTags}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        onReset={handleResetFilters}
-        hasActiveFilters={hasActiveFilters}
-        timeframeCounts={
-          activeTab === "created" ? createdTimeframeCounts : rsvpTimeframeCounts
-        }
-      />
+      <div ref={filterBarRef}>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          selectedTimeframe={timeframe}
+          onTimeframeChange={handleTimeframeChange}
+          selectedType={eventType}
+          onTypeChange={handleTypeChange}
+          selectedTag={selectedTag}
+          onTagChange={handleTagChange}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+          tags={allTags}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          onReset={handleResetFilters}
+          hasActiveFilters={hasActiveFilters}
+          timeframeCounts={
+            activeTab === "created" ? createdTimeframeCounts : rsvpTimeframeCounts
+          }
+        />
+      </div>
 
       {/* Tab 1: Created by Me */}
       <div
