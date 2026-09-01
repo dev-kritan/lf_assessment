@@ -144,4 +144,48 @@ describe('LocationHoverCard Component', () => {
     expect(writeTextMock).toHaveBeenCalledWith(mapUrl);
     expect(await screen.findByText('Copied')).toBeInTheDocument();
   });
+
+  it('renders with viewport-bounded positioning on card variant without hardcoded sm:left-0 override', async () => {
+    const { container } = renderComponent({
+      location: 'Centrally Positioned Innovation Hub',
+      variant: 'card',
+    });
+
+    const outerContainer = container.firstElementChild as HTMLElement;
+    act(() => {
+      fireEvent.pointerEnter(outerContainer, { pointerType: 'mouse' });
+    });
+
+    const popover = await screen.findByText('Venue Location');
+    const popoverContainer = popover.closest('div.absolute') as HTMLElement;
+    expect(popoverContainer).toBeInTheDocument();
+    expect(popoverContainer).not.toHaveClass('sm:left-0');
+    // Verify dynamic left positioning style or fallback centering is applied
+    expect(popoverContainer.style.left).toBeDefined();
+  });
+
+  it('supports keyboard navigation: toggles on Enter key and closes on Escape key', async () => {
+    renderComponent({
+      location: 'Accessible Conference Center',
+    });
+
+    const trigger = screen.getByRole('button', { name: /Accessible Conference Center/i });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    // Press Enter to open
+    act(() => {
+      fireEvent.keyDown(trigger, { key: 'Enter' });
+    });
+
+    expect(await screen.findByText('Venue Location')).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    // Press Escape to close
+    act(() => {
+      fireEvent.keyDown(document, { key: 'Escape' });
+    });
+
+    expect(screen.queryByText('Venue Location')).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
 });

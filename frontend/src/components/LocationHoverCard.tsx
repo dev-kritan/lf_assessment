@@ -8,6 +8,7 @@ export interface LocationHoverCardProps {
   isRestricted?: boolean | null;
   className?: string;
   variant?: 'card' | 'detail';
+  align?: 'center' | 'left' | 'right';
 }
 
 export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
@@ -15,14 +16,75 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
   isRestricted = false,
   className = '',
   variant = 'card',
+  align = 'center',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [popoverStyle, setPopoverStyle] = useState<{
+    left?: number;
+    arrowLeft?: number;
+  }>({});
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const toastContext = useContext(ToastContext);
   const parsed = parseLocation(location);
+
+  const updatePosition = () => {
+    if (!containerRef.current || !popoverRef.current) return;
+    const triggerRect = containerRef.current.getBoundingClientRect();
+    const popoverRect = popoverRef.current.getBoundingClientRect();
+
+    const viewportWidth =
+      window.innerWidth || document.documentElement.clientWidth || 375;
+    const padding = 16;
+    const popoverWidth =
+      popoverRect.width || popoverRef.current.offsetWidth || 320;
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2;
+
+    const idealScreenLeft = triggerCenterX - popoverWidth / 2;
+    const minScreenLeft = padding;
+    const maxScreenLeft = Math.max(
+      padding,
+      viewportWidth - popoverWidth - padding
+    );
+    const clampedScreenLeft = Math.min(
+      Math.max(idealScreenLeft, minScreenLeft),
+      maxScreenLeft
+    );
+
+    const relativeLeft = clampedScreenLeft - triggerRect.left;
+    const arrowPos = triggerCenterX - clampedScreenLeft;
+    const clampedArrowLeft = Math.min(
+      Math.max(arrowPos, 18),
+      popoverWidth - 18
+    );
+
+    setPopoverStyle({
+      left: relativeLeft,
+      arrowLeft: clampedArrowLeft,
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPopoverStyle({});
+      return;
+    }
+
+    updatePosition();
+    const animId = requestAnimationFrame(updatePosition);
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen]);
 
   const handlePointerEnter = (e: React.PointerEvent) => {
     // Touch devices synthesize pointerenter during tap gestures; ignore hover on touch devices!
@@ -72,6 +134,16 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isRestricted && location) {
+        setIsOpen((prev) => !prev);
+      }
+    }
+  };
+
   // Close when clicking or tapping outside on mobile or desktop
   useEffect(() => {
     if (!isOpen) return;
@@ -85,12 +157,20 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       }
     };
 
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen]);
 
@@ -126,6 +206,14 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
     );
   }
 
+  // Fallback Alignment classes mapping before layout calculation
+  const alignClass =
+    align === 'left'
+      ? 'left-0'
+      : align === 'right'
+      ? 'right-0'
+      : 'left-1/2 -translate-x-1/2';
+
   if (variant === 'detail') {
     return (
       <div
@@ -135,7 +223,13 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         onPointerLeave={handlePointerLeave}
       >
         <div
-          className="flex flex-col min-w-0 max-w-full group/detail cursor-pointer"
+          role="button"
+          tabIndex={0}
+          aria-expanded={isOpen}
+          aria-haspopup="dialog"
+          aria-label={`Event location: ${parsed.displayText}. Click to toggle details`}
+          onKeyDown={handleKeyDown}
+          className="flex flex-col min-w-0 max-w-full group/detail cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           onClick={handleToggleClick}
         >
           <span
@@ -163,9 +257,28 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
         {/* Floating Glassmorphic Hover Card for Detail Page */}
         {isOpen && (
           <div
-            className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2.5 z-[999] w-[min(20rem,calc(100vw-2rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto before:content-[''] before:absolute before:-top-1.5 before:left-1/2 before:-translate-x-1/2 sm:before:left-6 sm:before:translate-x-0 before:w-3 before:h-3 before:bg-white dark:before:bg-slate-900 before:border-t before:border-l before:border-slate-200 dark:before:border-slate-800 before:rotate-45"
+            ref={popoverRef}
+            style={
+              popoverStyle.left !== undefined
+                ? { left: `${popoverStyle.left}px`, transform: 'none' }
+                : undefined
+            }
+            className={`absolute ${
+              popoverStyle.left === undefined ? alignClass : ''
+            } top-full mt-2.5 z-[999] w-[min(20rem,calc(100vw-2rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto`}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Pointer arrow with dynamic tracking */}
+            <div
+              style={{
+                left:
+                  popoverStyle.arrowLeft !== undefined
+                    ? `${popoverStyle.arrowLeft}px`
+                    : '50%',
+              }}
+              className="absolute -top-1.5 -translate-x-1/2 w-3 h-3 bg-white dark:bg-slate-900 border-t border-l border-slate-200 dark:border-slate-800 rotate-45 pointer-events-none"
+            />
+
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800/80">
               <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-800/60">
                 <Navigation className="w-3 h-3" />
@@ -213,7 +326,13 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       onPointerLeave={handlePointerLeave}
     >
       <div
-        className="flex items-center gap-2 max-w-full group/loc cursor-pointer"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-label={`Event location: ${parsed.displayText}. Click to view details`}
+        onKeyDown={handleKeyDown}
+        className="flex items-center gap-2 max-w-full group/loc cursor-pointer rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800/60 px-1.5 py-0.5 -mx-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         onClick={handleToggleClick}
       >
         <MapPin
@@ -244,9 +363,28 @@ export const LocationHoverCard: React.FC<LocationHoverCardProps> = ({
       {/* Modern Interactive Glassmorphic Hover Card */}
       {isOpen && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2.5 z-[999] w-[min(20rem,calc(100vw-2.5rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto after:content-[''] after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 sm:after:left-6 sm:after:translate-x-0 after:w-3 after:h-3 after:bg-white dark:after:bg-slate-900 after:border-b after:border-r after:border-slate-200/90 dark:after:border-slate-800 after:rotate-45"
+          ref={popoverRef}
+          style={
+            popoverStyle.left !== undefined
+              ? { left: `${popoverStyle.left}px`, transform: 'none' }
+              : undefined
+          }
+          className={`absolute ${
+            popoverStyle.left === undefined ? alignClass : ''
+          } bottom-full mb-2.5 z-[999] w-[min(20rem,calc(100vw-2rem))] sm:w-80 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto`}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Pointer arrow with dynamic tracking */}
+          <div
+            style={{
+              left:
+                popoverStyle.arrowLeft !== undefined
+                  ? `${popoverStyle.arrowLeft}px`
+                  : '50%',
+            }}
+            className="absolute -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white dark:bg-slate-900 border-b border-r border-slate-200/90 dark:border-slate-800 rotate-45 pointer-events-none"
+          />
+
           {/* Header */}
           <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800/80">
             <div className="flex items-center gap-1.5">

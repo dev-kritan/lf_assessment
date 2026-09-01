@@ -64,7 +64,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
 
   return (
-    <div className={`group relative rounded-3xl overflow-visible hover:z-30 glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
+    <div className={`group relative rounded-3xl overflow-visible hover:z-30 focus-within:z-30 glass-card transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full border ${
       isSelected
         ? 'ring-2 ring-indigo-500 border-indigo-500 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/30'
         : isPast 
