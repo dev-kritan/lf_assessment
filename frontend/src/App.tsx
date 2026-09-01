@@ -1,5 +1,11 @@
 import React, { useState, useEffect, Suspense, lazy } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigationType,
+} from "react-router-dom";
 import { Calendar, Loader2 } from "lucide-react";
 import { eventsApi } from "./api/events.api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -35,16 +41,26 @@ import { APP_ROUTES } from "./constants";
 
 export const ScrollToTop: React.FC = () => {
   const { pathname, search } = useLocation();
+  const navType = useNavigationType();
+
+  useEffect(() => {
+    // Disable native browser scroll restoration so Chrome does not force scroll to 0 prematurely on POP navigations
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
 
   useEffect(() => {
     const savedPos =
       typeof window !== "undefined"
         ? sessionStorage.getItem(`scroll_pos_${pathname}${search}`)
         : null;
-    if (!savedPos || Number(savedPos) <= 0) {
+
+    // For new page pushes without a saved position, scroll to top
+    if (navType === "PUSH" && (!savedPos || Number(savedPos) <= 0)) {
       window.scrollTo(0, 0);
     }
-  }, [pathname, search]);
+  }, [pathname, search, navType]);
 
   return null;
 };

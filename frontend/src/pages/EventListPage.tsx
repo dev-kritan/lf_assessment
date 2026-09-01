@@ -389,6 +389,9 @@ export const EventListPage: React.FC = () => {
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
+      // Do not overwrite saved scroll position while content is actively loading
+      if (isFetching) return;
+
       if (!ticking) {
         window.requestAnimationFrame(() => {
           if (typeof window !== "undefined" && window.scrollY > 0) {
@@ -403,11 +406,26 @@ export const EventListPage: React.FC = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
+    const saveCurrentScroll = () => {
+      if (typeof window !== "undefined" && window.scrollY > 0) {
+        sessionStorage.setItem(
+          `scroll_pos_${location.pathname}${location.search}`,
+          String(window.scrollY),
+        );
+      }
     };
-  }, [location.pathname, location.search]);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("pagehide", saveCurrentScroll);
+    window.addEventListener("beforeunload", saveCurrentScroll);
+
+    return () => {
+      saveCurrentScroll();
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("pagehide", saveCurrentScroll);
+      window.removeEventListener("beforeunload", saveCurrentScroll);
+    };
+  }, [location.pathname, location.search, isFetching]);
 
   // Reset restoration flag when user explicitly changes query params
   useEffect(() => {
@@ -425,12 +443,15 @@ export const EventListPage: React.FC = () => {
         if (top > 0) {
           isRestoredRef.current = true;
           requestAnimationFrame(() => {
+            window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
             requestAnimationFrame(() => {
               window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
             });
           });
+          return;
         }
       }
+      isRestoredRef.current = true;
     }
   }, [events, isFetching, location.pathname, location.search]);
 

@@ -18,7 +18,12 @@ import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { APP_ROUTES, DEFAULT_ASSETS, UI_TIMINGS, getRandomCoverImageUrl } from "../constants";
+import {
+  APP_ROUTES,
+  DEFAULT_ASSETS,
+  UI_TIMINGS,
+  getRandomCoverImageUrl,
+} from "../constants";
 import {
   eventFormSchema,
   validateForm as validateWithZod,
@@ -316,9 +321,13 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
     if (isSubmitting) return;
 
     if (user && !user.isEmailVerified) {
-      error("Email verification required: Please verify your email address to create events.");
+      error(
+        "Email verification required: Please verify your email address to create events.",
+      );
       onClose();
-      navigate(APP_ROUTES.PROFILE, { state: { highlightEmailVerification: true } });
+      navigate(APP_ROUTES.PROFILE, {
+        state: { highlightEmailVerification: true },
+      });
       return;
     }
 
@@ -889,7 +898,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2 sm:gap-3 sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pb-1 sm:pb-0 shrink-0">
+          <div className="py-2 sm:py-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2 sm:gap-3 sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shrink-0">
             <button
               type="button"
               onClick={onClose}
