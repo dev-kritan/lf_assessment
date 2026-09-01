@@ -11,6 +11,7 @@ import { eventsApi } from "./api/events.api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { EventFormModal } from "./components/EventFormModal";
 import { Navbar } from "./components/Navbar";
+import { TopLoader } from "./components/TopLoader";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
@@ -163,6 +164,7 @@ export const App: React.FC = () => {
         <ToastProvider>
           <AuthProvider>
             <BrowserRouter>
+              <TopLoader />
               <ScrollToTop />
               <AppContent />
             </BrowserRouter>
