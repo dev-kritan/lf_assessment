@@ -1,30 +1,30 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
+  BookmarkCheck,
+  BookOpen,
   Calendar,
+  CalendarCheck,
+  Database,
+  ExternalLink,
+  FileText,
+  LogIn,
+  LogOut,
+  Menu,
+  Monitor,
+  Moon,
   Plus,
   PlusCircle,
-  Sun,
-  Moon,
-  Monitor,
-  User as UserIcon,
-  LogOut,
   ShieldCheck,
-  Database,
-  BookmarkCheck,
-  Menu,
-  X,
-  CalendarCheck,
-  FileText,
-  ExternalLink,
-  LogIn,
+  Sun,
+  User as UserIcon,
   UserPlus,
-  BookOpen,
+  X,
 } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL, APP_ROUTES, getDicebearAvatarUrl } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
-import { APP_ROUTES, getDicebearAvatarUrl, API_BASE_URL } from "../constants";
 
 interface NavbarProps {
   onOpenCreateModal?: () => void;
@@ -119,8 +119,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
   const handleLogout = async () => {
     await logout();
     success("Logged out successfully");
-    navigate(APP_ROUTES.HOME);
+    navigate(APP_ROUTES.HOME, { replace: true, state: { clearData: true } });
     setProfileDropdownOpen(false);
+    window.location.reload();
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -312,7 +313,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left"
                     >
                       <LogOut className="w-4 h-4" />
-                      Sign Out
+                      Sign Outs
                     </button>
                   </div>
                 )}
