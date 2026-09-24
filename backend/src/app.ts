@@ -1,36 +1,50 @@
-import express, { Express } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import { config } from './config/env';
-import { requestLogger } from './middlewares/requestLogger.middleware';
-import { errorHandler } from './middlewares/error.middleware';
-import { setupSwagger } from './config/swagger';
-import apiRouter from './routes';
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express, { Express } from "express";
+import helmet from "helmet";
+import { config } from "./config/env";
+import { setupSwagger } from "./config/swagger";
+import { errorHandler } from "./middlewares/error.middleware";
+import { requestLogger } from "./middlewares/requestLogger.middleware";
+import apiRouter from "./routes";
 
-import { ERROR_CODES, VALIDATION_LIMITS } from './constants';
+import { ERROR_CODES, VALIDATION_LIMITS } from "./constants";
 
 export function createApp(): Express {
   const app = express();
 
   // Security & standard middlewares
-  app.use(helmet({
-    contentSecurityPolicy: false, // Allows Swagger UI & embedded previews
-  }));
+  // prevent : clickjacking, hide server identity, XSS attack (by enabling strict CSP headers rules)
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Allows Swagger UI & embedded previews
+    }),
+  );
 
-  app.use(cors({
-    origin: [config.clientUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+  app.use(
+    cors({
+      origin: [
+        config.clientUrl,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+      ],
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+  );
 
   app.use(express.json({ limit: VALIDATION_LIMITS.MAX_BODY_LIMIT }));
-  app.use(express.urlencoded({ extended: true, limit: VALIDATION_LIMITS.MAX_BODY_LIMIT }));
+  app.use(
+    express.urlencoded({
+      extended: true,
+      limit: VALIDATION_LIMITS.MAX_BODY_LIMIT,
+    }),
+  );
   app.use(cookieParser(config.cookieSecret));
 
   // Request logger (Morgan + Winston)
-  if (config.nodeEnv !== 'test') {
+  if (config.nodeEnv !== "test") {
     app.use(requestLogger);
   }
 
@@ -38,10 +52,10 @@ export function createApp(): Express {
   setupSwagger(app);
 
   // Mount API router
-  app.use('/api/v1', apiRouter);
+  app.use("/api/v1", apiRouter);
 
   // 404 Handler for undefined routes
-  app.use('*', (req, res) => {
+  app.use("*", (req, res) => {
     res.status(404).json({
       success: false,
       error: {
