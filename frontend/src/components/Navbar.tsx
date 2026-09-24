@@ -313,7 +313,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left"
                     >
                       <LogOut className="w-4 h-4" />
-                      Sign Outs
+                      Sign Out
                     </button>
                   </div>
                 )}
